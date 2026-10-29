@@ -1,0 +1,72 @@
+/**
+ * MACHINING LAB V2.0 — 3D MOTION LAB CSS (css/lab3d.css)
+ * Canvas wraps, telemetry HUD, kinematics dials, machine tabs.
+ */
+
+.three-canvas-wrap {
+  width: 100%; height: 380px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: radial-gradient(circle at center, #17202c 0%, #0d1218 80%);
+  position: relative; overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+}
+
+.canvas-hud {
+  position: absolute; top: 12px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  pointer-events: none; z-index: 5;
+}
+
+.canvas-controls-hint {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+  background: rgba(10, 14, 20, 0.7); padding: 4px 14px; border-radius: 99px;
+  border: 1px solid var(--line); pointer-events: none; z-index: 5;
+  white-space: nowrap;
+}
+
+/* Machine Simulation Panels */
+.machining-lab-container {
+  display: grid; grid-template-columns: 1fr 340px; gap: 24px;
+  height: 520px;
+}
+
+.sim-controls-panel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 20px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.control-group { margin-bottom: 18px; }
+.control-label {
+  font-family: var(--mono); font-size: 12px; color: var(--ink-dim);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+
+.switch-btn {
+  width: 100%; padding: 10px 14px; border-radius: 8px;
+  background: var(--bg3); border: 1px solid var(--line);
+  color: var(--ink); font-family: var(--sans); font-size: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 8px;
+}
+.switch-btn.active {
+  border-color: var(--cyan); background: rgba(0, 229, 255, 0.1);
+  color: var(--cyan);
+}
+.switch-status { font-family: var(--mono); font-size: 12px; font-weight: 700; }
+
+.machine-nav-tabs {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.tab-btn {
+  flex: 1; padding: 8px 10px; border-radius: 8px;
+  background: var(--bg3); border: 1px solid var(--line);
+  color: var(--ink-dim); font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--ac); color: #000; border-color: var(--ac);
+}

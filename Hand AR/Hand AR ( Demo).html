@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#050608" />
+  <title>Hand AR Lab — Gesture Tracking</title>
+  <style>
+    :root{color-scheme:dark;--bg:#050608;--line:rgba(255,255,255,.14);--muted:#a0a5b1;--text:#f4f5f8;--accent:#a9f7e4;--accent2:#88baff}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    #stage{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 45%,#131a20 0%,#080a0d 48%,#030405 100%);overflow:hidden}
+    #video{position:absolute;width:100%;height:100%;inset:0;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .6s ease}
+    #video.ready{opacity:.62}
+    #shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(2,4,7,.72),transparent 28%,transparent 62%,rgba(2,4,7,.82));pointer-events:none}
+    #overlay{position:absolute;inset:0;width:100%;height:100%;z-index:2;transform:scaleX(-1);pointer-events:none}
+    .topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:clamp(16px,3vw,32px);gap:16px;z-index:5}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .mark{width:38px;height:38px;border:1px solid rgba(169,247,228,.55);border-radius:12px;display:grid;place-items:center;background:rgba(169,247,228,.08);box-shadow:0 0 28px rgba(169,247,228,.08);flex:0 0 auto}
+    .brandname{font-size:12px;letter-spacing:.19em;text-transform:uppercase;font-weight:750}
+    .brandsub{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+    .status{display:flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--line);border-radius:999px;background:rgba(10,13,17,.66);backdrop-filter:blur(16px);font-size:11px;color:#d8dde4;white-space:nowrap}
+    .dot{width:7px;height:7px;border-radius:50%;background:#6b7280;box-shadow:0 0 0 4px rgba(107,114,128,.12)}
+    .dot.live{background:var(--accent);box-shadow:0 0 0 4px rgba(169,247,228,.12),0 0 14px rgba(169,247,228,.65)}
+    .center-guide{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(600px,88vw);text-align:center;pointer-events:none;transition:opacity .3s;z-index:3}
+    .eyebrow{color:var(--accent);font-size:10px;letter-spacing:.26em;text-transform:uppercase;font-weight:700;margin-bottom:18px}
+    h1{font-size:clamp(32px,6.3vw,76px);letter-spacing:-.065em;line-height:.98;font-weight:550;margin:0 auto 18px;max-width:700px;text-wrap:balance}
+    .description{font-size:clamp(13px,1.5vw,16px);color:#c0c5ce;line-height:1.7;max-width:420px;margin:0 auto}
+    .scan-frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(54vw,520px);height:min(60vh,520px);border:1px solid rgba(255,255,255,.12);border-radius:36px;pointer-events:none;z-index:3;transition:border-color .25s,box-shadow .25s}
+    .scan-frame:before,.scan-frame:after{content:"";position:absolute;width:32px;height:32px;border-color:var(--accent);border-style:solid;opacity:.85}
+    .scan-frame:before{left:-1px;top:-1px;border-width:2px 0 0 2px;border-radius:18px 0 0 0}
+    .scan-frame:after{right:-1px;bottom:-1px;border-width:0 2px 2px 0;border-radius:0 0 18px 0}
+    .scan-frame.detected{border-color:rgba(169,247,228,.32);box-shadow:inset 0 0 70px rgba(169,247,228,.035),0 0 60px rgba(169,247,228,.035)}
+    .corner{position:absolute;width:25px;height:25px;border-color:rgba(255,255,255,.52);border-style:solid}
+    .c2{right:-1px;top:-1px;border-width:2px 2px 0 0;border-radius:0 18px 0 0}
+    .c3{left:-1px;bottom:-1px;border-width:0 0 2px 2px;border-radius:0 0 0 18px}
+    .bottom{position:absolute;bottom:0;left:0;right:0;padding:24px clamp(16px,3vw,32px) max(22px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;gap:18px;z-index:5;pointer-events:none}
+    .bottom>*{pointer-events:auto}
+    .metric-panel{display:flex;gap:10px;flex-wrap:wrap}
+    .metric{min-width:118px;padding:13px 15px;border:1px solid var(--line);border-radius:16px;background:rgba(7,10,13,.67);backdrop-filter:blur(16px)}
+    .metric-label{font-size:9px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-bottom:7px}
+    .metric-value{font-size:13px;font-weight:600;letter-spacing:.01em}
+    .metric-value.accent{color:var(--accent)}
+    .actions{display:flex;gap:9px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+    button{font:inherit;color:var(--text);cursor:pointer;border-radius:999px;padding:12px 16px;border:1px solid rgba(255,255,255,.2);background:rgba(9,12,16,.72);backdrop-filter:blur(14px);font-size:11px;letter-spacing:.025em;transition:transform .18s,border-color .18s,background .18s}
+    button:hover{border-color:rgba(169,247,228,.55);transform:translateY(-1px)}
+    button.primary{background:var(--accent);border-color:var(--accent);color:#07110e;font-weight:750}
+    button.primary:hover{background:#c5ffef}
+    #toast{position:absolute;left:50%;bottom:116px;transform:translate(-50%,10px);opacity:0;transition:opacity .25s,transform .25s;z-index:7;padding:10px 14px;border:1px solid rgba(169,247,228,.3);border-radius:999px;background:rgba(5,13,12,.86);color:var(--accent);font-size:11px;pointer-events:none;white-space:nowrap;backdrop-filter:blur(14px)}
+    #toast.show{opacity:1;transform:translate(-50%,0)}
+    .loading{position:absolute;inset:0;display:grid;place-items:center;background:#050608;z-index:10;transition:opacity .5s,visibility .5s}
+    .loading.hide{opacity:0;visibility:hidden;pointer-events:none}
+    .loadbox{text-align:center}
+    .spinner{width:34px;height:34px;border:1px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 18px}
+    .loadtitle{font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+    .loadnote{font-size:11px;color:var(--muted);margin-top:9px}
+    .permission{display:none;position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,calc(100% - 36px));padding:24px;border:1px solid var(--line);border-radius:22px;background:rgba(7,10,13,.92);backdrop-filter:blur(22px);text-align:center}
+    .permission.show{display:block}
+    .permission h2{font-size:19px;font-weight:600;margin:0 0 10px}
+    .permission p{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 18px}
+    .permission .actions{justify-content:center}
+    .tiny{font-size:10px;color:rgba(211,216,224,.62);letter-spacing:.04em;margin-top:12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:650px){.brandsub{display:none}.status{font-size:10px;padding:9px 11px}.scan-frame{width:76vw;height:44vh;border-radius:26px}.center-guide{top:49%}h1{font-size:clamp(34px,10vw,54px)}.description{max-width:300px}.bottom{align-items:stretch;flex-direction:column;gap:12px}.metric-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.metric{min-width:0;padding:11px 10px}.metric-label{font-size:8px}.metric-value{font-size:11px}.actions{justify-content:space-between}.actions button{flex:1;padding:12px 10px}#toast{bottom:145px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <main id="stage">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="overlay"></canvas>
+    <div id="shade"></div>
+    <div class="scan-frame" id="scanFrame"><i class="corner c2"></i><i class="corner c3"></i></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 12V6.7a1.7 1.7 0 0 1 3.4 0V11 5.7a1.7 1.7 0 0 1 3.4 0V11 7.2a1.7 1.7 0 0 1 3.4 0v7.2c0 4.1-2.5 6.6-6.3 6.6h-.7c-2.2 0-3.8-.9-5-2.8l-2.3-3.6a1.7 1.7 0 0 1 2.8-1.9L8 15" stroke="#a9f7e4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4h3M4.5 2.5v3M19 3h2M20 2v2" stroke="#a9f7e4" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div><div class="brandname">Hand AR Lab</div><div class="brandsub">Real-time gesture tracking · No objects attached</div></div>
+      </div>
+      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">CAMERA OFFLINE</span></div>
+    </header>
+
+    <section class="center-guide" id="guide">
+      <div class="eyebrow">Spatial interface / 001</div>
+      <h1>Move naturally.<br>Interact in space.</h1>
+      <p class="description" id="guideDescription">Đưa một bàn tay vào khung hình. Hệ thống sẽ theo dõi 21 điểm khớp và nhận diện cử chỉ theo thời gian thực.</p>
+    </section>
+
+    <div id="permission" class="permission">
+      <h2 id="permissionTitle">Bật camera để bắt đầu</h2>
+      <p id="permissionText">Demo cần quyền truy cập webcam để theo dõi bàn tay. Hãy chạy trang qua localhost hoặc HTTPS, sau đó cho phép camera trên trình duyệt.</p>
+      <div class="actions"><button class="primary" id="retryBtn">Bật camera</button></div>
+      <div class="tiny">Camera frames are processed in your browser.</div>
+    </div>
+
+    <div id="toast">PINCH DETECTED · Gesture registered</div>
+    <footer class="bottom">
+      <div class="metric-panel">
+        <div class="metric"><div class="metric-label">Tracking</div><div class="metric-value" id="trackingValue">Waiting</div></div>
+        <div class="metric"><div class="metric-label">Gesture</div><div class="metric-value" id="gestureValue">—</div></div>
+        <div class="metric"><div class="metric-label">Landmarks</div><div class="metric-value" id="landmarkValue">0 / 21</div></div>
+      </div>
+      <div class="actions">
+        <button id="resetBtn">Reset demo</button>
+        <button id="toggleSkeletonBtn">Hide skeleton</button>
+        <button class="primary" id="cameraBtn">Enable camera ↗</button>
+      </div>
+    </footer>
+
+    <div class="loading" id="loading"><div class="loadbox"><div class="spinner"></div><div class="loadtitle">Initialising hand tracking</div><div class="loadnote">Loading MediaPipe model…</div></div></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
+      const loading = $('loading'), permission = $('permission'), guide = $('guide');
+      const statusDot = $('statusDot'), statusText = $('statusText'), frame = $('scanFrame');
+      let hands = null, camera = null, cameraOn = false, skeletonOn = true;
+      let lastPinching = false, lastToastAt = 0, pinches = 0, handPresent = false;
+      let latestLandmarks = null, latestResults = null, lastFrameAt = 0;
+
+      const connections = [
+        [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8], [5,9],[9,10],[10,11],[11,12],
+        [9,13],[13,14],[14,15],[15,16], [13,17],[17,18],[18,19],[19,20],[0,17]
+      ];
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(innerWidth * dpr);
+        canvas.height = Math.round(innerHeight * dpr);
+        canvas.style.width = innerWidth + 'px';
+        canvas.style.height = innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize); resize();
+
+      function setStatus(live, text) {
+        statusDot.classList.toggle('live', live);
+        statusText.textContent = text;
+      }
+      function showToast() {
+        const toast = $('toast'); toast.classList.add('show');
+        lastToastAt = performance.now();
+      }
+      function hideToastIfNeeded(now) {
+        if (now - lastToastAt > 1300) $('toast').classList.remove('show');
+      }
+      function pinching(lm) {
+        const dx = lm[4].x - lm[8].x, dy = lm[4].y - lm[8].y;
+        return Math.hypot(dx, dy) < 0.075;
+      }
+      function mapPoint(p) {
+        // Match object-fit: cover, then mirror the video and canvas together with CSS.
+        const vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+        const scale = Math.max(innerWidth / vw, innerHeight / vh);
+        const dw = vw * scale, dh = vh * scale;
+        const ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
+        return { x: ox + p.x * dw, y: oy + p.y * dh };
+      }
+      function drawHand(lm, isPinching) {
+        const points = lm.map(mapPoint);
+        if (skeletonOn) {
+          ctx.save();
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.shadowBlur = 12; ctx.shadowColor = 'rgba(126,255,225,.38)';
+          ctx.strokeStyle = 'rgba(169,247,228,.86)'; ctx.lineWidth = 2;
+          for (const [a,b] of connections) {
+            ctx.beginPath(); ctx.moveTo(points[a].x, points[a].y); ctx.lineTo(points[b].x, points[b].y); ctx.stroke();
+          }
+          ctx.shadowBlur = 8;
+          points.forEach((p,i) => {
+            const tip = [4,8,12,16,20].includes(i);
+            ctx.beginPath(); ctx.arc(p.x,p.y,tip?4:2.4,0,Math.PI*2);
+            ctx.fillStyle = (i===4 || i===8) ? '#ffffff' : (tip ? '#a9f7e4' : 'rgba(230,255,250,.9)');
+            ctx.fill();
+          });
+          ctx.restore();
+        }
+        const a=points[4], b=points[8], center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+        ctx.save();
+        ctx.translate(center.x,center.y);
+        const pulse=1+Math.sin(performance.now()*.008)*.08;
+        ctx.beginPath(); ctx.arc(0,0,isPinching?25:15,0,Math.PI*2);
+        ctx.strokeStyle=isPinching?'rgba(255,255,255,.95)':'rgba(169,247,228,.95)';
+        ctx.lineWidth=isPinching?2.5:1.4; ctx.shadowBlur=isPinching?28:17;
+        ctx.shadowColor=isPinching?'#ffffff':'#a9f7e4'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0,(isPinching?7:3)*pulse,0,Math.PI*2);
+        ctx.fillStyle=isPinching?'#ffffff':'#a9f7e4'; ctx.fill();
+        ctx.restore();
+      }
+      function draw() {
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        const now=performance.now();
+        if (latestLandmarks && handPresent) drawHand(latestLandmarks, pinching(latestLandmarks));
+        hideToastIfNeeded(now);
+        requestAnimationFrame(draw);
+      }
+
+      function onResults(results) {
+        latestResults = results;
+        const lm = results.multiHandLandmarks && results.multiHandLandmarks[0];
+        if (lm) {
+          const wasPresent = handPresent;
+          handPresent = true; latestLandmarks = lm;
+          const pinchNow = pinching(lm);
+          $('trackingValue').textContent = 'Active';
+          $('trackingValue').classList.add('accent');
+          $('gestureValue').textContent = pinchNow ? 'Pinch detected' : 'Open hand';
+          $('gestureValue').classList.toggle('accent', pinchNow);
+          $('landmarkValue').textContent = `${lm.length} / 21`;
+          frame.classList.add('detected');
+          guide.style.opacity = '.16';
+          setStatus(true, 'HAND DETECTED');
+          if (pinchNow && !lastPinching) {
+            pinches++;
+            showToast();
+            // Small AR confirmation pulse emitted at the gesture midpoint.
+            const p = mapPoint({x:(lm[4].x+lm[8].x)/2,y:(lm[4].y+lm[8].y)/2});
+            pulseAt(p.x,p.y);
+          }
+          lastPinching = pinchNow;
+        } else {
+          handPresent = false; latestLandmarks = null; lastPinching = false;
+          $('trackingValue').textContent = 'Waiting';
+          $('trackingValue').classList.remove('accent');
+          $('gestureValue').textContent = '—'; $('gestureValue').classList.remove('accent');
+          $('landmarkValue').textContent = '0 / 21';
+          frame.classList.remove('detected');
+          guide.style.opacity = '1';
+          if (cameraOn) setStatus(true, 'CAMERA READY · NO HAND');
+        }
+      }
+      let pulses=[];
+      function pulseAt(x,y){ pulses.push({x,y,start:performance.now()}); }
+      const originalDrawHand = drawHand;
+      // Draw lightweight ring particles independently from the tracked hand.
+      function drawPulses() {
+        const now=performance.now();
+        pulses=pulses.filter(p=>now-p.start<650);
+        for(const p of pulses){
+          const t=(now-p.start)/650;
+          ctx.beginPath(); ctx.arc(p.x,p.y,8+t*46,0,Math.PI*2);
+          ctx.strokeStyle=`rgba(169,247,228,${(1-t)*.85})`; ctx.lineWidth=2*(1-t)+.3; ctx.stroke();
+          ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();
+        }
+      }
+      const drawBase = draw;
+      // One RAF loop handles skeleton, cursor, and gesture feedback.
+      function renderLoop(){
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        if(latestLandmarks && handPresent) drawHand(latestLandmarks,pinching(latestLandmarks));
+        drawPulses(); hideToastIfNeeded(performance.now()); requestAnimationFrame(renderLoop);
+      }
+
+      async function startCamera() {
+        permission.classList.remove('show');
+        loading.classList.remove('hide');
+        $('cameraBtn').disabled = true;
+        try {
+          if (!window.Hands || !window.Camera) throw new Error('Không tải được thư viện MediaPipe. Kiểm tra kết nối Internet rồi thử lại.');
+          if (!hands) {
+            hands = new Hands({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+            hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:.6, minTrackingConfidence:.55 });
+            hands.onResults(onResults);
+          }
+          if (camera) { try { await camera.stop(); } catch(e) {} camera = null; }
+          camera = new Camera(video, { onFrame: async () => { if (hands && video.readyState >= 2) await hands.send({image:video}); }, width:640, height:480 });
+          await camera.start();
+          cameraOn = true; video.classList.add('ready');
+          setStatus(true,'CAMERA READY · SCANNING');
+          $('cameraBtn').textContent='Disable camera ×';
+          $('trackingValue').textContent='Scanning';
+          loading.classList.add('hide');
+          $('cameraBtn').disabled = false;
+        } catch(err) {
+          cameraOn = false; loading.classList.add('hide');
+          setStatus(false,'CAMERA UNAVAILABLE');
+          $('permissionTitle').textContent='Không mở được camera';
+          $('permissionText').textContent = (err && err.message ? err.message + ' ' : '') + 'Hãy mở bằng localhost/HTTPS, kiểm tra quyền camera và đóng ứng dụng khác đang dùng webcam.';
+          permission.classList.add('show');
+          $('cameraBtn').textContent='Try camera again ↗'; $('cameraBtn').disabled = false;
+        }
+      }
+      async function stopCamera() {
+        cameraOn=false; handPresent=false; latestLandmarks=null; lastPinching=false;
+        try { if(camera) await camera.stop(); } catch(e) {}
+        camera=null;
+        if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); video.srcObject=null; }
+        video.classList.remove('ready'); ctx.clearRect(0,0,innerWidth,innerHeight);
+        $('trackingValue').textContent='Stopped'; $('trackingValue').classList.remove('accent');
+        $('gestureValue').textContent='—'; $('landmarkValue').textContent='0 / 21';
+        frame.classList.remove('detected'); guide.style.opacity='1';
+        setStatus(false,'CAMERA OFFLINE'); $('cameraBtn').textContent='Enable camera ↗';
+      }
+
+      $('cameraBtn').addEventListener('click',()=> cameraOn ? stopCamera() : startCamera());
+      $('retryBtn').addEventListener('click',startCamera);
+      $('toggleSkeletonBtn').addEventListener('click',()=>{
+        skeletonOn=!skeletonOn;
+        $('toggleSkeletonBtn').textContent=skeletonOn?'Hide skeleton':'Show skeleton';
+      });
+      $('resetBtn').addEventListener('click',()=>{
+        pinches=0; pulses=[]; latestLandmarks=null; handPresent=false; lastPinching=false;
+        $('trackingValue').textContent=cameraOn?'Scanning':'Waiting';
+        $('gestureValue').textContent='—'; $('landmarkValue').textContent='0 / 21';
+        $('toast').classList.remove('show'); guide.style.opacity='1'; frame.classList.remove('detected');
+      });
+
+      // Prevent the default hidden-screen state from looking like a failed app.
+      setTimeout(()=>loading.classList.add('hide'),1200);
+      renderLoop();
+      // Attempt initialization once so the user gets one clear permission flow.
+      startCamera();
+    })();
+  </script>
+</body>
+</html>

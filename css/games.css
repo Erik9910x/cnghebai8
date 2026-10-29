@@ -1,0 +1,624 @@
+/**
+ * MACHINING LAB V2.0 — GAMES STYLING (css/games.css)
+ * Quiz Arena, Drag & Drop Tray, Sequence Builder, Hand AR HUD, Virtual Remote.
+ */
+
+/* ==========================================================================
+   MODULE 1: QUIZ ARENA
+   ========================================================================== */
+.quiz-arena {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 16px; padding: 28px 36px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+.quiz-header {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 20px;
+}
+.quiz-stats { display: flex; gap: 18px; font-family: var(--mono); font-size: 13.5px; align-items: center; }
+.quiz-nav-group { display: flex; align-items: center; gap: 6px; }
+.qz-nav-btn {
+  padding: 4px 10px !important; font-size: 16px !important; font-weight: 700 !important;
+  min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+}
+.qz-jump-box {
+  display: flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 12px;
+  background: var(--bg2); border: 1px solid var(--line); padding: 2px 8px; border-radius: 8px;
+}
+.qz-jump-input {
+  width: 36px; background: var(--bg); border: 1px solid var(--line); color: var(--ac);
+  font-family: var(--mono); font-size: 13px; font-weight: 700; text-align: center;
+  border-radius: 4px; padding: 2px;
+}
+.qz-jump-input:focus { outline: none; border-color: var(--ac); box-shadow: 0 0 8px var(--ac-glow); }
+.quiz-timer { color: var(--ac); font-weight: 700; font-size: 17px; font-family: var(--mono); transition: color 0.3s; }
+
+.quiz-question {
+  font-family: var(--serif); font-size: 28px; line-height: 1.28;
+  margin-bottom: 24px; min-height: 75px; color: var(--ink);
+}
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.opt-btn {
+  all: unset; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-radius: 12px;
+  background: var(--bg2); border: 1px solid var(--line);
+  font-size: 16px; font-weight: 500;
+  transition: all 0.2s var(--ease);
+}
+.opt-btn:hover { border-color: var(--ac); transform: translateY(-2px); }
+.opt-key {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--line);
+  display: grid; place-items: center; font-family: var(--mono);
+  font-size: 13px; font-weight: 700; color: var(--ac); flex-none;
+}
+.opt-btn.correct { background: rgba(16, 185, 129, 0.2) !important; border-color: var(--emerald) !important; color: #a7f3d0; }
+.opt-btn.incorrect { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--coral) !important; color: #fca5a5; }
+
+.quiz-feedback {
+  margin-top: 18px; padding: 12px 18px; border-radius: 10px;
+  background: var(--bg2); border-left: 4px solid var(--ac);
+  font-size: 15px; color: var(--ink-dim); min-height: 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.dnd-ghost {
+  position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px var(--cyan-glow);
+  background: var(--bg2); color: var(--ink); border: 1.5px solid var(--cyan);
+  border-radius: 10px; padding: 10px 16px; font-size: 13.5px; font-weight: 600;
+  will-change: transform; transform-origin: center center; transition: none;
+}
+
+/* ==========================================================================
+   MODULE 2 & 4: HAND AR & DRAG & DROP ARENA (FULL-SLIDE LAYOUT)
+   ========================================================================== */
+#s12 {
+  position: relative; overflow: visible;
+}
+
+/* Full-Stage Hand AR Gesture Canvas & Cursor */
+#hand-ar-overlay {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 22;
+}
+.ar-laser-cursor {
+  display: none !important;
+}
+
+/* Compact Corner Picture-in-Picture Camera */
+#camera-pip-wrap {
+  position: absolute; top: 24px; right: 54px; width: 175px; height: 115px;
+  border-radius: 12px; overflow: hidden; background: #080c12;
+  border: 1.5px solid var(--line); box-shadow: 0 10px 28px rgba(0,0,0,0.6);
+  z-index: 25; transition: border-color 0.3s, box-shadow 0.3s;
+}
+#camera-pip-wrap.live {
+  border-color: var(--cyan); box-shadow: 0 0 22px var(--cyan-glow);
+}
+#camera-pip-wrap video {
+  width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+}
+.pip-hud {
+  position: absolute; bottom: 6px; left: 8px; right: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--mono); font-size: 10px; color: #fff;
+  background: rgba(9, 12, 16, 0.75); padding: 3px 8px; border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+.pip-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #64748b;
+  display: inline-block; margin-right: 4px;
+}
+.pip-dot.live { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+/* Workpiece Tray Grid */
+.dnd-tray {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  padding: 10px 12px; background: rgba(0,0,0,0.28);
+  border-radius: 12px; border: 1px dashed var(--line);
+  min-height: 80px;
+}
+.dnd-card {
+  padding: 9px 12px; border-radius: 8px;
+  background: var(--bg2); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 600; cursor: grab;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  transition: all 0.2s var(--ease);
+  user-select: none; touch-action: none; text-align: center;
+  line-height: 1.35;
+}
+.dnd-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+.dnd-card:active { cursor: grabbing; transform: scale(0.96); }
+.dnd-card.selected-card {
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 20px var(--ac-glow), 0 8px 24px rgba(0,0,0,0.5);
+  background: rgba(245, 158, 11, 0.2) !important;
+  transform: translateY(-3px) scale(1.02);
+}
+.dnd-card.ar-grabbed {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 28px var(--cyan-glow), 0 16px 32px rgba(0,0,0,0.6);
+  pointer-events: none; opacity: 0.95; transform: scale(1.06);
+}
+.dnd-card.dragging { opacity: 0.25; }
+
+/* 5 Station Bins Across the Bottom */
+.dnd-bins-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 8px;
+}
+.dnd-bin {
+  border: 2px dashed var(--line); border-radius: 14px;
+  padding: 16px 12px; min-height: 135px; background: var(--panel);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; transition: all 0.25s;
+  cursor: pointer; position: relative;
+}
+.dnd-bin:hover { border-color: var(--cyan); background: rgba(0, 229, 255, 0.05); }
+.dnd-bin.hover { border-color: var(--ac); background: var(--ac-glow); transform: scale(1.04); }
+.dnd-bin.correct-flash {
+  border-color: var(--emerald) !important;
+  background: rgba(16, 185, 129, 0.2) !important;
+  transform: scale(1.05);
+}
+.dnd-bin.wrong-flash {
+  border-color: var(--coral) !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+.bin-badge {
+  position: absolute; top: 8px; left: 10px; font-family: var(--mono);
+  font-size: 11px; font-weight: 700; border: 1px solid; border-radius: 4px;
+  padding: 1px 6px;
+}
+.bin-name { font-family: var(--serif); font-size: 22px; color: var(--ac); margin-bottom: 3px; }
+.bin-desc { font-size: 11.5px; color: var(--ink-dim); margin-bottom: 6px; }
+.bin-count { font-family: var(--mono); font-size: 11px; color: var(--ink); font-weight: 600; }
+
+.card-shake { animation: shake 0.5s ease-in-out; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+/* ==========================================================================
+   MODULE 3: SEQUENCE BUILDER
+   ========================================================================== */
+.seq-container {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.seq-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-radius: 10px; background: var(--bg2);
+  border: 1px solid var(--line); transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+.seq-item:hover { border-color: var(--cyan); }
+.seq-item.seq-correct {
+  border-color: var(--emerald) !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+.seq-item.seq-wrong {
+  border-color: var(--coral) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.seq-index {
+  font-family: var(--mono); font-weight: 700; color: var(--ac);
+  margin-right: 12px; min-width: 24px;
+}
+.seq-text { flex: 1; font-size: 13.5px; }
+.seq-btns { display: flex; gap: 4px; }
+.seq-btn {
+  width: 26px; height: 26px; border-radius: 6px; background: var(--bg3);
+  border: 1px solid var(--line); color: var(--ink); cursor: pointer;
+  display: grid; place-items: center; font-size: 11px; transition: all 0.15s;
+}
+.seq-btn:hover:not(:disabled) { border-color: var(--ac); color: var(--ac); transform: scale(1.1); }
+.seq-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.seq-alert {
+  margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; display: none;
+}
+.seq-alert.success {
+  display: block; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); color: #a7f3d0;
+}
+.seq-alert.warning {
+  display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--coral); color: #fca5a5;
+}
+.seq-alert.info {
+  display: block; background: rgba(0, 229, 255, 0.15); border: 1px solid var(--cyan); color: #bae6fd;
+}
+
+/* ==========================================================================
+   FEATURE: DICE RANDOM PICKER & GAME SHOW ARENA 🎲
+   ========================================================================== */
+.dice-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dice-roll-btn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(0, 229, 255, 0.2)) !important;
+  border-color: var(--ac) !important;
+  color: var(--ac) !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 16px var(--ac-glow);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.dice-roll-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 28px var(--ac-glow);
+  background: var(--ac) !important;
+  color: #000 !important;
+}
+.pool-mgr-btn {
+  font-family: var(--mono);
+  font-size: 12px !important;
+  padding: 8px 14px !important;
+  color: var(--cyan) !important;
+  border-color: var(--line) !important;
+}
+.pool-mgr-btn:hover {
+  border-color: var(--cyan) !important;
+  background: rgba(0, 229, 255, 0.1) !important;
+}
+
+/* Modal Overlay for Dice Engine */
+#dice-engine-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 13, 0.94);
+  backdrop-filter: blur(24px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 24px;
+}
+#dice-engine-modal.active {
+  display: flex;
+}
+
+.dice-engine-container {
+  width: min(880px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(245, 158, 11, 0.15);
+  position: relative;
+  text-align: center;
+}
+
+.dice-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+.dice-close-btn:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+  transform: rotate(90deg);
+}
+
+/* Flat Digital Dice Stage */
+.dice-flat-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px 0 20px 0;
+}
+.dice-flat-display {
+  width: 90px;
+  height: 90px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #182234, #0b111a);
+  border: 2px solid var(--ac);
+  box-shadow: 0 0 24px var(--ac-glow), inset 0 0 12px rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--ac);
+  position: relative;
+  transition: transform 0.2s;
+}
+.dice-flat-display.rolling {
+  animation: diceRollPulse 0.12s infinite alternate;
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 30px var(--cyan-glow);
+}
+@keyframes diceRollPulse {
+  0% { transform: scale(0.96); }
+  100% { transform: scale(1.05); }
+}
+
+/* Result Reveal Banner */
+.dice-result-banner {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--cyan);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.dice-mode-title {
+  font-family: var(--serif);
+  font-size: 32px;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.dice-mode-title em {
+  color: var(--ac);
+  font-style: italic;
+}
+
+/* 6 Mode Containers */
+.dice-mode-view {
+  display: none;
+  animation: fadeIn 0.3s var(--ease);
+}
+.dice-mode-view.active {
+  display: block;
+}
+
+/* Mode 1: Random Student (1-48, active 43) Slot Machine */
+.shuffle-box {
+  background: var(--bg2);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 520px;
+  margin: 0 auto 20px auto;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+  text-align: center;
+}
+.shuffle-stt {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 6px;
+}
+.shuffle-name {
+  font-family: var(--sans);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  min-height: 38px;
+}
+.shuffle-box.locked {
+  border-color: var(--emerald);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+}
+.shuffle-box.locked .shuffle-stt {
+  color: var(--emerald);
+}
+
+/* Mode 2: F1 Reaction Challenge */
+.f1-lights-gantry {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  background: #000;
+  padding: 18px 24px;
+  border-radius: 16px;
+  border: 2px solid #222;
+  margin: 16px auto 20px auto;
+  width: fit-content;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+}
+.f1-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.f1-bulb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  border: 2px solid #333;
+  transition: all 0.1s ease;
+}
+.f1-bulb.red-on {
+  background: #ef4444;
+  border-color: #f87171;
+  box-shadow: 0 0 24px #ef4444, inset 0 0 10px #fca5a5;
+}
+.f1-bulb.green-on {
+  background: #10b981 !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 28px #10b981, inset 0 0 12px #6ee7b7 !important;
+}
+.f1-timer-display {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-top: 12px;
+}
+
+/* Mode 3: Dual Duel (1 VS 1) */
+.duel-arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+.duel-card {
+  flex: 1;
+  max-width: 240px;
+  background: var(--bg2);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s;
+}
+.duel-card.active-p1 { border-color: var(--cyan); box-shadow: 0 0 24px var(--cyan-glow); }
+.duel-card.active-p2 { border-color: var(--ac); box-shadow: 0 0 24px var(--ac-glow); }
+.duel-num {
+  font-family: var(--mono);
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.duel-vs-badge {
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--coral);
+  font-style: italic;
+  text-shadow: 0 0 20px var(--coral);
+}
+.duel-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.duel-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--ac));
+  transition: width 0.1s linear;
+}
+
+/* Mode 4: Lucky Escape Card */
+.lucky-card {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.15), rgba(0, 229, 255, 0.08));
+  border: 2px solid var(--emerald);
+  border-radius: 18px;
+  padding: 22px;
+  max-width: 540px;
+  margin: 0 auto 18px auto;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+}
+
+/* Mode 5: Class Rush */
+.rush-timer-ring {
+  font-family: var(--mono);
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--ac);
+  text-shadow: 0 0 30px var(--ac-glow);
+  margin-bottom: 12px;
+}
+.rush-timer-ring.urgent {
+  color: var(--coral);
+  text-shadow: 0 0 36px var(--coral);
+  animation: shake 0.3s infinite alternate;
+}
+
+/* Mode 6: Chaos Mode */
+.chaos-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(245, 158, 11, 0.2));
+  border: 2px solid var(--violet);
+  border-radius: 18px;
+  padding: 22px 28px;
+  max-width: 540px;
+  margin: 0 auto 18px auto;
+  box-shadow: 0 0 36px rgba(139, 92, 246, 0.25);
+}
+
+/* Student Pool Management Modal */
+#student-pool-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 13, 0.94);
+  backdrop-filter: blur(24px);
+  z-index: 110;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#student-pool-modal.active {
+  display: flex;
+}
+.pool-container {
+  width: min(840px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  position: relative;
+}
+.pool-grid-47 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+  max-height: 54vh;
+  overflow-y: auto;
+  padding: 6px;
+}
+.student-chip {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.student-chip .chip-stt {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--ac);
+  font-size: 11px;
+  min-width: 24px;
+}
+.student-chip .chip-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.student-chip.picked {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--emerald);
+  color: #a7f3d0;
+}
+.student-chip.picked .chip-stt {
+  color: var(--emerald);
+}
+.student-chip:hover {
+  border-color: var(--cyan);
+  transform: translateY(-1px);
+}
+

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bài 8: Một Số Phương Pháp Gia Công Cơ Khí — Machining Lab V2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+
+<!-- Modular Stylesheets -->
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/slides.css">
+<link rel="stylesheet" href="css/games.css">
+<link rel="stylesheet" href="css/lab3d.css">
+</head>
+<body>
+
+<!-- Ambient Canvases & Visual FX -->
+<canvas id="bg-grid"></canvas>
+<canvas id="sparks-canvas"></canvas>
+
+<svg class="ambient-gear gear-1" viewBox="0 0 100 100">
+  <path d="M50,15 A35,35 0 1,0 50,85 A35,35 0 1,0 50,15 Z" stroke-dasharray="2,6"/>
+  <circle cx="50" cy="50" r="22" stroke-width="1.5"/>
+  <path d="M50,5 L50,18 M50,82 L50,95 M5,50 L18,50 M82,50 L95,50 M18,18 L28,28 M72,72 L82,82 M18,82 L28,72 M72,28 L82,18" stroke-width="2"/>
+</svg>
+<svg class="ambient-gear gear-2" viewBox="0 0 100 100">
+  <polygon points="50,10 62,35 90,38 68,58 75,85 50,70 25,85 32,58 10,38 38,35" stroke-width="1.2"/>
+</svg>
+
+<div id="wipe"></div>
+<div id="bar"></div>
+
+<!-- Top Live Telemetry Bar -->
+<div class="telemetry-bar">
+  <div class="telemetry-item">
+    <span class="telemetry-dot"></span>
+    <span>PHÒNG THỰC HÀNH CƠ KHÍ · CNC V2.4</span>
+  </div>
+  <div class="telemetry-item">
+    <span>VẬT LIỆU: THÉP C45 / GANG XÁM</span>
+  </div>
+  <div class="telemetry-item">
+    <span id="telemetry-coords">X: 120.40 Y: -45.10 Z: 12.00</span>
+  </div>
+</div>
+
+<!-- 16:9 Presentation Stage -->
+<div id="view">
+  <div id="stage">
+
+    <!-- ==========================================
+         SLIDE 01: COVER
+         ========================================== -->
+    <section class="slide on" id="s1" data-note="Dẫn nhập: Từ động cơ máy bay, khung xe máy đến những chiếc ốc vít siêu nhỏ đều là sản phẩm của ngành cơ khí chế tạo. Hôm nay chúng ta cùng bước vào Machining Lab để giải mã 5 phương pháp gia công cơ bản nhất trong chương trình Công nghệ 11.">
+      <div class="reveal">
+        <div class="badge"><span class="badge-dot"></span> BÀI 8 · CÔNG NGHỆ CƠ KHÍ 11</div>
+        <h1 class="slide-title">MỘT SỐ PHƯƠNG PHÁP<br><em>GIA CÔNG CƠ KHÍ</em></h1>
+        <p class="sub-lead">Nhìn nguyên lí · Điều khiển chuyển động · Chọn đúng phương pháp chế tạo chi tiết kim loại trong công nghiệp.</p>
+        
+        <div class="grid-2" style="align-items: center; margin-top: 10px;">
+          <div>
+            <div class="chips-row">
+              <span class="chip">ĐÚC <b>Khuôn kim loại</b></span>
+              <span class="chip">HÀN <b>Hồ quang / Khí</b></span>
+              <span class="chip">KHOAN <b>Tạo lỗ</b></span>
+              <span class="chip">TIỆN <b>Mặt tròn xoay</b></span>
+              <span class="chip">PHAY <b>Mặt phẳng & rãnh</b></span>
+            </div>
+            <div style="margin-top: 32px; display: flex; gap: 16px;">
+              <button class="btn-tech" onclick="goSlide(1)">BẮT ĐẦU BÀI HỌC ➔</button>
+              <button class="btn-tech outline" onclick="goSlide(7)">MÔ PHỎNG 3D 🧪</button>
+            </div>
+          </div>
+          <div>
+            <div class="three-canvas-wrap" id="cover-3d-wrap">
+              <div class="canvas-hud">
+                <span>PHÔI GIA CÔNG: TRỤC TIỆN 3D</span>
+                <span>TỐC ĐỘ: 750 VÒNG/PHÚT</span>
+              </div>
+              <div class="canvas-controls-hint">Kéo chuột để xoay 360° · Cuộn để zoom</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 02: HOOK / ĐẶT VẤN ĐỀ
+         ========================================== -->
+    <section class="slide" id="s2" data-note="Hãy bắt đầu bằng một bài toán thực tế: Khi các kỹ sư nhận được bản vẽ một chi tiết cụ thể, tiêu chí nào quyết định phương pháp gia công? Hãy cùng thử thách trực giác kỹ thuật của các em.">
+      <div class="reveal">
+        <div class="badge cyan"><span class="badge-dot"></span> TÌNH HUỐNG THỰC TẾ</div>
+        <h2 class="section-heading">Bạn sẽ chọn <em>phương pháp nào?</em></h2>
+        <p class="sub-lead">Mỗi chi tiết có hình dạng hình học và yêu cầu kỹ thuật đặc trưng. Hãy bấm chọn phương pháp tối ưu cho từng trường hợp:</p>
+
+        <div class="grid-2">
+          <div style="display: flex; flex-direction: column; gap: 12px;" id="hook-scenarios">
+            <div class="tech-card active" onclick="selectHook(0)">
+              <div class="card-num">TÌNH HUỐNG 01</div>
+              <div class="card-title">Trục truyền động xe máy</div>
+              <div class="card-desc">Có nhiều bậc tròn xoay đồng tâm, mặt côn và ren vít ở đầu trục.</div>
+            </div>
+            <div class="tech-card" onclick="selectHook(1)">
+              <div class="card-num">TÌNH HUỐNG 02</div>
+              <div class="card-title">Thân máy động cơ đốt trong</div>
+              <div class="card-desc">Hình dạng phức tạp, thành mỏng, có nhiều khoang rỗng chứa áo nước làm mát.</div>
+            </div>
+            <div class="tech-card" onclick="selectHook(2)">
+              <div class="card-num">TÌNH HUỐNG 03</div>
+              <div class="card-title">Bàn máy gia công cơ khí</div>
+              <div class="card-desc">Bề mặt kim loại phẳng lớn và có các rãnh chữ T song song để gá kẹp êtô.</div>
+            </div>
+          </div>
+
+          <div class="tech-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="card-num" id="hook-eval-badge">PHÂN TÍCH KỸ THUẬT</div>
+              <h3 style="font-size: 26px; color: var(--ac); margin-bottom: 12px;" id="hook-eval-title">Phương pháp đề xuất: TIỆN</h3>
+              <p style="font-size: 16px; line-height: 1.6; color: var(--ink-dim);" id="hook-eval-desc">
+                Trục tròn xoay là sản phẩm kinh điển của phương pháp <b>Tiện</b>. Nhờ chuyển động quay tròn của phôi và chuyển động tịnh tiến của dao, máy tiện tạo ra các bề mặt trụ, côn và ren với độ đồng tâm rất cao.
+              </p>
+            </div>
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 14px; color: var(--cyan); font-family: var(--mono);">NGUYÊN LÍ: PHÔI QUAY + DAO TIẾN</span>
+              <button class="btn-tech" style="padding: 8px 18px; font-size: 12px;" onclick="goSlide(2)">XEM BẢN ĐỒ PHƯƠNG PHÁP ➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 03: TỔNG QUAN 5 PHƯƠNG PHÁP
+         ========================================== -->
+    <section class="slide" id="s3" data-note="SGK Bài 8 chia các phương pháp gia công cơ khí thành 5 nhóm lớn. Đúc và hàn thuộc nhóm gia công phôi và tạo liên kết, trong khi khoan, tiện, phay thuộc nhóm gia công cắt gọt kim loại bằng dao có phoi.">
+      <div class="reveal">
+        <div class="badge violet"><span class="badge-dot"></span> BẢN ĐỒ KIẾN THỨC BÀI 8</div>
+        <h2 class="section-heading">Năm phương pháp <em>gia công cơ khí trọng tâm</em></h2>
+        <p class="sub-lead">Học sinh cần nắm chắc bản chất vật lí và chuyển động cơ bản của từng phương pháp:</p>
+
+        <div class="grid-5">
+          <div class="tech-card" onclick="goSlide(3)">
+            <div class="card-num">PHƯƠNG PHÁP I</div>
+            <div class="card-title">ĐÚC</div>
+            <div class="card-desc">Rót kim loại nóng chảy vào khuôn. Khi nguội đông đặc nhận hình dạng lòng khuôn.</div>
+            <div class="chips-row"><span class="chip">Tạo phôi thô</span></div>
+          </div>
+
+          <div class="tech-card" onclick="goSlide(4)">
+            <div class="card-num">PHƯƠNG PHÁP II</div>
+            <div class="card-title">HÀN</div>
+            <div class="card-desc">Nung nóng chảy vùng tiếp xúc để tạo mối hàn liên kết không thể tháo rời.</div>
+            <div class="chips-row"><span class="chip">Tạo mối nối</span></div>
+          </div>
+
+          <div class="tech-card" onclick="goSlide(6)">
+            <div class="card-num">PHƯƠNG PHÁP III</div>
+            <div class="card-title">KHOAN</div>
+            <div class="card-desc">Mũi khoan vừa quay vừa tịnh tiến dọc trục để tạo lỗ từ phôi đặc.</div>
+            <div class="chips-row"><span class="chip">Vc quay + S tiến</span></div>
+          </div>
+
+          <div class="tech-card" onclick="goSlide(7)">
+            <div class="card-num">PHƯƠNG PHÁP IV</div>
+            <div class="card-title">TIỆN</div>
+            <div class="card-desc"><b>Phôi quay tròn</b>, dao tịnh tiến dọc/ngang để cắt gọt mặt tròn xoay.</div>
+            <div class="chips-row"><span class="chip">Phôi quay chính</span></div>
+          </div>
+
+          <div class="tech-card" onclick="goSlide(8)">
+            <div class="card-num">PHƯƠNG PHÁP V</div>
+            <div class="card-title">PHAY</div>
+            <div class="card-desc"><b>Dao phay quay tròn</b>, phôi tịnh tiến để tạo mặt phẳng, rãnh chữ T.</div>
+            <div class="chips-row"><span class="chip">Dao quay chính</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 04: GIA CÔNG ĐÚC & QUY TRÌNH
+         ========================================== -->
+    <section class="slide" id="s4" data-note="Đúc là phương pháp chế tạo phôi bằng cách rót kim loại lỏng vào lòng khuôn. Hãy chú ý quy trình đúc gồm 2 nhánh chuẩn bị độc lập trước khi rót kim loại: làm khuôn và nấu chảy kim loại.">
+      <div class="reveal">
+        <div class="badge"><span class="badge-dot"></span> PHƯƠNG PHÁP I · GIA CÔNG KHÔNG PHOI</div>
+        <h2 class="section-heading">Gia công đúc — <em>Nguyên lí & Quy trình 2 nhánh</em></h2>
+
+        <div class="grid-2">
+          <div>
+            <p style="font-size: 16px; line-height: 1.6; color: var(--ink-dim); margin-bottom: 16px;">
+              <b>Nguyên lí:</b> Nấu chảy kim loại thành thể lỏng, rót vào khuôn có hình dạng và kích thước của chi tiết cần chế tạo. Sau khi kim loại nguội và đông đặc, phá khuôn thu được <b>vật đúc</b>.
+            </p>
+            <div class="tech-card" style="margin-bottom: 14px;">
+              <div class="card-num">ĐẶC ĐIỂM CÔNG NGHỆ (SGK TRANG 40)</div>
+              <ul style="padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--ink-dim);">
+                <li>Đúc được mọi kim loại và hợp kim khác nhau.</li>
+                <li>Tạo được chi tiết có kết cấu rất phức tạp hoặc có khoang rỗng bên trong mà các phương pháp khác không thể gia công được.</li>
+                <li>Khối lượng vật đúc từ vài gam đến hàng trăm tấn.</li>
+                <li><b>Hạn chế:</b> Độ chính xác và độ nhẵn bề mặt nhìn chung không cao; thường dùng làm phôi thô cho gia công cắt gọt tinh.</li>
+              </ul>
+            </div>
+            <div class="chips-row">
+              <span class="chip">Đúc khuôn cát</span>
+              <span class="chip">Đúc mẫu chảy</span>
+              <span class="chip">Đúc áp lực</span>
+              <span class="chip">Đúc li tâm</span>
+            </div>
+          </div>
+
+          <!-- Interactive Sequence Builder Component -->
+          <div class="tech-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="card-num">THỬ THÁCH MODULE 3: XẾP QUY TRÌNH ĐÚC</div>
+              <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 10px;">
+                Dùng phím ▲ / ▼ để sắp xếp các bước theo đúng sơ đồ công nghệ:
+              </p>
+              <div class="seq-container" id="seq-list-container">
+                <!-- Rendered dynamically -->
+              </div>
+              <div id="seq-feedback-msg" class="seq-alert"></div>
+            </div>
+            <div style="margin-top: 14px; display: flex; gap: 10px;">
+              <button class="btn-tech" style="flex:1; padding: 10px; font-size: 12px;" onclick="checkSequenceSolution()">KIỂM TRA THỨ TỰ ✓</button>
+              <button class="btn-tech outline" style="padding: 10px; font-size: 12px;" onclick="showSequenceCorrect()">SƠ ĐỒ CHUẨN</button>
+              <button class="btn-tech outline" style="padding: 10px; font-size: 12px;" onclick="shuffleSequence()">TRỘN LẠI ↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 05: GIA CÔNG HÀN
+         ========================================== -->
+    <section class="slide" id="s5" data-note="Hàn là phương pháp nối các chi tiết kim loại với nhau bằng nhiệt. Lưu ý SGK tập trung vào hai phương pháp phổ biến là hàn hồ quang và hàn hơi.">
+      <div class="reveal">
+        <div class="badge coral"><span class="badge-dot"></span> PHƯƠNG PHÁP II · TẠO LIÊN KẾT KIM LOẠI</div>
+        <h2 class="section-heading">Gia công hàn — <em>Nguyên lí & Phân loại</em></h2>
+
+        <div class="grid-2">
+          <div>
+            <p style="font-size: 16px; line-height: 1.6; color: var(--ink-dim); margin-bottom: 18px;">
+              <b>Định nghĩa:</b> Hàn là phương pháp nối các chi tiết kim loại với nhau bằng cách nung nóng chỗ nối đến trạng thái nóng chảy. Sau khi kim loại kết tinh, đông đặc sẽ tạo thành <b>mối hàn</b>.
+            </p>
+            
+            <div class="tech-card" style="margin-bottom: 14px;">
+              <div class="card-num">HÀN HỒ QUANG (ARC WELDING)</div>
+              <p style="font-size: 14px; color: var(--ink-dim); line-height: 1.5;">
+                Dùng nhiệt lượng của <b>hồ quang điện</b> cháy giữa que hàn và vật hàn (3000°C – 6000°C) làm nóng chảy kim loại mối hàn và que hàn.
+              </p>
+              <div class="chips-row">
+                <span class="chip">Hồ quang điện</span>
+                <span class="chip">Que hàn bọc thuốc</span>
+              </div>
+            </div>
+
+            <div class="tech-card">
+              <div class="card-num">HÀN HƠI / HÀN KHÍ (GAS WELDING)</div>
+              <p style="font-size: 14px; color: var(--ink-dim); line-height: 1.5;">
+                Dùng nhiệt lượng của ngọn lửa sinh ra khi đốt cháy hỗn hợp khí <b>Oxy và Axetylen (O₂ + C₂H₂)</b> làm nóng chảy mép chi tiết và que hàn phụ.
+              </p>
+              <div class="chips-row">
+                <span class="chip">Khí O₂ + C₂H₂</span>
+                <span class="chip">Hàn ống mỏng</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tech-card">
+            <div class="card-num">MỞ RỘNG CÔNG NGHỆ CAO (MAG / TIG)</div>
+            <p style="font-size: 14px; color: var(--ink-dim); line-height: 1.6; margin-bottom: 14px;">
+              Trong sản xuất cơ khí hiện đại, vùng hàn được bảo vệ bằng môi trường khí trơ hoặc khí hoạt tính để ngăn oxy hóa mối hàn:
+            </p>
+            <div style="background: var(--bg2); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+              <b style="color: var(--cyan);">Hàn MAG/MIG:</b> Dùng khí bảo vệ CO₂ hoặc Argon, cấp dây hàn tự động liên tục, năng suất rất cao trong đóng tàu và khung gầm ô tô.
+            </div>
+            <div style="background: var(--bg2); padding: 12px; border-radius: 8px;">
+              <b style="color: var(--violet);">Hàn TIG:</b> Dùng điện cực Vonfram không nóng chảy và khí Argon bảo vệ, cho mối hàn siêu tinh xảo trên inox, nhôm, ống áp lực hạt nhân.
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+              <button class="btn-tech outline" onclick="goSlide(5)">XEM 5 KIỂU LIÊN KẾT HÀN ➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 06: NĂM KIỂU LIÊN KẾT HÀN
+         ========================================== -->
+    <section class="slide" id="s6" data-note="SGK nêu rõ 5 kiểu liên kết hàn cơ bản. Một câu hỏi hay gặp: Liên kết chữ T và liên kết góc khác nhau ở điểm nào? Hãy chú ý hiện tượng nhiệt không đều dễ làm cong vênh chi tiết.">
+      <div class="reveal">
+        <div class="badge coral"><span class="badge-dot"></span> BỐ CỤC MỐI HÀN</div>
+        <h2 class="section-heading">Năm kiểu <em>liên kết hàn tiêu biểu</em></h2>
+        <p class="sub-lead">Dựa theo vị trí tương đối giữa các mép nối kim loại (SGK Hình 8.4):</p>
+
+        <div class="grid-5" style="margin-bottom: 20px;">
+          <div class="tech-card" style="text-align: center;">
+            <svg width="100" height="70" viewBox="0 0 100 70" style="margin: auto; display: block;">
+              <rect x="5" y="30" width="40" height="12" fill="#3b4d66"/>
+              <rect x="55" y="30" width="40" height="12" fill="#3b4d66"/>
+              <polygon points="45,30 55,30 50,42" fill="#f59e0b"/>
+            </svg>
+            <div class="card-title" style="font-size: 16px; margin-top: 8px;">HÀN GIÁP MỐI</div>
+            <div class="card-desc" style="font-size: 13px;">Hai mép tấm đặt phẳng đối đầu nhau.</div>
+          </div>
+
+          <div class="tech-card" style="text-align: center;">
+            <svg width="100" height="70" viewBox="0 0 100 70" style="margin: auto; display: block;">
+              <rect x="5" y="36" width="55" height="10" fill="#3b4d66"/>
+              <rect x="40" y="24" width="55" height="10" fill="#3b4d66"/>
+              <polygon points="40,34 40,24 50,34" fill="#f59e0b"/>
+            </svg>
+            <div class="card-title" style="font-size: 16px; margin-top: 8px;">HÀN CHỒNG</div>
+            <div class="card-desc" style="font-size: 13px;">Hai tấm kim loại xếp gối lên nhau.</div>
+          </div>
+
+          <div class="tech-card" style="text-align: center;">
+            <svg width="100" height="70" viewBox="0 0 100 70" style="margin: auto; display: block;">
+              <rect x="10" y="45" width="80" height="10" fill="#3b4d66"/>
+              <rect x="45" y="10" width="10" height="35" fill="#3b4d66"/>
+              <polygon points="40,45 45,35 45,45" fill="#f59e0b"/>
+              <polygon points="60,45 55,35 55,45" fill="#f59e0b"/>
+            </svg>
+            <div class="card-title" style="font-size: 16px; margin-top: 8px;">HÀN CHỮ T</div>
+            <div class="card-desc" style="font-size: 13px;">Một tấm dựng vuông góc trên mặt tấm kia.</div>
+          </div>
+
+          <div class="tech-card" style="text-align: center;">
+            <svg width="100" height="70" viewBox="0 0 100 70" style="margin: auto; display: block;">
+              <rect x="15" y="15" width="10" height="45" fill="#3b4d66"/>
+              <rect x="25" y="50" width="60" height="10" fill="#3b4d66"/>
+              <polygon points="25,45 25,50 35,50" fill="#f59e0b"/>
+            </svg>
+            <div class="card-title" style="font-size: 16px; margin-top: 8px;">HÀN GÓC</div>
+            <div class="card-desc" style="font-size: 13px;">Hai tấm ghép với nhau tại góc nhọn/vuông.</div>
+          </div>
+
+          <div class="tech-card" style="text-align: center;">
+            <svg width="100" height="70" viewBox="0 0 100 70" style="margin: auto; display: block;">
+              <path d="M25,50 L25,25 Q25,15 35,15 L45,15" fill="none" stroke="#3b4d66" stroke-width="8"/>
+              <path d="M75,50 L75,25 Q75,15 65,15 L55,15" fill="none" stroke="#3b4d66" stroke-width="8"/>
+              <circle cx="50" cy="15" r="7" fill="#f59e0b"/>
+            </svg>
+            <div class="card-title" style="font-size: 16px; margin-top: 8px;">HÀN GẤP MÉP</div>
+            <div class="card-desc" style="font-size: 13px;">Mép tấm mỏng được uốn gập lại và hàn kín.</div>
+          </div>
+        </div>
+
+        <div class="tech-card" style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3);">
+          <b style="color: var(--coral);">CẢNH BÁO KỸ THUẬT QUAN TRỌNG (SGK):</b> Nhiệt hàn chỉ tập trung cục bộ ở vùng nóng chảy; khi nguội co ngót không đều sinh ra ứng suất nhiệt nội tại rất lớn, <b>dễ làm cong vênh, biến dạng hình học chi tiết</b> nếu không có biện pháp gá kẹp hoặc khử ứng suất.
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 07: GIA CÔNG KHOAN
+         ========================================== -->
+    <section class="slide" id="s7" data-note="Khoan là phương pháp tạo lỗ. Chuyển động cắt gồm 2 chuyển động đồng thời: mũi khoan quay tròn (Vc) và tịnh tiến dọc trục (S). Hãy phân biệt rõ khoan, khoét, doa, taro.">
+      <div class="reveal">
+        <div class="badge cyan"><span class="badge-dot"></span> PHƯƠNG PHÁP III · GIA CÔNG CẮT GỌT</div>
+        <h2 class="section-heading">Gia công khoan — <em>Tạo lỗ & Chuyển động cắt</em></h2>
+
+        <div class="grid-2">
+          <div>
+            <div class="tech-card" style="margin-bottom: 16px;">
+              <div class="card-num">HAI CHUYỂN ĐỘNG CỦA MŨI KHOAN RUỘT GÀ</div>
+              <p style="font-size: 15px; line-height: 1.6; color: var(--ink-dim);">
+                Dụng cụ cắt thông dụng nhất là <b>Mũi khoan ruột gà</b>. Để tạo thành lỗ, mũi khoan phải thực hiện đồng thời hai chuyển động:
+              </p>
+              <div style="margin-top: 10px; font-family: var(--mono); font-size: 14px;">
+                <div style="color: var(--ac); margin-bottom: 6px;">1. Chuyển động chính ($V_c$): Mũi khoan QUAY TRÒN (m/phút)</div>
+                <div style="color: var(--cyan);">2. Chuyển động chạy dao ($S$): Mũi khoan TỊNH TIẾN DỌC TRỤC (mm/vòng)</div>
+              </div>
+            </div>
+
+            <div class="tech-card">
+              <div class="card-num">PHÂN BIỆT 4 NGUYÊN CÔNG LỖ (RẤT QUAN TRỌNG)</div>
+              <ul style="padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--ink-dim);">
+                <li><b style="color: var(--ink);">KHOAN:</b> Tạo lỗ ban đầu trên phôi đặc nguyên khối.</li>
+                <li><b style="color: var(--cyan);">KHOÉT:</b> Mở rộng đường kính lỗ đã có sẵn (sau khi đúc hoặc khoan).</li>
+                <li><b style="color: var(--violet);">DOA:</b> Gia công tinh lỗ để đạt độ chính xác kích thước và độ bóng cao.</li>
+                <li><b style="color: var(--ac);">TARO:</b> Cắt ren trong của lỗ trụ.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <div class="three-canvas-wrap" id="drill-3d-wrap">
+              <div class="canvas-hud">
+                <span>DỤNG CỤ: MŨI KHOAN RUỘT GÀ</span>
+                <span>CHUYỂN ĐỘNG: TIẾN DAO DỌC TRỤC</span>
+              </div>
+              <div class="canvas-controls-hint">Kéo chuột để quan sát lưỡi cắt xoắn ruột gà</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 08: GIA CÔNG TIỆN
+         ========================================== -->
+    <section class="slide" id="s8" data-note="Tiện là phương pháp gia công cắt gọt thông dụng nhất, chiếm 30-40% khối lượng gia công xưởng. Cốt lõi: Phôi quay tròn (Vc), dao tịnh tiến (S dọc, S ngang, S chéo).">
+      <div class="reveal">
+        <div class="badge"><span class="badge-dot"></span> PHƯƠNG PHÁP IV · GIA CÔNG MẶT TRÒN XOAY</div>
+        <h2 class="section-heading">Gia công tiện — <em>Máy tiện & Chuyển động</em></h2>
+
+        <div class="grid-2">
+          <div>
+            <div class="tech-card" style="margin-bottom: 16px;">
+              <div class="card-num">NĂM BỘ PHẬN MÁY TIỆN VẠN NĂNG (SGK HÌNH 8.7)</div>
+              <ol style="padding-left: 20px; font-size: 15px; line-height: 1.6; color: var(--ink-dim);">
+                <li><b>Hộp tốc độ trục chính:</b> Thay đổi cấp tốc độ quay của phôi.</li>
+                <li><b>Mâm cặp:</b> Kẹp chặt phôi quay cùng trục chính.</li>
+                <li><b>Bàn gá dao:</b> Mang dao tiện di chuyển tịnh tiến.</li>
+                <li><b>Ụ động:</b> Đỡ chi tiết trục dài hoặc gá mũi khoan.</li>
+                <li><b>Thân / Đế máy:</b> Khung bệ nâng đỡ toàn bộ hệ thống trượt.</li>
+              </ol>
+            </div>
+
+            <div class="tech-card">
+              <div class="card-num">QUY TẮC CHUYỂN ĐỘNG TIỆN</div>
+              <div style="font-family: var(--mono); font-size: 14px; line-height: 1.8;">
+                <div style="color: var(--ac);">● Chuyển động chính: PHÔI QUAY TRÒN (Vc)</div>
+                <div style="color: var(--cyan);">● Chạy dao dọc (Sd): Dao tiến song song tâm phôi ➔ Mặt trụ</div>
+                <div style="color: var(--cyan);">● Chạy dao ngang (Sng): Dao tiến vuông góc tâm phôi ➔ Mặt đầu</div>
+                <div style="color: var(--cyan);">● Chạy dao chéo (Sch): Dao tiến nghiêng góc ➔ Mặt côn</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="three-canvas-wrap" id="lathe-3d-wrap">
+              <div class="canvas-hud">
+                <span>MÁY GIA CÔNG: TIỆN VẠN NĂNG 3D</span>
+                <span id="lathe-feed-readout">LƯỢNG TIẾN DAO Sd: 0.15 mm/vòng</span>
+              </div>
+              <div class="canvas-controls-hint">Phôi quay tròn quanh trục · Dao tịnh tiến cắt gọt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 09: GIA CÔNG PHAY
+         ========================================== -->
+    <section class="slide" id="s9" data-note="Phay đối nghịch với tiện: ở máy phay, dao phay quay tròn là chuyển động chính, còn phôi được kẹp trên bàn máy tịnh tiến. Nhớ callout các tay quay bàn trượt dọc, ngang, đứng.">
+      <div class="reveal">
+        <div class="badge cyan"><span class="badge-dot"></span> PHƯƠNG PHÁP V · GIA CÔNG MẶT PHẲNG VÀ RÃNH</div>
+        <h2 class="section-heading">Gia công phay — <em>Máy phay & Khả năng công nghệ</em></h2>
+
+        <div class="grid-2">
+          <div>
+            <div class="tech-card" style="margin-bottom: 16px;">
+              <div class="card-num">NGUYÊN LÍ CHUYỂN ĐỘNG PHAY</div>
+              <p style="font-size: 15px; line-height: 1.6; color: var(--ink-dim);">
+                <b style="color: var(--ac);">● Chuyển động chính:</b> <b>Dao phay QUAY TRÒN</b> với vận tốc cắt $V$ (m/phút).<br>
+                <b style="color: var(--cyan);">● Chuyển động chạy dao:</b> <b>Phôi TỊNH TIẾN</b> theo 3 phương không gian (dọc, ngang, thẳng đứng) với lượng chạy dao $S$.
+              </p>
+            </div>
+
+            <div class="tech-card">
+              <div class="card-num">BỘ PHẬN MÁY PHAY ĐỨNG (SGK HÌNH 8.9)</div>
+              <ul style="padding-left: 20px; font-size: 14px; line-height: 1.6; color: var(--ink-dim);">
+                <li>Trục chính mang dao & Động cơ truyền động.</li>
+                <li>Tay quay bàn trượt ngang, dọc và thẳng đứng.</li>
+                <li>Bảng điều khiển & Thân đế máy vững chắc.</li>
+              </ul>
+              <div class="card-num" style="margin-top: 12px;">KHẢ NĂNG CÔNG NGHỆ:</div>
+              <div class="chips-row">
+                <span class="chip">Mặt phẳng</span>
+                <span class="chip">Rãnh chữ T</span>
+                <span class="chip">Rãnh then bán nguyệt</span>
+                <span class="chip">Bề mặt định hình</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="three-canvas-wrap" id="mill-3d-wrap">
+              <div class="canvas-hud">
+                <span>MÁY GIA CÔNG: PHAY ĐỨNG 3D</span>
+                <span>DỤNG CỤ: DAO PHAY NGÓN ĐA MÂU CẮT</span>
+              </div>
+              <div class="canvas-controls-hint">Dao phay quay tròn · Bàn máy mang phôi tịnh tiến</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 10: SO SÁNH 5 PHƯƠNG PHÁP
+         ========================================== -->
+    <section class="slide" id="s10" data-note="Bảng so sánh này là chìa khóa để trả lời mọi câu hỏi thi và bài tập vận dụng. Nhấn mạnh sự khác biệt cốt lõi giữa Tiện (Phôi quay) và Phay (Dao quay).">
+      <div class="reveal">
+        <div class="badge violet"><span class="badge-dot"></span> BẢNG TỔNG HỢP CÔNG NGHỆ</div>
+        <h2 class="section-heading">So sánh <em>năm phương pháp gia công cơ khí</em></h2>
+
+        <div style="overflow-x: auto; margin-top: 16px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 15px; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--ac); font-family: var(--mono); color: var(--ac);">
+                <th style="padding: 12px 14px;">PHƯƠNG PHÁP</th>
+                <th style="padding: 12px 14px;">CHUYỂN ĐỘNG / CƠ CHẾ</th>
+                <th style="padding: 12px 14px;">MỤC ĐÍCH TIÊU BIỂU</th>
+                <th style="padding: 12px 14px;">DẤU HIỆU NHẬN BIẾT</th>
+              </tr>
+            </thead>
+            <tbody style="line-height: 1.6; color: var(--ink-dim);">
+              <tr style="border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.02);">
+                <td style="padding: 14px; font-weight: 700; color: var(--ink);">1. ĐÚC</td>
+                <td style="padding: 14px;">Kim loại lỏng rót vào khuôn ➔ Đông đặc</td>
+                <td style="padding: 14px;">Tạo phôi kết cấu phức tạp, khoang rỗng</td>
+                <td style="padding: 14px;"><span class="chip" style="color:var(--ac);">Có bavia / Bề mặt nhám</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--line);">
+                <td style="padding: 14px; font-weight: 700; color: var(--ink);">2. HÀN</td>
+                <td style="padding: 14px;">Nung nóng chảy mép nối ➔ Kết tinh</td>
+                <td style="padding: 14px;">Tạo mối liên kết kim loại vĩnh cửu</td>
+                <td style="padding: 14px;"><span class="chip" style="color:var(--coral);">Đường hàn vảy cá</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.02);">
+                <td style="padding: 14px; font-weight: 700; color: var(--ink);">3. KHOAN</td>
+                <td style="padding: 14px;">Mũi khoan quay tròn ($V_c$) + tịnh tiến ($S$)</td>
+                <td style="padding: 14px;">Tạo lỗ hình trụ tròn từ phôi đặc</td>
+                <td style="padding: 14px;"><span class="chip" style="color:var(--cyan);">Lỗ trụ tròn, phoi xoắn</span></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--line);">
+                <td style="padding: 14px; font-weight: 700; color: var(--ac);">4. TIỆN</td>
+                <td style="padding: 14px;"><b style="color:var(--ac);">Phôi quay tròn</b>, Dao tịnh tiến</td>
+                <td style="padding: 14px;">Gia công chi tiết tròn xoay, côn, ren</td>
+                <td style="padding: 14px;"><span class="chip" style="color:var(--ac);">Vết tiện tròn xoay</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 14px; font-weight: 700; color: var(--cyan);">5. PHAY</td>
+                <td style="padding: 14px;"><b style="color:var(--cyan);">Dao phay quay tròn</b>, Phôi tịnh tiến</td>
+                <td style="padding: 14px;">Mặt phẳng, rãnh chữ T, rãnh then</td>
+                <td style="padding: 14px;"><span class="chip" style="color:var(--cyan);">Vết phay vòm sóng</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Kinematics Principle Simulator (Module 6) -->
+        <div class="tech-card" style="margin-top: 14px; padding: 16px 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div class="card-num" style="margin:0;">THỰC HÀNH KIỂM CHỨNG ĐỘNG HỌC MÁY (MODULE 6)</div>
+            <div class="machine-nav-tabs" style="display:flex; gap:8px;">
+              <button class="btn-tech tab-btn active" data-machine="tien" style="padding:4px 12px; font-size:11px;" onclick="selectMachineMode('tien')">TIỆN</button>
+              <button class="btn-tech tab-btn outline" data-machine="phay" style="padding:4px 12px; font-size:11px;" onclick="selectMachineMode('phay')">PHAY</button>
+              <button class="btn-tech tab-btn outline" data-machine="khoan" style="padding:4px 12px; font-size:11px;" onclick="selectMachineMode('khoan')">KHOAN</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+            <button class="btn-tech outline" id="btn-wp-rot" onclick="toggleKinematicSetting('workpieceRot')">
+              Phôi quay: <b class="switch-status" style="color:var(--ac);">BẬT</b>
+            </button>
+            <button class="btn-tech outline" id="btn-tool-rot" onclick="toggleKinematicSetting('toolRot')">
+              Dao quay: <b class="switch-status" style="color:var(--ac);">TẮT</b>
+            </button>
+            <button class="btn-tech outline" id="btn-wp-feed" onclick="toggleKinematicSetting('workpieceFeed')">
+              Phôi tiến: <b class="switch-status" style="color:var(--cyan);">TẮT</b>
+            </button>
+            <button class="btn-tech outline" id="btn-tool-feed" onclick="toggleKinematicSetting('toolFeed')">
+              Dao tiến: <b class="switch-status" style="color:var(--cyan);">BẬT</b>
+            </button>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:12px; align-items:center;">
+            <button class="btn-tech" style="padding:8px 18px; font-size:12px; white-space:nowrap;" onclick="checkKinematicsPrinciple()">KIỂM TRA NGUYÊN LÍ SGK ✓</button>
+            <div id="kinematics-feedback" class="seq-alert" style="flex:1; margin:0;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 11: ĐẤU TRƯỜNG: RINH ĐIỂM LIỀN TAY
+         ========================================== -->
+    <section class="slide" id="s11" data-note="Chào mừng các em đến với Đấu trường: Rinh điểm liền tay! Gồm 20 câu hỏi từ kiến thức nền tảng SGK đến kỹ thuật chuyên sâu. Mỗi câu đúng nhận điểm và cộng dồn streak!">
+      <div class="reveal">
+        <div class="badge cyan"><span class="badge-dot"></span> GAME MODULE 1 · THỰC HÀNH CÔNG NGHỆ 11</div>
+        <h2 class="section-heading" style="margin-bottom: 12px;">Đấu trường: <em>Rinh điểm liền tay</em></h2>
+        <div class="quiz-arena">
+          <div class="quiz-header">
+            <div class="quiz-stats">
+              <div class="quiz-nav-group">
+                <button class="btn-tech outline qz-nav-btn" id="qz-btn-prev" onclick="prevQuestion()" title="Câu trước (‹)">‹</button>
+                <div class="qz-jump-box">
+                  <span>CÂU:</span>
+                  <input type="number" id="qz-jump-input" class="qz-jump-input" min="1" max="25" value="1" onchange="jumpToQuestion(this.value)" onkeydown="if(event.key==='Enter') jumpToQuestion(this.value)">
+                  <span>/ 25</span>
+                </div>
+                <button class="btn-tech outline qz-nav-btn" id="qz-btn-next" onclick="nextQuestion()" title="Câu sau (›)">›</button>
+                <span id="qz-current-badge"></span>
+              </div>
+              <span>ĐIỂM: <b id="qz-score" style="color:var(--ac);">0</b></span>
+              <span>STREAK: <b id="qz-streak" style="color:var(--cyan);">0 🔥</b></span>
+            </div>
+            <div class="dice-header-controls">
+              <button class="btn-dice-roll" id="btn-dice-roll" onclick="triggerDiceRoll()" title="Lắc Xúc Xắc Random Mini-Game (Phím R)">
+                <span class="dice-cube-icon">🎲</span>
+                <span>LẮC XÚC XẮC</span>
+              </button>
+              <button class="btn-tech outline" id="btn-pool-mgr" onclick="toggleStudentPoolModal()" title="Danh sách học sinh lớp (43 học sinh)" style="padding: 6px 12px; font-size: 11px;">
+                👥 DS LỚP (<span id="pool-count-badge">43</span>)
+              </button>
+            </div>
+          </div>
+
+          <div class="quiz-question" id="qz-question">Đang tải câu hỏi...</div>
+
+          <div class="quiz-options" id="qz-options">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <div class="quiz-feedback" id="qz-feedback">
+            <span id="qz-fb-text">Chọn đáp án bằng chuột hoặc bấm phím số 1, 2, 3, 4 trên bàn phím.</span>
+            <button class="btn-tech" id="qz-next-btn" style="display:none; padding: 6px 16px; font-size:12px;" onclick="nextQuestion()">CÂU TIẾP THEO ➔</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 12: HAND AR - PINCH & PLACE
+         ========================================== -->
+    <section class="slide" id="s12" data-note="Tại Slide 12, chúng ta có công nghệ Hand AR tương tác không chạm! Các em có thể bật webcam để nhận diện cử chỉ chụm ngón tay (pinch) gắp dụng cụ đặt vào đúng trạm gia công. Nếu không có camera, chuột và cảm ứng vẫn hoạt động 100%.">
+      
+      <!-- Full-Slide Hand AR Skeleton Overlay -->
+      <canvas id="hand-ar-overlay"></canvas>
+
+      <!-- Compact Picture-in-Picture Camera (Top Right Corner) -->
+      <div id="camera-pip-wrap">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <div class="pip-hud">
+          <div style="display:flex; align-items:center;">
+            <span class="pip-dot" id="pip-status-dot"></span>
+            <span id="ar-status-text">CAM OFF</span>
+          </div>
+          <span style="font-size:9px; color:var(--ink-dim);">PIP</span>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; padding-right: 180px;">
+          <div>
+            <div class="badge cyan"><span class="badge-dot"></span> GESTURE TRACKING · HAND AR MODULE 4</div>
+            <h2 class="section-heading" style="margin-bottom: 4px; font-size: 36px;">Hand AR: <em>Pinch & Place phân loại phôi</em></h2>
+            <p class="sub-lead" style="margin-bottom: 0; font-size: 14.5px;">
+              Chụm ngón cái & ngón trỏ (Pinch) hoặc bấm chọn thẻ để gắp phôi nối vào 5 trạm máy gia công:
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: nowrap; align-items: center;">
+            <button class="btn-tech" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;" id="btn-toggle-cam" onclick="toggleCamera()">BẬT WEBCAM 📷</button>
+            <button class="btn-tech outline" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;" id="btn-toggle-skel" onclick="toggleSkeleton()">TẮT KHUNG XƯƠNG 🦴</button>
+            <button class="btn-tech outline" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;" id="btn-toggle-sim" onclick="toggleVirtualHand()">GIẢ LẬP TAY 🕹</button>
+            <button class="btn-tech outline" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;" onclick="resetDndGame()">LÀM LẠI ↺</button>
+          </div>
+        </div>
+
+        <div class="ar-game-arena">
+          <!-- Zone 1: Khay phôi cần phân loại -->
+          <div class="tech-card" style="padding: 12px 18px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div class="card-num" style="margin: 0;">KHAY PHÔI CẦN GIA CÔNG (8 CHI TIẾT)</div>
+              <div id="ar-gesture-text" style="font-family: var(--mono); font-size: 11px; color: var(--cyan);">GESTURE: SẴN SÀNG</div>
+            </div>
+            <div class="dnd-tray" id="ar-card-tray">
+              <!-- Rendered dynamically by dnd.js -->
+            </div>
+          </div>
+
+          <!-- Zone 2: 5 Trạm máy gia công -->
+          <div class="control-label" style="margin-bottom: 6px;">5 TRẠM MÁY GIA CÔNG CƠ KHÍ (ĐÍCH ĐẾN):</div>
+          <div class="dnd-bins-grid" id="ar-bins-grid">
+            <div class="dnd-bin" data-accept="duc">
+              <div class="bin-badge" style="color:var(--ac); border-color:var(--ac);">01</div>
+              <div class="bin-name">ĐÚC</div>
+              <div class="bin-desc">Khuôn & kim loại lỏng</div>
+              <span class="bin-count">0 thẻ</span>
+            </div>
+            <div class="dnd-bin" data-accept="han">
+              <div class="bin-badge" style="color:var(--coral); border-color:var(--coral);">02</div>
+              <div class="bin-name">HÀN</div>
+              <div class="bin-desc">Nối mép kim loại</div>
+              <span class="bin-count">0 thẻ</span>
+            </div>
+            <div class="dnd-bin" data-accept="khoan">
+              <div class="bin-badge" style="color:var(--cyan); border-color:var(--cyan);">03</div>
+              <div class="bin-name">KHOAN</div>
+              <div class="bin-desc">Tạo lỗ & taro ren</div>
+              <span class="bin-count">0 thẻ</span>
+            </div>
+            <div class="dnd-bin" data-accept="tien">
+              <div class="bin-badge" style="color:var(--ac); border-color:var(--ac);">04</div>
+              <div class="bin-name">TIỆN</div>
+              <div class="bin-desc">Mặt tròn xoay & ren</div>
+              <span class="bin-count">0 thẻ</span>
+            </div>
+            <div class="dnd-bin" data-accept="phay">
+              <div class="bin-badge" style="color:var(--violet); border-color:var(--violet);">05</div>
+              <div class="bin-name">PHAY</div>
+              <div class="bin-desc">Mặt phẳng & rãnh T</div>
+              <span class="bin-count">0 thẻ</span>
+            </div>
+          </div>
+
+          <!-- Live Dynamic Feedback Bar -->
+          <div id="dnd-hud-msg" style="margin-top: 12px; padding: 10px 16px; background: var(--bg2); border-radius: 8px; font-size: 13.5px; color: var(--ink-dim); min-height: 42px; border: 1px solid var(--line); display: flex; align-items: center;">
+            Đưa tay trước webcam hoặc di chuột để gắp thẻ nối vào trạm máy thích hợp.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 13: CẢM ƠN VÀ KẾT THÚC
+         ========================================== -->
+    <section class="slide" id="s13" data-note="Cảm ơn Thầy Cô và các bạn học sinh đã chú ý lắng nghe bài thuyết trình!">
+      <div class="reveal" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 520px;">
+        <h1 class="slide-title" style="font-size: 72px; line-height: 1.15; max-width: 950px; margin: 0 auto;">
+          CẢM ƠN MỌI NGƯỜI<br>& CÁC BẠN <em>ĐÃ LẮNG NGHE!</em>
+        </h1>
+      </div>
+    </section>
+
+  </div><!-- /#stage -->
+</div><!-- /#view -->
+
+<!-- Bottom Navigation Controls -->
+<div id="nav">
+  <button id="btn-prev" onclick="goSlide(currentSlide - 1)" title="Slide trước (← / Backspace)">‹</button>
+  <div id="slide-count">01 / 13</div>
+  <button id="btn-next" onclick="goSlide(currentSlide + 1)" title="Slide sau (→ / Space)">›</button>
+</div>
+
+<!-- Tools Bar -->
+<div id="tools">
+  <button id="btn-toggle-ui" onclick="toggleUIBars()" title="Ẩn/Hiện thanh công cụ (Phím H)">👁️</button>
+  <button id="btn-overview" onclick="toggleOverview()" title="Tổng quan các Slide (Phím O)">▦</button>
+  <button id="btn-audio" onclick="toggleAudio()" title="Bật/Tắt âm thanh (Phím M)">🔊</button>
+  <button id="btn-fs" onclick="toggleFullscreen()" title="Toàn màn hình (Phím F)">⛶</button>
+  <button id="btn-theme" onclick="toggleTheme()" title="Sáng/Tối (Phím T)">◐</button>
+</div>
+
+<!-- UI Restore Pill (Appears when UI bars are hidden) -->
+<div id="ui-restore-pill" onclick="toggleUIBars()" title="Bấm hoặc gõ H để hiện lại thanh công cụ">
+  ▲ HIỆN THANH ĐIỀU KHIỂN (H)
+</div>
+
+<div id="shortcut-hint">
+  Phím: ← / → điều hướng · O tổng quan · F toàn màn hình · H ẩn/hiện thanh · R lắc xúc xắc 🎲
+</div>
+
+<!-- Fullscreen Overview Modal -->
+<div id="overview-modal" onclick="if(event.target===this) toggleOverview()"></div>
+
+<!-- Flat Digital Dice Random Picker & Interactive Mini-Games Modal -->
+<div id="dice-engine-modal" class="dice-modal-backdrop" onclick="if(event.target===this) closeDiceModal()">
+  <div class="dice-engine-container">
+    <button class="dice-close-btn" onclick="closeDiceModal()" title="Đóng">✕</button>
+
+    <!-- Digital Dice Roll Stage -->
+    <div class="dice-flat-stage" id="dice-flat-stage">
+      <div class="dice-flat-display" id="dice-flat-display">🎲</div>
+      <div class="dice-result-banner" id="dice-rolling-label" style="margin-top:12px;">ĐANG TUNG XÚC XẮC DIGITAL...</div>
+    </div>
+
+    <!-- Mode Banner -->
+    <div id="dice-result-badge" class="dice-result-banner" style="display:none; font-size:15px; margin-bottom:8px;"></div>
+    <h3 id="dice-mode-title" class="dice-mode-title" style="margin:0 0 16px 0;"></h3>
+
+    <!-- Mode Interactive View Containers -->
+    <div id="dice-mode-container" style="display:none;">
+      
+      <!-- Mode 1: Random Student (STT & TÊN) -->
+      <div id="dice-view-1" class="dice-mode-view">
+        <div class="shuffle-box" id="slot-student-box">
+          <div style="font-size:38px; margin-bottom:6px;">🎓</div>
+          <div class="shuffle-stt" id="slot-student-stt">STT #--</div>
+          <div class="shuffle-name" id="slot-student-name">Đang quay ngẫu nhiên...</div>
+          <div style="font-size:13px; color:var(--ink-dim); margin-top:8px;" id="slot-student-sub">Lọc tự động trong danh sách 43 học sinh chính thức</div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:12px; justify-content:center;">
+          <button class="btn-tech" style="padding:10px 24px; font-size:14px;" onclick="closeDiceModal()">BẮT ĐẦU TRẢ LỜI CÂU HỎI ➔</button>
+          <button class="btn-tech outline" style="padding:10px 18px; font-size:13px;" onclick="triggerDiceRoll(1)">QUAY LẠI ↺</button>
+        </div>
+      </div>
+
+      <!-- Mode 2: F1 Reaction Challenge -->
+      <div id="dice-view-2" class="dice-mode-view">
+        <div class="f1-lights-gantry">
+          <div class="f1-column"><div class="f1-bulb" id="f1-bulb-1"></div></div>
+          <div class="f1-column"><div class="f1-bulb" id="f1-bulb-2"></div></div>
+          <div class="f1-column"><div class="f1-bulb" id="f1-bulb-3"></div></div>
+          <div class="f1-column"><div class="f1-bulb" id="f1-bulb-4"></div></div>
+          <div class="f1-column"><div class="f1-bulb" id="f1-bulb-5"></div></div>
+        </div>
+        <div id="f1-hud-msg" style="font-family:var(--mono); font-size:16px; margin:10px 0; color:var(--cyan);">CHUẨN BỊ...</div>
+        <div id="f1-tap-zone" onclick="handleF1ReactionTap()" style="background:var(--bg2); border:2px dashed var(--line); border-radius:12px; padding:22px; font-weight:700; font-size:16px; cursor:pointer; user-select:none;">
+          ⚡ BẤM HOẶC CHẠM VÀO ĐÂY KHI ĐÈN TẮT / CHUYỂN XANH!
+        </div>
+        <div id="f1-result-box" class="f1-timer-display"></div>
+      </div>
+
+      <!-- Mode 3: DUAL DUEL (1 vs 1) -->
+      <div id="dice-view-3" class="dice-mode-view">
+        <div class="duel-arena">
+          <div class="duel-card active-p1">
+            <div style="font-family:var(--mono); font-size:11px; color:var(--cyan); margin-bottom:4px;">ĐẤU THỦ A</div>
+            <div class="duel-num" id="duel-stt-a">#??</div>
+            <div style="font-weight:700; font-size:16px; color:var(--ink);" id="duel-name-a">Học sinh A</div>
+          </div>
+          <div class="duel-vs-badge">VS</div>
+          <div class="duel-card active-p2">
+            <div style="font-family:var(--mono); font-size:11px; color:var(--ac); margin-bottom:4px;">ĐẤU THỦ B</div>
+            <div class="duel-num" id="duel-stt-b">#??</div>
+            <div style="font-weight:700; font-size:16px; color:var(--ink);" id="duel-name-b">Học sinh B</div>
+          </div>
+        </div>
+        <div class="duel-progress-bar"><div class="duel-progress-fill" id="duel-timer-fill"></div></div>
+        <div style="font-family:var(--mono); font-size:15px; margin-top:8px; color:var(--cyan);" id="duel-timer-text">THỜI GIAN ĐỐI ĐẦU: 15s</div>
+        <div style="margin-top:16px;">
+          <button class="btn-tech" style="padding:10px 24px; font-size:14px;" onclick="closeDiceModal()">VÀO CÂU HỎI ĐỐI KHÁNG ➔</button>
+        </div>
+      </div>
+
+      <!-- Mode 4: LUCKY ESCAPE -->
+      <div id="dice-view-4" class="dice-mode-view">
+        <div class="lucky-card">
+          <div style="font-size:38px; margin-bottom:6px;">🍀</div>
+          <div style="font-family:var(--mono); font-size:22px; color:var(--emerald); font-weight:700;" id="escape-student-stt">STT #??</div>
+          <div style="font-size:24px; font-weight:800; color:var(--ink); margin-bottom:12px;" id="escape-student-name">Học sinh được chọn</div>
+          <p style="font-size:14.5px; color:var(--ink-dim); line-height:1.5; margin:0 auto 16px auto; max-width:440px;">
+            Em nhận được quyền năng <b>LUCKY ESCAPE</b>: Tự trả lời để nhận <b>X2 ĐIỂM SỐ</b> hoặc <b>CHUYỂN QUYỀN</b> câu hỏi này cho một bạn bất kỳ trong lớp!
+          </p>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <button class="btn-tech" style="padding:10px 20px; font-size:13px;" onclick="executeLuckyChoice('self')">🎯 TỰ TRẢ LỜI (+200đ)</button>
+            <button class="btn-tech outline" style="padding:10px 20px; font-size:13px;" onclick="executeLuckyChoice('pass')">🤝 CHUYỂN BẠN KHÁC</button>
+          </div>
+          <div id="escape-decision-msg" style="margin-top:12px; font-size:14px; font-weight:600; color:var(--emerald);"></div>
+        </div>
+      </div>
+
+      <!-- Mode 5: CLASS RUSH -->
+      <div id="dice-view-5" class="dice-mode-view">
+        <div style="background:var(--bg2); border:2px solid var(--line); border-radius:18px; padding:24px; max-width:480px; margin:0 auto 16px auto;">
+          <div style="font-family:var(--mono); color:var(--ac); font-size:13px; letter-spacing:0.15em; margin-bottom:4px;">🔥 THỬ THÁCH TOÀN LỚP</div>
+          <div class="rush-timer-ring" id="rush-counter">20s</div>
+          <p style="font-size:14.5px; color:var(--ink-dim); line-height:1.5; margin:0;">
+            Cả lớp cùng suy nghĩ! Đếm ngược 20 giây, ai giơ tay đầu tiên và trả lời đúng sẽ cộng điểm trực tiếp cho tổ!
+          </p>
+          <div style="margin-top:16px;">
+            <button class="btn-tech" style="padding:10px 24px; font-size:14px;" onclick="closeDiceModal()">BẮT ĐẦU ĐẾM NGƯỢC ➔</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode 6: CHAOS MODE -->
+      <div id="dice-view-6" class="dice-mode-view">
+        <div class="chaos-card">
+          <div style="font-size:38px; margin-bottom:6px;">⚡</div>
+          <div style="font-size:24px; font-weight:800; color:var(--violet); margin-bottom:8px;" id="chaos-rule-title">CHẾ ĐỘ HỖN LOẠN!</div>
+          <div style="font-size:15px; color:var(--ink); line-height:1.5; margin-bottom:16px;" id="chaos-rule-desc">Đang chọn thử thách bất ngờ...</div>
+          <button class="btn-tech" style="padding:10px 24px; font-size:14px;" onclick="closeDiceModal()">CHẤP NHẬN THỬ THÁCH ➔</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Student Pool Management Modal (43 Học sinh chính thức) -->
+<div id="student-pool-modal" onclick="if(event.target===this) toggleStudentPoolModal()">
+  <div class="pool-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div>
+        <h3 style="margin:0; font-size:18px; color:var(--ink);">Danh sách học sinh lớp (43 học sinh)</h3>
+        <p style="margin:2px 0 0 0; font-size:12px; color:var(--ink-dim);">
+          Đã gọi: <b id="pool-picked-count" style="color:var(--coral);">0</b> / 43 · Còn lại: <b id="pool-remain-count" style="color:var(--emerald);">43</b> (Bấm vào tên để bật/tắt thủ công)
+        </p>
+      </div>
+      <button class="dice-close-btn" onclick="toggleStudentPoolModal()" title="Đóng">✕</button>
+    </div>
+
+    <div class="pool-grid-47" id="student-pool-grid">
+      <!-- 43 student chips rendered dynamically with STT + Name -->
+    </div>
+
+    <div style="margin-top:14px; display:flex; gap:10px; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:var(--ink-dim);">Đã loại trừ 5 học sinh hòa nhập & nghỉ học</span>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-tech outline" style="padding:6px 14px; font-size:12px;" onclick="resetStudentPool()">↺ RESET TẤT CẢ</button>
+        <button class="btn-tech" style="padding:6px 16px; font-size:12px;" onclick="toggleStudentPoolModal()">XONG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- External Libraries (CDNs with local fallbacks) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+<!-- Modular Scripts -->
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/three-machines.js"></script>
+<script src="js/games/quiz.js"></script>
+<script src="js/games/dnd.js"></script>
+<script src="js/games/sequence.js"></script>
+<script src="js/games/hand-ar.js"></script>
+<script src="js/games/motion-lab.js"></script>
+
+<script>
+// Lifecycle Initialization
+window.addEventListener('DOMContentLoaded', () => {
+  fitStage();
+  initBackgroundFX();
+  buildOverview();
+  initAllThreeMachines();
+  initQuizModule();
+  initDndModule();
+  initSequenceModule();
+  initHandARModule();
+  initMotionLabModule();
+
+  // Load slide from hash or default to 0
+  const hash = parseInt(location.hash.slice(1));
+  if (hash >= 1 && hash <= SLIDES_COUNT) {
+    goSlide(hash - 1);
+  } else {
+    goSlide(0);
+  }
+});
+</script>
+</body>
+</html>
