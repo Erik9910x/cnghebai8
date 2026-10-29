@@ -6,25 +6,180 @@
 .three-canvas-wrap {
   width: 100%; height: 380px;
   border-radius: 14px;
-  border: 1px solid var(--line);
-  background: radial-gradient(circle at center, #17202c 0%, #0d1218 80%);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  /* Nền trắng caro kỹ thuật chính xác (Engineering White Graph Paper Grid) */
+  background-color: #f8fafc;
+  background-image: 
+    linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+    linear-gradient(to right, rgba(148, 163, 184, 0.75) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.75) 1.5px, transparent 1.5px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+  background-position: -1px -1px;
   position: relative; overflow: hidden;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), inset 0 0 0 1px #ffffff;
 }
 
 .canvas-hud {
-  position: absolute; top: 12px; left: 16px; right: 16px;
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  position: absolute; top: 10px; left: 12px; right: 54px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
   pointer-events: none; z-index: 5;
 }
 
+.canvas-hud span {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: #0284c7;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid rgba(186, 230, 253, 0.85);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-expand-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(186, 230, 253, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-expand-badge:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: scale(1.05);
+}
+
+.three-canvas-wrap.expanded .btn-expand-badge {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #f87171;
+}
+
+.three-canvas-wrap.expanded .btn-expand-badge:hover {
+  background: #dc2626;
+}
+
+/* Chế độ Phóng to toàn màn hình cho Slide thuyết trình */
+.three-canvas-wrap.theater-expanded {
+  position: fixed !important;
+  top: 24px !important;
+  left: 40px !important;
+  right: 40px !important;
+  bottom: 24px !important;
+  width: calc(100vw - 80px) !important;
+  height: calc(100vh - 48px) !important;
+  z-index: 999999 !important;
+  border-radius: 18px !important;
+  border: 2px solid #0284c7 !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 0 2000px rgba(7, 12, 22, 0.85) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.three-canvas-placeholder {
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.15);
+  border: 1px dashed rgba(203, 213, 225, 0.4);
+}
+
 .canvas-controls-hint {
-  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-  font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
-  background: rgba(10, 14, 20, 0.7); padding: 4px 14px; border-radius: 99px;
-  border: 1px solid var(--line); pointer-events: none; z-index: 5;
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 11px; font-weight: 600; color: #334155;
+  background: rgba(255, 255, 255, 0.94); padding: 4px 14px; border-radius: 99px;
+  border: 1px solid rgba(203, 213, 225, 0.9); pointer-events: none; z-index: 5;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Sidebar Tool Bar bên phải của Artifact Box 3D */
+.box-sidebar-tools {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 6px 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.box-tool-btn {
+  width: 32px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(30, 41, 59, 0.85);
+  color: #f8fafc;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.box-tool-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: scale(1.08);
+}
+
+.box-tool-btn:active {
+  transform: scale(0.95);
+}
+
+.box-tool-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 2px 1px;
+}
+
+/* Tooltip on hover */
+.box-tool-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0f172a;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.box-tool-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Machine Simulation Panels */

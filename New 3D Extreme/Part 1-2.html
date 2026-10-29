@@ -1,0 +1,3736 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AGENT A — Mô Hình 3D Cơ Khí Công Nghiệp: Trục Truyền Động 5 Bậc & Máy Khoan Đứng</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+      overflow: hidden;
+      user-select: none;
+    }
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.35);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.6);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col bg-[#090d16] text-slate-100">
+
+  <!-- Top Industrial Header Bar -->
+  <header class="h-14 shrink-0 bg-slate-950/95 border-b border-sky-500/20 px-3 sm:px-5 flex items-center justify-between gap-2 z-20">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <span class="px-2 py-0.5 text-[11px] font-mono-tech font-semibold uppercase tracking-wider bg-sky-500/15 text-sky-400 border border-sky-400/40 rounded">
+        AGENT A
+      </span>
+      <div class="truncate">
+        <h1 class="text-xs sm:text-sm font-bold text-slate-100 truncate">
+          Mô Hình 3D Cơ Khí Công Nghiệp · Công Nghệ 11
+        </h1>
+        <p class="text-[10px] text-slate-400 hidden md:block">
+          Three.js Procedural Geometry · DeltaTime Kinematics · GLTF 2.0 Binary (.glb) Export
+        </p>
+      </div>
+    </div>
+
+    <!-- Model Switcher Tabs -->
+    <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-lg border border-slate-800">
+      <button
+        type="button"
+        id="tab-model-01"
+        data-model-switch="01-drive-shaft-chuck"
+        class="px-2.5 sm:px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-sky-600 text-white shadow-sm"
+      >
+        01 · Trục 5 Bậc &amp; Mâm Cặp 3 Chấu
+      </button>
+      <button
+        type="button"
+        id="tab-model-02"
+        data-model-switch="02-industrial-drill-press"
+        class="px-2.5 sm:px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800"
+      >
+        02 · Máy Khoan Đứng Công Nghiệp
+      </button>
+    </div>
+
+    <!-- Standalone GLB Export Buttons -->
+    <div class="flex items-center gap-1.5">
+      <button
+        type="button"
+        id="btn-export-01"
+        title="Xuất file 01-drive-shaft-chuck.glb độc lập"
+        class="px-2.5 py-1.5 rounded-md text-xs font-medium bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1"
+      >
+        <span>⬇ GLB 01</span>
+      </button>
+      <button
+        type="button"
+        id="btn-export-02"
+        title="Xuất file 02-industrial-drill-press.glb độc lập"
+        class="px-2.5 py-1.5 rounded-md text-xs font-medium bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 transition flex items-center gap-1"
+      >
+        <span>⬇ GLB 02</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 3D Workspace + Compact Engineering Sidebar -->
+  <div class="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
+
+    <!-- 3D WebGL Studio Viewport -->
+    <main class="flex-1 relative h-full min-h-[300px] bg-[#090d16]">
+      <div id="viewport-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+      <!-- Top-Left Floating Quick Camera Bar -->
+      <div class="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 rounded-lg p-1.5 shadow-lg z-10">
+        <button type="button" data-cam-view="fit" class="px-2.5 py-1 rounded text-[11px] font-medium bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white transition">
+          Fit Model
+        </button>
+        <button type="button" data-cam-view="reset" class="px-2.5 py-1 rounded text-[11px] font-medium bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white transition">
+          Reset Camera
+        </button>
+        <span class="h-3.5 w-[1px] bg-slate-700 mx-0.5"></span>
+        <button type="button" data-cam-view="front" class="px-2 py-1 rounded text-[11px] font-mono-tech bg-slate-800/80 hover:bg-sky-600 text-slate-300 hover:text-white transition">
+          Front
+        </button>
+        <button type="button" data-cam-view="side" class="px-2 py-1 rounded text-[11px] font-mono-tech bg-slate-800/80 hover:bg-sky-600 text-slate-300 hover:text-white transition">
+          Side
+        </button>
+        <button type="button" data-cam-view="top" class="px-2 py-1 rounded text-[11px] font-mono-tech bg-slate-800/80 hover:bg-sky-600 text-slate-300 hover:text-white transition">
+          Top
+        </button>
+        <button type="button" data-cam-view="iso" class="px-2 py-1 rounded text-[11px] font-mono-tech bg-sky-600/30 border border-sky-500/40 hover:bg-sky-600 text-sky-200 hover:text-white transition">
+          Isometric
+        </button>
+      </div>
+
+      <!-- Bottom-Left Real-Time Kinematics Telemetry HUD -->
+      <div class="absolute bottom-3 left-3 right-3 sm:right-auto bg-slate-950/90 backdrop-blur-md border border-sky-500/30 rounded-lg px-3.5 py-2 shadow-lg pointer-events-none z-10">
+        <div class="flex items-center gap-2">
+          <span id="hud-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="hud-telemetry" class="text-xs font-mono-tech text-slate-200">
+            Đang khởi tạo mô hình 3D...
+          </span>
+        </div>
+        <div id="hud-subnote" class="text-[10px] text-slate-400 mt-0.5">
+          Chuột trái: Xoay Orbit · Chuột phải / Shift: Pan · Con lăn: Zoom · Nhấp vào chi tiết 3D để kiểm tra
+        </div>
+      </div>
+
+      <!-- Toast Notification Banner for GLB Export -->
+      <div id="export-toast" class="hidden absolute top-14 left-3 bg-emerald-950/95 border border-emerald-400/50 text-emerald-200 px-3.5 py-2 rounded-lg text-xs font-medium shadow-xl z-30">
+        Đã xuất file GLB thành công!
+      </div>
+    </main>
+
+    <!-- Right Engineering Control & Component Tree Sidebar -->
+    <aside class="w-full lg:w-[360px] xl:w-[380px] shrink-0 h-[44vh] lg:h-full bg-slate-900/95 border-t lg:border-t-0 lg:border-l border-slate-800 flex flex-col overflow-y-auto p-3.5 gap-3 z-10">
+
+      <!-- 1. DeltaTime Animation Controls -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">
+            Điều Khiển Động Học (deltaTime)
+          </h2>
+          <span id="anim-state-badge" class="text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            PLAYING
+          </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" id="btn-play" class="py-1.5 px-2 rounded text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+            ▶ Play
+          </button>
+          <button type="button" id="btn-pause" class="py-1.5 px-2 rounded text-xs font-semibold bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white transition">
+            ⏸ Pause
+          </button>
+          <button type="button" id="btn-reset-anim" class="py-1.5 px-2 rounded text-xs font-semibold bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white transition">
+            ↺ Reset
+          </button>
+        </div>
+
+        <div class="mt-2.5 flex items-center gap-2.5 text-xs">
+          <label for="speed-slider" class="text-slate-400 shrink-0">Tốc độ mô phỏng:</label>
+          <input
+            id="speed-slider"
+            type="range"
+            min="0.1"
+            max="2.5"
+            step="0.1"
+            value="1.0"
+            class="flex-1 accent-sky-400 cursor-pointer"
+          />
+          <span id="speed-value" class="font-mono-tech text-sky-300 w-10 text-right">1.0x</span>
+        </div>
+
+        <!-- Drill Press Specific State Controls -->
+        <div id="drill-extra-controls" class="hidden mt-3 pt-2.5 border-t border-slate-800/90 space-y-2">
+          <div class="text-[11px] text-slate-400 font-medium">
+            Trạng thái hình học lỗ khoan trên phôi (<code class="text-sky-300">DrilledHoleVisual</code>):
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" data-hole-mode="auto" class="hole-mode-btn py-1 px-2 rounded text-[11px] font-medium bg-sky-600 text-white">
+              Theo hành trình
+            </button>
+            <button type="button" data-hole-mode="pre" class="hole-mode-btn py-1 px-2 rounded text-[11px] font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">
+              Trước khoan
+            </button>
+            <button type="button" data-hole-mode="post" class="hole-mode-btn py-1 px-2 rounded text-[11px] font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">
+              Đã khoan xong
+            </button>
+          </div>
+          <label class="flex items-center justify-between text-xs text-slate-300 pt-1 cursor-pointer">
+            <span>Hiển thị phoi xoắn minh họa (<code class="text-sky-300 font-mono-tech">drill.chips</code>)</span>
+            <input type="checkbox" id="toggle-chips" checked class="accent-sky-400 w-4 h-4 rounded cursor-pointer" />
+          </label>
+        </div>
+      </section>
+
+      <!-- 2. Selected Component Technical Inspector -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="flex items-center justify-between mb-1.5">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">
+            Thông Tin Bộ Phận Cơ Khí
+          </h2>
+          <button type="button" id="btn-clear-selection" class="text-[10px] text-slate-400 hover:text-sky-300 underline">
+            Bỏ chọn
+          </button>
+        </div>
+        <div id="component-inspector" class="text-xs space-y-1.5"></div>
+      </section>
+
+      <!-- 3. Scene Graph Component Hierarchy & Visibility Toggles -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 flex-1 flex flex-col min-h-[190px]">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">
+            Cây Cấu Trúc Component (Ẩn / Hiện)
+          </h2>
+          <div class="flex gap-1.5">
+            <button type="button" id="btn-show-all" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
+              Hiện tất cả
+            </button>
+          </div>
+        </div>
+        <div id="component-tree" class="space-y-1 overflow-y-auto pr-1 flex-1"></div>
+      </section>
+
+    </aside>
+  </div>
+
+  <script>
+    // ============================================================================
+    // EMBEDDED MODEL MANIFEST
+    // ============================================================================
+    const manifest = {
+  "schemaVersion": "1.0.0",
+  "agentId": "agent-a",
+  "project": "industrial-3d-agent-a",
+  "coordinateSystem": {
+    "upAxis": "Y",
+    "units": "normalized_model_units",
+    "scaleNote": "Kích thước mô phỏng trực quan hóa nhất quán (normalized visualization units), không phải kích thước bản vẽ chế tạo thực tế."
+  },
+  "models": [
+    {
+      "id": "01-drive-shaft-chuck",
+      "rootName": "DriveShaftAssembly",
+      "exportFile": "public/exports/01-drive-shaft-chuck.glb",
+      "titleVi": "Cụm Trục Truyền Động 5 Bậc & Mâm Cặp 3 Chấu",
+      "titleEn": "5-Step Drive Shaft & 3-Jaw Chuck Assembly",
+      "primaryAxis": "X",
+      "descriptionVi": "Cụm trục truyền động cơ khí 5 bậc đồng trục gắn trên mâm cặp 3 chấu tự định tâm (120°), bao gồm cổ kẹp, thân trụ tiện tinh có rãnh then phay chìm, cổ lắp vòng bi, đầu ren ngoài xoắn 3D và đầu vát 45°.",
+      "simulationNotes": {
+        "referenceRpm": 750,
+        "rpmNote": "Tốc độ 750 RPM là thông số HUD tham khảo minh họa; vận tốc góc mô phỏng được tính theo deltaTime và có thể điều chỉnh tốc độ trực tiếp để quan sát hình học.",
+        "manufacturingNote": "Các bậc trụ, mặt vát và ren ngoài được gia công trên máy tiện; rãnh then (drive.shaft.keyway) là đặc trưng gia công bằng nguyên công phay rãnh then (keyway milling)."
+      },
+      "components": [
+        {
+          "id": "drive.chuck",
+          "nodeName": "ChuckAssembly",
+          "parent": "DriveShaftAssembly",
+          "titleVi": "Cụm mâm cặp 3 chấu tự định tâm",
+          "functionVi": "Gá đặt, định tâm và truyền mô-men xoắn từ trục chính máy sang cổ kẹp của trục truyền động.",
+          "processVi": "Lắp ghép cơ khí chính xác từ thân mâm cặp đúc/tiện và 3 chấu kẹp thép tôi."
+        },
+        {
+          "id": "drive.chuck.body",
+          "nodeName": "ChuckBody",
+          "parent": "ChuckAssembly",
+          "titleVi": "Thân mâm cặp gang đúc",
+          "functionVi": "Thân trụ dày có lòng thông tâm, mặt đầu gia công phẳng và 3 rãnh dẫn hướng chấu kẹp bố trí lệch nhau 120°.",
+          "processVi": "Đúc gang xám, tiện mặt đầu, tiện bậc định vị và phay rãnh dẫn hướng chấu."
+        },
+        {
+          "id": "drive.chuck.jaw-01",
+          "nodeName": "Jaw_01",
+          "parent": "ChuckAssembly",
+          "titleVi": "Chấu kẹp số 1 (Góc 0°)",
+          "functionVi": "Chấu kẹp bậc bằng thép tôi cứng tiếp xúc trực tiếp với cổ kẹp của trục tại vị trí 0°.",
+          "processVi": "Phay tạo hình bậc, vát cạnh và nhiệt luyện bề mặt kẹp."
+        },
+        {
+          "id": "drive.chuck.jaw-02",
+          "nodeName": "Jaw_02",
+          "parent": "ChuckAssembly",
+          "titleVi": "Chấu kẹp số 2 (Góc 120°)",
+          "functionVi": "Chấu kẹp bậc bố trí tại góc 120° quanh trục X, phối hợp định tâm đồng trục cho phôi trục.",
+          "processVi": "Phay tạo hình bậc, vát cạnh và nhiệt luyện bề mặt kẹp."
+        },
+        {
+          "id": "drive.chuck.jaw-03",
+          "nodeName": "Jaw_03",
+          "parent": "ChuckAssembly",
+          "titleVi": "Chấu kẹp số 3 (Góc 240°)",
+          "functionVi": "Chấu kẹp bậc bố trí tại góc 240° quanh trục X, giữ chặt cổ trục không trượt khi quay.",
+          "processVi": "Phay tạo hình bậc, vát cạnh và nhiệt luyện bề mặt kẹp."
+        },
+        {
+          "id": "drive.shaft",
+          "nodeName": "DriveShaft",
+          "parent": "DriveShaftAssembly",
+          "titleVi": "Trục truyền động 5 bậc",
+          "functionVi": "Chi tiết trục cơ khí truyền chuyển động quay và mô-men xoắn, có các bậc lắp ổ lăn, bánh răng/puli (qua then) và đai ốc hãm.",
+          "processVi": "Tiện bậc ngoài, phay rãnh then, tiện/cán ren và mài cổ trục."
+        },
+        {
+          "id": "drive.shaft.clamping-neck",
+          "nodeName": "ClampingNeck",
+          "parent": "DriveShaft",
+          "titleVi": "Bậc 1 — Cổ kẹp (Clamping Neck)",
+          "functionVi": "Phần đuôi trục được 3 chấu mâm cặp kẹp chặt đồng trục, truyền mô-men quay cho toàn trục.",
+          "processVi": "Tiện trụ ngoài và vát mép đuôi trục."
+        },
+        {
+          "id": "drive.shaft.polished-body",
+          "nodeName": "PolishedBody",
+          "parent": "DriveShaft",
+          "titleVi": "Bậc 2 — Thân trụ tiện tinh (Polished Body)",
+          "functionVi": "Đoạn thân chính có đường kính lớn nhất, bề mặt tiện tinh để lắp may-ơ bánh răng hoặc puli truyền động.",
+          "processVi": "Tiện tinh đạt độ nhẵn bóng cao và phay khoét rãnh then."
+        },
+        {
+          "id": "drive.shaft.keyway",
+          "nodeName": "Keyway",
+          "parent": "DriveShaft",
+          "titleVi": "Rãnh then chìm (Recessed Keyway)",
+          "functionVi": "Rãnh chìm có đáy phẳng và thành đứng trên thân trụ chính, dùng để lắp then bằng truyền mô-men xoắn chống xoay tương đối.",
+          "processVi": "Gia công bằng nguyên công phay ngón (end-milling) hoặc phay đĩa (không phải nguyên công tiện)."
+        },
+        {
+          "id": "drive.shaft.bearing-journal",
+          "nodeName": "BearingJournal",
+          "parent": "DriveShaft",
+          "titleVi": "Bậc 3 — Cổ lắp vòng bi (Bearing Journal)",
+          "functionVi": "Vùng trụ bậc có đường kính chuẩn xác và rãnh thoát đá mài để lắp vòng trong của ổ lăn (vòng bi).",
+          "processVi": "Tiện bán tinh, tiện rãnh thoát dao và mài tròn ngoài chính xác."
+        },
+        {
+          "id": "drive.shaft.threaded-neck",
+          "nodeName": "ThreadedNeck",
+          "parent": "DriveShaft",
+          "titleVi": "Bậc 4 — Đầu ren ngoài (External Threaded Neck)",
+          "functionVi": "Đoạn trục có ren ngoài xoắn ốc 3D dùng để vặn đai ốc hãm cố định vòng bi hoặc chi tiết lắp trên trục.",
+          "processVi": "Tiện ren ngoài theo bước xoắn tiêu chuẩn."
+        },
+        {
+          "id": "drive.shaft.chamfer-point",
+          "nodeName": "ChamferPoint",
+          "parent": "DriveShaft",
+          "titleVi": "Bậc 5 — Đầu vát 45° (Chamfer Point)",
+          "functionVi": "Mặt côn vát 45° ở đầu mút trục giúp dẫn hướng lắp đai ốc dễ dàng và bảo vệ các vòng ren đầu tiên khỏi biến dạng.",
+          "processVi": "Tiện vát mép 45° và khoan lỗ tâm định vị."
+        }
+      ]
+    },
+    {
+      "id": "02-industrial-drill-press",
+      "rootName": "DrillPressAssembly",
+      "exportFile": "public/exports/02-industrial-drill-press.glb",
+      "titleVi": "Máy Khoan Đứng Công Nghiệp (Industrial Vertical Drill Press)",
+      "titleEn": "Industrial Vertical Drill Press",
+      "primaryAxis": "Y",
+      "descriptionVi": "Máy khoan đứng công nghiệp hoàn chỉnh gồm đế gang đúc, trụ đứng, bàn gá có rãnh chữ T, ê-tô cơ khí kẹp chặt phôi thép, cụm đầu khoan có tay quay ăn dao, đầu kẹp 3 ngàm và mũi khoan ruột gà 2 me xoắn phủ TiN.",
+      "simulationNotes": {
+        "maxFeedTravel": 0.38,
+        "feedTravelNote": "Hành trình chạy dao 0.38 đơn vị là thông số mô phỏng trực quan; mũi khoan đi vào vùng lỗ khoan của phôi thép và tuyệt đối không xuyên qua đáy phôi, ê-tô hay bàn máy.",
+        "holeSimulationNote": "Lỗ khoan trên phôi (DrilledHoleVisual) được biểu diễn bằng hình học lỗ trụ + đáy côn 118° kết hợp cập nhật độ sâu/trạng thái trước và sau khi khoan (không dùng phép trừ boolean CSG bóc vật liệu thời gian thực).",
+        "chipColorNote": "Màu xanh lam ánh kim của phoi xoắn (drill.chips) là hiệu ứng màu nhiệt/nhấn kỹ thuật trực quan, không hàm ý mọi phoi kim loại đều có màu xanh."
+      },
+      "components": [
+        {
+          "id": "drill.base",
+          "nodeName": "Base",
+          "parent": "DrillPressAssembly",
+          "titleVi": "Đế máy gang đúc (Cast-Iron Base)",
+          "functionVi": "Đế máy đúc dày có gân tăng cứng, rãnh chữ T và lỗ bu-lông nền giúp đỡ toàn bộ trọng lượng máy và chống rung khi cắt gọt.",
+          "processVi": "Đúc gang xám, phay phẳng mặt đế và các rãnh chữ T."
+        },
+        {
+          "id": "drill.column",
+          "nodeName": "Column",
+          "parent": "DrillPressAssembly",
+          "titleVi": "Trụ máy đứng (Vertical Column)",
+          "functionVi": "Trụ ống thép/gang dày thẳng đứng liên kết đế máy, dẫn hướng bàn gá nâng hạ và đỡ cụm đầu khoan phía trên.",
+          "processVi": "Tiện và mài tròn ngoài trụ đứng, lắp thanh răng nâng hạ bàn."
+        },
+        {
+          "id": "drill.worktable",
+          "nodeName": "Worktable",
+          "parent": "DrillPressAssembly",
+          "titleVi": "Bàn gá phôi (Slotted Worktable)",
+          "functionVi": "Bàn máy dày có cổ ôm trụ đứng và các rãnh chữ T trên mặt bàn để định vị, kẹp chặt ê-tô hoặc đồ gá phôi.",
+          "processVi": "Đúc gang, doa lỗ ôm trụ và phay rãnh chữ T mặt bàn."
+        },
+        {
+          "id": "drill.vise",
+          "nodeName": "DrillVise",
+          "parent": "Worktable",
+          "titleVi": "Ê-tô bàn khoan (Machine Vise)",
+          "functionVi": "Đồ gá kẹp chặt phôi thép cố định trên bàn máy, chống xoay và chống dịch chuyển dưới tác dụng của lực cắt và mô-men khoan.",
+          "processVi": "Cụm lắp ghép gồm thân trượt, má tĩnh, má động và trục vít me kẹp."
+        },
+        {
+          "id": "drill.vise.body",
+          "nodeName": "ViseBody",
+          "parent": "DrillVise",
+          "titleVi": "Thân ê-tô và trục vít me",
+          "functionVi": "Khung dẫn hướng phẳng nằm trên mặt bàn gá, mang trục vít me điều khiển hành trình kẹp của má động.",
+          "processVi": "Đúc gang, phay băng dẫn hướng và lắp trục vít me."
+        },
+        {
+          "id": "drill.vise.fixed-jaw",
+          "nodeName": "FixedJaw",
+          "parent": "DrillVise",
+          "titleVi": "Má kẹp cố định (Fixed Jaw)",
+          "functionVi": "Má kẹp gắn cố định trên thân ê-tô làm chuẩn định vị mặt sau của phôi thép.",
+          "processVi": "Phay vuông góc và lắp tấm hàm thép khía nhám."
+        },
+        {
+          "id": "drill.vise.moving-jaw",
+          "nodeName": "MovingJaw",
+          "parent": "DrillVise",
+          "titleVi": "Má kẹp di động (Moving Jaw)",
+          "functionVi": "Má kẹp trượt dọc thân ê-tô nhờ trục vít me, ép chặt phôi thép vào má cố định.",
+          "processVi": "Phay rãnh trượt và lắp tấm hàm kẹp thép tôi."
+        },
+        {
+          "id": "drill.workpiece",
+          "nodeName": "Workpiece",
+          "parent": "DrillVise",
+          "titleVi": "Phôi thép gia công (Steel Workpiece)",
+          "functionVi": "Khối phôi thép hình hộp được kẹp chặt giữa hai má ê-tô, có tâm lỗ khoan đồng trục hoàn toàn với trục mũi khoan.",
+          "processVi": "Phôi thép phay phẳng 6 mặt, đang thực hiện nguyên công khoan lỗ."
+        },
+        {
+          "id": "drill.workpiece.hole",
+          "nodeName": "DrilledHoleVisual",
+          "parent": "Workpiece",
+          "titleVi": "Lỗ khoan trên phôi (Drilled Bore Geometry)",
+          "functionVi": "Biểu diễn hình học thành lỗ trụ và đáy côn 118° được tạo ra khi mũi khoan tiến vào phôi (có thể chuyển trạng thái trước/sau khi khoan).",
+          "processVi": "Minh họa trạng thái lỗ khoan đồng trục với mũi khoan ruột gà."
+        },
+        {
+          "id": "drill.head",
+          "nodeName": "DrillHead",
+          "parent": "DrillPressAssembly",
+          "titleVi": "Cụm đầu khoan (Drill Head Assembly)",
+          "functionVi": "Cụm truyền động chính trên đỉnh trụ máy, chứa động cơ, hộp puli truyền đai, ốngẫn hướng trục chính (quill) và cơ cấu tay quay ăn dao.",
+          "processVi": "Lắp ghép vỏ đầu máy, động cơ, trục chính, đầu kẹp và mũi khoan."
+        },
+        {
+          "id": "drill.head.housing",
+          "nodeName": "HeadHousing",
+          "parent": "DrillHead",
+          "titleVi": "Vỏ hộp đầu khoan & Động cơ",
+          "functionVi": "Thân vỏ gang đúc gắn chặt vào đỉnh trụ, bao che bộ truyền đai phía trên, động cơ điện phía sau và tay quay ăn dao bên hông.",
+          "processVi": "Đúc gang, doa lỗ đồng trục và sơn tĩnh điện công nghiệp."
+        },
+        {
+          "id": "drill.spindle",
+          "nodeName": "Spindle",
+          "parent": "DrillHead",
+          "titleVi": "Trục chính máy khoan (Spindle / Quill)",
+          "functionVi": "Trục thép truyền chuyển động quay tròn (chuyển động cắt chính) và tịnh tiến dọc trục Y (chuyển động chạy dao) xuống phôi.",
+          "processVi": "Thép hợp kim tiện, mài chuẩn đồng trục cao."
+        },
+        {
+          "id": "drill.chuck",
+          "nodeName": "DrillChuck",
+          "parent": "DrillHead",
+          "titleVi": "Đầu kẹp mũi khoan (3-Jaw Drill Chuck)",
+          "functionVi": "Đầu kẹp dạng trụ bậc có 3 ngàm kẹp đồng tâm giữ chặt chuôi trụ của mũi khoan ruột gà.",
+          "processVi": "Gia công tiện bậc, lăn nhám vỏ ngoài và lắp 3 ngàm kẹp."
+        },
+        {
+          "id": "drill.twist-bit",
+          "nodeName": "TwistDrillBit",
+          "parent": "DrillHead",
+          "titleVi": "Mũi khoan ruột gà 2 me xoắn (2-Flute Twist Drill Bit)",
+          "functionVi": "Dụng cụ cắt có 2 rãnh xoắn sâu đối xứng (khoảng 8 vòng đường xoắn dọc thân) để thoát phoi, 2 lưỡi cắt chính và góc đỉnh 118° phủ TiN vàng kim.",
+          "processVi": "Phay/mài rãnh xoắn 2 me, mài sắc mặt sau lưỡi cắt góc 118° và phủ Titanium Nitride (TiN)."
+        },
+        {
+          "id": "drill.chips",
+          "nodeName": "DrillChips",
+          "parent": "DrillPressAssembly",
+          "titleVi": "Phoi kim loại xoắn (Curled Metal Chips)",
+          "functionVi": "Các dải phoi xoắn thoát ra từ rãnh mũi khoan tại miệng lỗ phôi trong quá trình cắt gọt (có thể bật/tắt để quan sát rõ lỗ khoan).",
+          "processVi": "Sinh ra trong quá trình bóc tách kim loại khi khoan."
+        }
+      ]
+    }
+  ]
+}
+;
+
+    // ============================================================================
+    // SHARED PBR MATERIAL LIBRARY
+    // ============================================================================
+    /**
+ * Shared PBR Material Library for Agent A Industrial 3D Models
+ * Adheres strictly to the Shared Technical Contract:
+ * - Cast Iron (Gang đúc): Charcoal gray, relatively high roughness
+ * - Machined Steel (Thép gia công): Silver metallic, balanced reflection (non-plastic chrome)
+ * - TiN Coating (Lớp phủ TiN): Golden metallic finish for twist drill bit
+ * - Technical Cyan Accent: Subtle engineering highlight / thermal chip tint
+ */
+function createMaterialLibrary() {
+  const materials = {
+    castIronDark: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_Dark',
+      color: 0x2b3038,
+      metalness: 0.62,
+      roughness: 0.72,
+    }),
+    castIronMachined: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_Machined',
+      color: 0x454d59,
+      metalness: 0.74,
+      roughness: 0.48,
+    }),
+    castIronHousing: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_IndustrialBlueGray',
+      color: 0x253342,
+      metalness: 0.55,
+      roughness: 0.64,
+    }),
+    polishedSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_PolishedTurned',
+      color: 0xd8dee9,
+      metalness: 0.88,
+      roughness: 0.22,
+    }),
+    bearingGroundSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_BearingJournal',
+      color: 0xe5e9f0,
+      metalness: 0.92,
+      roughness: 0.15,
+    }),
+    clampingSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_ClampingNeck',
+      color: 0xb8c2cc,
+      metalness: 0.84,
+      roughness: 0.34,
+    }),
+    threadedSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_Threaded',
+      color: 0xc4cdd6,
+      metalness: 0.86,
+      roughness: 0.28,
+    }),
+    keywayRecessSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_KeywayMilled',
+      color: 0x8f9ba8,
+      metalness: 0.80,
+      roughness: 0.42,
+    }),
+    hardenedJawSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_HardenedJaw',
+      color: 0x5c6673,
+      metalness: 0.82,
+      roughness: 0.36,
+    }),
+    workpieceSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_WorkpieceBlock',
+      color: 0x9aa5b4,
+      metalness: 0.82,
+      roughness: 0.35,
+    }),
+    drilledHoleInterior: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_DrilledBore',
+      color: 0x525c68,
+      metalness: 0.78,
+      roughness: 0.45,
+      side: THREE.DoubleSide,
+    }),
+    tinCoatedGold: new THREE.MeshStandardMaterial({
+      name: 'Mat_TiN_GoldenCoating',
+      color: 0xd9a738,
+      metalness: 0.88,
+      roughness: 0.24,
+    }),
+    drillShankSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_DrillShank',
+      color: 0xc0c8d2,
+      metalness: 0.86,
+      roughness: 0.28,
+    }),
+    technicalCyanChip: new THREE.MeshStandardMaterial({
+      name: 'Mat_Chip_IllustrativeCyanBlue',
+      color: 0x38bdf8,
+      emissive: 0x082f49,
+      emissiveIntensity: 0.25,
+      metalness: 0.75,
+      roughness: 0.30,
+      side: THREE.DoubleSide,
+    }),
+    darkOxideBolt: new THREE.MeshStandardMaterial({
+      name: 'Mat_Steel_BlackOxide',
+      color: 0x1e2229,
+      metalness: 0.75,
+      roughness: 0.45,
+    }),
+  };
+
+  return {
+    materials,
+    get(key) {
+      return materials[key] || materials.polishedSteel;
+    },
+    disposeAll() {
+      Object.values(materials).forEach((mat) => {
+        if (mat && typeof mat.dispose === 'function') {
+          mat.dispose();
+        }
+      });
+    },
+  };
+}
+
+    // ============================================================================
+    // PROCEDURAL MECHANICAL PRIMITIVES
+    // ============================================================================
+    /**
+ * Procedural Mechanical Primitives for Industrial 3D Models
+ * Generates watertight, indexed BufferGeometries with outward normals:
+ * - Hollow cylinders / stepped lathe solids along X or Y axis
+ * - Slotted shaft body with a true recessed 3D keyway pocket (carved into the cylinder)
+ * - Recessed keyway pocket geometry (floor, vertical walls, end fillets)
+ * - Stepped chuck jaws with gripping teeth and chamfered edges
+ * - Slotted machine worktable with true 3D T-slot channels
+ * - Workpiece block with coaxial top circular hole opening
+ */
+
+/**
+ * Creates a solid or hollow revolved profile along the X-axis.
+ * @param {Array<[number, number]>} profileXR - Array of [x, radius] points forming a closed loop
+ * @param {number} radialSegments - Number of angular subdivisions around X
+ */
+function createRevolvedXGeometry(profileXR, radialSegments = 64) {
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  const ringCount = profileXR.length;
+  for (let i = 0; i < ringCount; i++) {
+    const [x, r] = profileXR[i];
+    const v = i / Math.max(1, ringCount - 1);
+    for (let s = 0; s <= radialSegments; s++) {
+      const u = s / radialSegments;
+      const theta = u * Math.PI * 2;
+      const y = r * Math.cos(theta);
+      const z = r * Math.sin(theta);
+      positions.push(x, y, z);
+      uvs.push(u, v);
+    }
+  }
+
+  const stride = radialSegments + 1;
+  for (let i = 0; i < ringCount - 1; i++) {
+    for (let s = 0; s < radialSegments; s++) {
+      const a = i * stride + s;
+      const b = (i + 1) * stride + s;
+      const c = (i + 1) * stride + (s + 1);
+      const d = i * stride + (s + 1);
+      indices.push(a, c, b);
+      indices.push(a, d, c);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Creates a cylinder or frustum along the X-axis from xStart to xEnd
+ */
+function createCylinderXGeometry(xStart, xEnd, rStart, rEnd = rStart, radialSegments = 64, rInner = 0) {
+  if (rInner > 0) {
+    const profile = [
+      [xStart, rInner],
+      [xStart, rStart],
+      [xEnd, rEnd],
+      [xEnd, rInner],
+      [xStart, rInner],
+    ];
+    return createRevolvedXGeometry(profile, radialSegments);
+  }
+  const profile = [
+    [xStart, 0],
+    [xStart, rStart],
+    [xEnd, rEnd],
+    [xEnd, 0],
+  ];
+  return createRevolvedXGeometry(profile, radialSegments);
+}
+
+/**
+ * Creates the main polished shaft body along X-axis with a TRUE carved-out keyway slot
+ * so the keyway is physically recessed below the cylindrical surface (no z-fighting or fake flat decal).
+ */
+function createSlottedShaftBodyGeometry({
+  xStart = -0.45,
+  xEnd = 1.05,
+  radius = 0.44,
+  keywayXStart = -0.18,
+  keywayXEnd = 0.78,
+  keywayWidth = 0.22,
+  keywayDepth = 0.11,
+  radialSegments = 72,
+} = {}) {
+  const halfW = keywayWidth * 0.5;
+  const thetaKey = Math.asin(Math.min(0.95, halfW / radius));
+  const floorY = radius - keywayDepth;
+
+  const positions = [];
+  const indices = [];
+
+  function addQuad(p0, p1, p2, p3) {
+    const base = positions.length / 3;
+    positions.push(...p0, ...p1, ...p2, ...p3);
+    indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+
+  function addTriangle(p0, p1, p2) {
+    const base = positions.length / 3;
+    positions.push(...p0, ...p1, ...p2);
+    indices.push(base, base + 1, base + 2);
+  }
+
+  // Helper to get point on cylinder around X-axis where theta=0 is +Y, theta=PI/2 is +Z
+  function cylPt(x, r, theta) {
+    return [x, r * Math.cos(theta), r * Math.sin(theta)];
+  }
+
+  // 1. Left full cylinder section: [xStart, keywayXStart]
+  for (let s = 0; s < radialSegments; s++) {
+    const t0 = (s / radialSegments) * Math.PI * 2;
+    const t1 = ((s + 1) / radialSegments) * Math.PI * 2;
+    const p00 = cylPt(xStart, radius, t0);
+    const p01 = cylPt(xStart, radius, t1);
+    const p10 = cylPt(keywayXStart, radius, t0);
+    const p11 = cylPt(keywayXStart, radius, t1);
+
+    // Left end cap at xStart
+    addTriangle([xStart, 0, 0], p01, p00);
+    // Outer wall
+    addQuad(p00, p10, p11, p01);
+  }
+
+  // 2. Middle slotted section: [keywayXStart, keywayXEnd]
+  // Angular span goes from +thetaKey around to (2*PI - thetaKey), leaving top opening [-thetaKey, +thetaKey] open for keyway
+  const arcSpan = Math.PI * 2 - 2 * thetaKey;
+  const arcSegments = Math.max(36, Math.floor(radialSegments * 0.85));
+  for (let s = 0; s < arcSegments; s++) {
+    const t0 = thetaKey + (s / arcSegments) * arcSpan;
+    const t1 = thetaKey + ((s + 1) / arcSegments) * arcSpan;
+    const p00 = cylPt(keywayXStart, radius, t0);
+    const p01 = cylPt(keywayXStart, radius, t1);
+    const p10 = cylPt(keywayXEnd, radius, t0);
+    const p11 = cylPt(keywayXEnd, radius, t1);
+    addQuad(p00, p10, p11, p01);
+  }
+
+  // 3. Right full cylinder section: [keywayXEnd, xEnd]
+  for (let s = 0; s < radialSegments; s++) {
+    const t0 = (s / radialSegments) * Math.PI * 2;
+    const t1 = ((s + 1) / radialSegments) * Math.PI * 2;
+    const p00 = cylPt(keywayXEnd, radius, t0);
+    const p01 = cylPt(keywayXEnd, radius, t1);
+    const p10 = cylPt(xEnd, radius, t0);
+    const p11 = cylPt(xEnd, radius, t1);
+
+    // Outer wall
+    addQuad(p00, p10, p11, p01);
+    // Right end cap at xEnd
+    addTriangle([xEnd, 0, 0], p10, p11);
+  }
+
+  // 4. Close the crescent arch between cylinder top arc [-thetaKey, +thetaKey] and the keyway top edge at keywayXStart and keywayXEnd
+  const capSteps = 12;
+  for (let s = 0; s < capSteps; s++) {
+    const t0 = -thetaKey + (s / capSteps) * (2 * thetaKey);
+    const t1 = -thetaKey + ((s + 1) / capSteps) * (2 * thetaKey);
+    const z0 = radius * Math.sin(t0);
+    const z1 = radius * Math.sin(t1);
+    const y0 = radius * Math.cos(t0);
+    const y1 = radius * Math.cos(t1);
+
+    // At keywayXStart (normal points +X into the slot)
+    addQuad(
+      [keywayXStart, floorY, z0],
+      [keywayXStart, y0, z0],
+      [keywayXStart, y1, z1],
+      [keywayXStart, floorY, z1]
+    );
+    // At keywayXEnd (normal points -X into the slot)
+    addQuad(
+      [keywayXEnd, floorY, z1],
+      [keywayXEnd, y1, z1],
+      [keywayXEnd, y0, z0],
+      [keywayXEnd, floorY, z0]
+    );
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Creates the TRUE 3D Recessed Keyway Pocket geometry (floor + vertical side walls + end walls + subtle bevel rim)
+ * Sits cleanly inside the carved opening of PolishedBody.
+ */
+function createKeywayPocketGeometry({
+  radius = 0.44,
+  keywayXStart = -0.18,
+  keywayXEnd = 0.78,
+  keywayWidth = 0.22,
+  keywayDepth = 0.11,
+} = {}) {
+  const halfW = keywayWidth * 0.5;
+  const edgeY = Math.sqrt(Math.max(0.001, radius * radius - halfW * halfW));
+  const floorY = radius - keywayDepth;
+  const eps = 0.0015; // slight inset to prevent coplanar overlap with outer end crescent
+
+  const x0 = keywayXStart + eps;
+  const x1 = keywayXEnd - eps;
+
+  const positions = [];
+  const indices = [];
+
+  function addQuad(p0, p1, p2, p3) {
+    const base = positions.length / 3;
+    positions.push(...p0, ...p1, ...p2, ...p3);
+    indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+
+  // 1. Keyway bottom flat floor (facing +Y upwards)
+  addQuad(
+    [x0, floorY, -halfW],
+    [x0, floorY, +halfW],
+    [x1, floorY, +halfW],
+    [x1, floorY, -halfW]
+  );
+
+  // 2. Left side wall (at z = -halfW, normal facing +Z inward)
+  addQuad(
+    [x0, floorY, -halfW],
+    [x1, floorY, -halfW],
+    [x1, edgeY, -halfW],
+    [x0, edgeY, -halfW]
+  );
+
+  // 3. Right side wall (at z = +halfW, normal facing -Z inward)
+  addQuad(
+    [x0, floorY, +halfW],
+    [x0, edgeY, +halfW],
+    [x1, edgeY, +halfW],
+    [x1, floorY, +halfW]
+  );
+
+  // 4. Left end wall (at x = x0, normal facing +X inward)
+  addQuad(
+    [x0, floorY, -halfW],
+    [x0, edgeY, -halfW],
+    [x0, edgeY, +halfW],
+    [x0, floorY, +halfW]
+  );
+
+  // 5. Right end wall (at x = x1, normal facing -X inward)
+  addQuad(
+    [x1, floorY, +halfW],
+    [x1, edgeY, +halfW],
+    [x1, edgeY, -halfW],
+    [x1, floorY, -halfW]
+  );
+
+  // 6. Precision chamfered top lip strips along z = +-halfW and x0, x1 so the milled slot edge catches studio light
+  const cham = 0.014;
+  addQuad(
+    [x0, edgeY - cham, -halfW],
+    [x1, edgeY - cham, -halfW],
+    [x1, edgeY, -halfW - cham],
+    [x0, edgeY, -halfW - cham]
+  );
+  addQuad(
+    [x0, edgeY, +halfW + cham],
+    [x1, edgeY, +halfW + cham],
+    [x1, edgeY - cham, +halfW],
+    [x0, edgeY - cham, +halfW]
+  );
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Creates a single stepped 3-jaw chuck jaw geometry in local coordinates:
+ * X = axial direction, Y = radial direction from shaft center, Z = tangential thickness.
+ * Can then be rotated by 0°, 120°, 240° around the X-axis.
+ */
+function createChuckJawGeometry({
+  innerRadius = 0.36,
+  outerRadius = 1.02,
+  jawThickness = 0.24,
+  baseLengthX = 0.56,
+  gripLengthX = 0.38,
+} = {}) {
+  // Build a multi-stepped L-shaped jaw profile in the X-Y plane and extrude along Z with chamfered bevels
+  const shape = new THREE.Shape();
+  // Local X: 0 is front face of chuck body, +X extends forward toward the shaft
+  const r0 = innerRadius;
+  const rMid1 = innerRadius + (outerRadius - innerRadius) * 0.42;
+  const rMid2 = innerRadius + (outerRadius - innerRadius) * 0.74;
+  const rMax = outerRadius;
+
+  shape.moveTo(-0.08, r0 + 0.04);
+  shape.lineTo(0.0, r0);
+  // Clamping land touching ClampingNeck at y = r0
+  shape.lineTo(gripLengthX - 0.04, r0);
+  // Front 45° nose chamfer on clamping tip
+  shape.lineTo(gripLengthX, r0 + 0.045);
+  shape.lineTo(gripLengthX, rMid1);
+  // Step 1
+  shape.lineTo(baseLengthX * 0.68, rMid1);
+  shape.lineTo(baseLengthX * 0.68, rMid2);
+  // Step 2
+  shape.lineTo(baseLengthX * 0.36, rMid2);
+  shape.lineTo(baseLengthX * 0.36, rMax - 0.04);
+  shape.lineTo(baseLengthX * 0.28, rMax);
+  // Outer edge back to chuck face
+  shape.lineTo(-0.08, rMax);
+  shape.closePath();
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: jawThickness,
+    bevelEnabled: true,
+    bevelThickness: 0.018,
+    bevelSize: 0.018,
+    bevelSegments: 2,
+  };
+
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  // Center along Z so Z=0 is the jaw center plane
+  geometry.translate(0, 0, -jawThickness * 0.5);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Merges an array of BufferGeometries into a single BufferGeometry
+ * (Pure helper with zero external dependency on BufferGeometryUtils)
+ */
+function mergeGeometries(geometries) {
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+  let vertexOffset = 0;
+
+  for (const geom of geometries) {
+    const g = geom.index ? geom : geom.toNonIndexed();
+    if (!g.attributes.normal) {
+      g.computeVertexNormals();
+    }
+    const posAttr = g.attributes.position;
+    const normAttr = g.attributes.normal;
+    const uvAttr = g.attributes.uv;
+
+    for (let i = 0; i < posAttr.count; i++) {
+      positions.push(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i));
+      if (normAttr) {
+        normals.push(normAttr.getX(i), normAttr.getY(i), normAttr.getZ(i));
+      } else {
+        normals.push(0, 1, 0);
+      }
+      if (uvAttr) {
+        uvs.push(uvAttr.getX(i), uvAttr.getY(i));
+      } else {
+        uvs.push(0, 0);
+      }
+    }
+
+    if (g.index) {
+      const idx = g.index.array;
+      for (let i = 0; i < idx.length; i++) {
+        indices.push(idx[i] + vertexOffset);
+      }
+    } else {
+      for (let i = 0; i < posAttr.count; i++) {
+        indices.push(vertexOffset + i);
+      }
+    }
+    vertexOffset += posAttr.count;
+  }
+
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  merged.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  merged.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  merged.setIndex(indices);
+  return merged;
+}
+
+/**
+ * Creates a rectangular steel workpiece block with a coaxial circular hole on the top face
+ * so the drilled hole cavity is genuinely visible from above without z-fighting.
+ */
+function createPerforatedWorkpieceGeometry({
+  width = 0.92,
+  height = 0.42,
+  depth = 0.68,
+  holeRadius = 0.115,
+  holeSegments = 48,
+} = {}) {
+  const shape = new THREE.Shape();
+  const hw = width * 0.5;
+  const hd = depth * 0.5;
+
+  shape.moveTo(-hw, -hd);
+  shape.lineTo(hw, -hd);
+  shape.lineTo(hw, hd);
+  shape.lineTo(-hw, hd);
+  shape.closePath();
+
+  const holePath = new THREE.Path();
+  holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, true);
+  shape.holes.push(holePath);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: height,
+    bevelEnabled: true,
+    bevelThickness: 0.01,
+    bevelSize: 0.01,
+    bevelSegments: 1,
+    curveSegments: holeSegments,
+  };
+
+  const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  // Rotate so extrusion is along +Y (vertical height) and center at Y=0
+  geom.rotateX(-Math.PI / 2);
+  geom.translate(0, -height * 0.5, 0);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+    // ============================================================================
+    // PROCEDURAL 3D EXTERNAL HELICAL THREAD GEOMETRY
+    // ============================================================================
+    /**
+ * Procedural 3D External Helical Thread Geometry (Bậc 4 — Đầu ren ngoài)
+ * Generates a continuous 3D spiral V/trapezoidal thread ridge + root core along the X-axis.
+ * No fake 2D texture rings or flat parallel stripes — every helical turn has real 3D flank, crest, and root faces.
+ */
+function createExternalThreadGeometry({
+  xStart = 1.70,
+  xEnd = 2.35,
+  majorRadius = 0.265,
+  minorRadius = 0.212,
+  turns = 10,
+  segmentsPerTurn = 48,
+} = {}) {
+  const length = xEnd - xStart;
+  const pitch = length / turns;
+  const totalAngularSteps = Math.floor(turns * segmentsPerTurn);
+
+  // Each axial pitch consists of 4 profile sub-stations:
+  // 0: root start (minorRadius)
+  // 1: rising flank to crest start (majorRadius)
+  // 2: crest flat end (majorRadius)
+  // 3: falling flank to root end (minorRadius)
+  const profileOffsets = [
+    { frac: 0.0, r: minorRadius },
+    { frac: 0.32, r: majorRadius },
+    { frac: 0.54, r: majorRadius },
+    { frac: 0.86, r: minorRadius },
+    { frac: 1.0, r: minorRadius },
+  ];
+  const profCount = profileOffsets.length;
+
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  // 1. Build the continuous helical thread surface strip
+  for (let step = 0; step <= totalAngularSteps; step++) {
+    const turnProgress = step / segmentsPerTurn;
+    const theta = turnProgress * Math.PI * 2;
+    const baseX = xStart + turnProgress * pitch;
+
+    for (let p = 0; p < profCount; p++) {
+      const rawX = baseX + profileOffsets[p].frac * pitch;
+      const clampedX = Math.min(xEnd, Math.max(xStart, rawX));
+      // Taper thread height smoothly at the very start/end lead-in (first and last 0.45 turn)
+      const edgeDist = Math.min(
+        (clampedX - xStart) / (pitch * 0.6),
+        (xEnd - clampedX) / (pitch * 0.6),
+        1.0
+      );
+      const leadFactor = Math.max(0, Math.min(1, edgeDist));
+      const r = minorRadius + (profileOffsets[p].r - minorRadius) * leadFactor;
+
+      const y = r * Math.cos(theta);
+      const z = r * Math.sin(theta);
+      positions.push(clampedX, y, z);
+      uvs.push(step / totalAngularSteps, p / (profCount - 1));
+    }
+  }
+
+  for (let step = 0; step < totalAngularSteps; step++) {
+    const row0 = step * profCount;
+    const row1 = (step + 1) * profCount;
+    for (let p = 0; p < profCount - 1; p++) {
+      const a = row0 + p;
+      const b = row1 + p;
+      const c = row1 + (p + 1);
+      const d = row0 + (p + 1);
+      indices.push(a, c, b);
+      indices.push(a, d, c);
+    }
+  }
+
+  // 2. Add solid inner core cylinder from xStart to xEnd with radius = minorRadius * 0.995
+  // so there are never any gaps between helical turns and both ends are sealed watertight
+  const coreRadius = minorRadius * 0.996;
+  const radialSegs = segmentsPerTurn;
+  const coreBaseIdx = positions.length / 3;
+
+  for (let i = 0; i <= 1; i++) {
+    const x = i === 0 ? xStart : xEnd;
+    for (let s = 0; s <= radialSegs; s++) {
+      const theta = (s / radialSegs) * Math.PI * 2;
+      positions.push(x, coreRadius * Math.cos(theta), coreRadius * Math.sin(theta));
+      uvs.push(s / radialSegs, i);
+    }
+  }
+
+  const stride = radialSegs + 1;
+  for (let s = 0; s < radialSegs; s++) {
+    const a = coreBaseIdx + s;
+    const b = coreBaseIdx + stride + s;
+    const c = coreBaseIdx + stride + s + 1;
+    const d = coreBaseIdx + s + 1;
+    indices.push(a, c, b);
+    indices.push(a, d, c);
+  }
+
+  // End caps at xStart and xEnd
+  const leftCenterIdx = positions.length / 3;
+  positions.push(xStart, 0, 0);
+  uvs.push(0.5, 0.5);
+  const rightCenterIdx = positions.length / 3;
+  positions.push(xEnd, 0, 0);
+  uvs.push(0.5, 0.5);
+
+  for (let s = 0; s < radialSegs; s++) {
+    // Left cap (normal -X)
+    indices.push(leftCenterIdx, coreBaseIdx + s + 1, coreBaseIdx + s);
+    // Right cap (normal +X)
+    indices.push(rightCenterIdx, coreBaseIdx + stride + s, coreBaseIdx + stride + s + 1);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+    // ============================================================================
+    // PROCEDURAL 2-FLUTE HELICAL TWIST DRILL BIT & SPIRAL SWARF CHIPS
+    // ============================================================================
+    /**
+ * Procedural 2-Flute Helical Twist Drill Bit Geometry (Mũi khoan ruột gà hai me xoắn)
+ * Features:
+ * - Vertical Y-axis alignment (shank at top +Y, cutting tip at bottom -Y)
+ * - Two deep symmetrical helical flutes (2 flutes, 180° apart)
+ * - Configurable helical turns along the fluted body (default: 4 full revolutions = 8 helical flute wraps visible along the body)
+ * - Raised cylindrical lands/margins and heel body clearance
+ * - 118° conical point angle (59° half-angle) with two primary cutting lips and chisel web tip
+ */
+function createHelicalTwistDrillGeometry({
+  totalFluteLength = 0.78,
+  tipLength = 0.068,
+  radius = 0.11,
+  webRadius = 0.036,
+  helicalTurns = 4.0, // 4 full turns of a 2-flute helix = 8 helical flute passes along the body
+  axialSegments = 140,
+  radialSegments = 64,
+} = {}) {
+  // Cross-sectional radius function r(phi) for a 2-flute twist drill bit in local angle phi in [0, 2*PI):
+  // Two symmetrical flutes centered at phi = PI/2 and phi = 3*PI/2
+  // Two cutting lands/margins near phi = 0 and phi = PI
+  function drillCrossSectionRadius(phi, currentOuterRadius, currentWebRadius) {
+    // Normalize phi to [0, PI) because 2 flutes are 180-degree symmetric (period = PI)
+    const p = ((phi % Math.PI) + Math.PI) % Math.PI;
+    // Let [0, 0.18*PI] be the full-diameter cylindrical margin + body clearance land
+    // Let [0.18*PI, 0.88*PI] be the deep concave helical flute channel
+    // Let [0.88*PI, PI] be the leading cutting land ramp up to the cutting edge at p = PI (and p = 0)
+    if (p < 0.12 * Math.PI) {
+      // Narrow cylindrical land (margin)
+      return currentOuterRadius;
+    } else if (p < 0.24 * Math.PI) {
+      // Body clearance relief behind the margin
+      return currentOuterRadius * 0.92;
+    } else if (p < 0.92 * Math.PI) {
+      // Deep concave helical flute profile
+      const u = (p - 0.24 * Math.PI) / (0.68 * Math.PI); // 0..1 across flute
+      const fluteCurve = Math.sin(u * Math.PI);
+      const depth = (currentOuterRadius - currentWebRadius) * fluteCurve;
+      return currentOuterRadius * 0.92 - depth * 0.92;
+    } else {
+      // Sharp rise to the primary cutting lip / leading margin
+      const u = (p - 0.92 * Math.PI) / (0.08 * Math.PI);
+      return currentWebRadius + (currentOuterRadius - currentWebRadius) * u;
+    }
+  }
+
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  // Local Y coordinates:
+  // Top of fluted section is y = 0
+  // Bottom of fluted cylinder / start of 118° conical point is y = -totalFluteLength
+  // Tip apex is y = -(totalFluteLength + tipLength)
+  // Note: 118° point angle => half-angle = 59°, so tan(59°) = 1.664 => tipLength = radius / 1.664 ≈ 0.6008 * radius
+  const exactTipLength = tipLength || radius / Math.tan((59 * Math.PI) / 180);
+  const totalLen = totalFluteLength + exactTipLength;
+
+  for (let i = 0; i <= axialSegments; i++) {
+    const v = i / axialSegments;
+    const y = -v * totalLen;
+
+    // Determine outer radius and web radius at this axial height y
+    let outerR = radius;
+    let innerWebR = webRadius;
+    let fluteFade = 1.0;
+
+    if (y > -0.06) {
+      // Smooth flute runout into cylindrical neck at the top (y near 0)
+      fluteFade = Math.max(0, Math.min(1, -y / 0.06));
+    }
+
+    if (y < -totalFluteLength) {
+      // Inside the 118° conical point zone!
+      const tipProgress = (-y - totalFluteLength) / exactTipLength; // 0 at cone shoulder, 1 at chisel point
+      const coneScale = Math.max(0.06, 1.0 - tipProgress * 0.94);
+      outerR = radius * coneScale;
+      innerWebR = webRadius * coneScale * 0.85;
+    }
+
+    // Helical twist angle along Y
+    const twistAngle = v * helicalTurns * Math.PI * 2;
+
+    for (let s = 0; s <= radialSegments; s++) {
+      const u = s / radialSegments;
+      const theta = u * Math.PI * 2;
+      const localPhi = theta - twistAngle;
+
+      const rawFluteR = drillCrossSectionRadius(localPhi, outerR, innerWebR);
+      const r = outerR * (1 - fluteFade) + rawFluteR * fluteFade;
+
+      const x = r * Math.cos(theta);
+      const z = r * Math.sin(theta);
+
+      positions.push(x, y, z);
+      uvs.push(u, v);
+    }
+  }
+
+  const stride = radialSegments + 1;
+  for (let i = 0; i < axialSegments; i++) {
+    for (let s = 0; s < radialSegments; s++) {
+      const a = i * stride + s;
+      const b = (i + 1) * stride + s;
+      const c = (i + 1) * stride + (s + 1);
+      const d = i * stride + (s + 1);
+      indices.push(a, b, c);
+      indices.push(a, c, d);
+    }
+  }
+
+  // Cap top at y = 0 and tip chisel apex at y = -totalLen
+  const topCenterIdx = positions.length / 3;
+  positions.push(0, 0, 0);
+  uvs.push(0.5, 0);
+
+  const tipCenterIdx = positions.length / 3;
+  positions.push(0, -totalLen - 0.004, 0);
+  uvs.push(0.5, 1);
+
+  const lastRingStart = axialSegments * stride;
+  for (let s = 0; s < radialSegments; s++) {
+    // Top cap
+    indices.push(topCenterIdx, s + 1, s);
+    // Bottom conical tip apex
+    indices.push(tipCenterIdx, lastRingStart + s, lastRingStart + s + 1);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/**
+ * Generates spiral/conical curled metal swarf chips (Phoi kim loại xoắn) around the drilling zone
+ */
+function createSpiralChipGeometry({
+  startRadius = 0.035,
+  endRadius = 0.095,
+  height = 0.14,
+  turns = 2.4,
+  ribbonWidth = 0.022,
+  segments = 48,
+} = {}) {
+  const positions = [];
+  const indices = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = t * turns * Math.PI * 2;
+    const r = startRadius + (endRadius - startRadius) * t;
+    const y = t * height;
+
+    const xInner = r * Math.cos(angle);
+    const zInner = r * Math.sin(angle);
+    const xOuter = (r + ribbonWidth) * Math.cos(angle);
+    const zOuter = (r + ribbonWidth) * Math.sin(angle);
+
+    positions.push(xInner, y, zInner);
+    positions.push(xOuter, y + ribbonWidth * 0.35, zOuter);
+  }
+
+  for (let i = 0; i < segments; i++) {
+    const a = i * 2;
+    const b = i * 2 + 1;
+    const c = (i + 1) * 2 + 1;
+    const d = (i + 1) * 2;
+    indices.push(a, b, c);
+    indices.push(a, c, d);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+    // ============================================================================
+    // OBJECT 01 — DRIVE SHAFT + 3-JAW CHUCK MODEL
+    // ============================================================================
+    /**
+ * OBJECT 01 — DRIVE SHAFT + 3-JAW CHUCK
+ * Root Name: DriveShaftAssembly
+ * Axis: X-axis (Y-up coordinate system)
+ * Contract: createModel(options) => ({ root, components, metadata, animation, dispose })
+ */
+function createDriveShaftModel(options = {}) {
+  const matLib = options.materialLibrary || createMaterialLibrary();
+  const ownsMatLib = !options.materialLibrary;
+
+  const root = new THREE.Group();
+  root.name = 'DriveShaftAssembly';
+  root.userData = {
+    componentId: 'drive.root',
+    modelId: '01-drive-shaft-chuck',
+    titleVi: 'Cụm Trục Truyền Động 5 Bậc & Mâm Cặp 3 Chấu',
+    titleEn: '5-Step Drive Shaft & 3-Jaw Chuck Assembly',
+    primaryAxis: 'X',
+    units: 'normalized_model_units',
+    scaleNote:
+      'Kích thước mô phỏng trực quan hóa nhất quán (normalized visualization units), không phải kích thước chế tạo thực tế.',
+  };
+
+  const components = {};
+  const disposableGeometries = [];
+
+  function registerNode(node, meta) {
+    node.name = meta.nodeName;
+    node.userData = {
+      componentId: meta.id,
+      nodeName: meta.nodeName,
+      titleVi: meta.titleVi,
+      titleEn: meta.titleEn,
+      functionVi: meta.functionVi,
+      processVi: meta.processVi,
+      dimensionsNote: meta.dimensionsNote || 'Tỷ lệ mô phỏng trực quan hóa (normalized units)',
+      materialName: meta.materialName || '',
+    };
+    components[meta.id] = node;
+    return node;
+  }
+
+  // ============================================================================
+  // 1. CHUCK ASSEMBLY (Mâm cặp 3 chấu tự định tâm)
+  // ============================================================================
+  const chuckAssembly = new THREE.Group();
+  registerNode(chuckAssembly, {
+    id: 'drive.chuck',
+    nodeName: 'ChuckAssembly',
+    titleVi: 'Cụm mâm cặp 3 chấu tự định tâm',
+    titleEn: '3-Jaw Self-Centering Chuck Assembly',
+    functionVi:
+      'Gá đặt, tự động định tâm đồng trục và truyền mô-men xoắn từ trục chính sang cổ kẹp của trục truyền động.',
+    processVi: 'Lắp ghép từ thân mâm cặp gang đúc, đĩa xoắn Archimedes và 3 chấu thép tôi.',
+  });
+  root.add(chuckAssembly);
+
+  // 1.1 Chuck Body (Thân mâm cặp)
+  // Hollow stepped lathe profile along X from x = -1.68 to x = -0.82 with inner through-bore r = 0.362
+  const chuckProfile = [
+    [-1.68, 0.362],
+    [-1.68, 0.96],
+    [-1.56, 0.96],
+    [-1.54, 1.12],
+    [-0.86, 1.12],
+    [-0.82, 1.07],
+    [-0.82, 0.56],
+    [-0.90, 0.56],
+    [-0.90, 0.362],
+    [-1.68, 0.362],
+  ];
+  const mainChuckCyl = createRevolvedXGeometry(chuckProfile, 72);
+
+  // Add 3 radial jaw guideway ribs/slots and 6 perimeter socket bolt heads on the chuck body
+  const bodySubGeoms = [mainChuckCyl];
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    const bolt = new THREE.CylinderGeometry(0.048, 0.048, 0.06, 16);
+    bolt.rotateZ(Math.PI / 2);
+    bolt.translate(-0.83, Math.cos(angle) * 0.88, Math.sin(angle) * 0.88);
+    bodySubGeoms.push(bolt);
+  }
+  // Add 3 chuck key square socket bezels on outer circumference (at 60°, 180°, 300°)
+  for (let i = 0; i < 3; i++) {
+    const angle = ((i * 120 + 60) * Math.PI) / 180;
+    const bezel = new THREE.CylinderGeometry(0.095, 0.095, 0.05, 20);
+    // Align cylinder radially outward from X-axis
+    bezel.rotateZ(0);
+    bezel.rotateX(angle);
+    const rPos = 1.10;
+    bezel.translate(-1.18, Math.cos(angle) * rPos, Math.sin(angle) * rPos);
+    bodySubGeoms.push(bezel);
+  }
+
+  const chuckBodyGeom = mergeGeometries(bodySubGeoms);
+  mainChuckCyl.dispose();
+  bodySubGeoms.slice(1).forEach((g) => g.dispose());
+  disposableGeometries.push(chuckBodyGeom);
+
+  const chuckBodyMesh = new THREE.Mesh(chuckBodyGeom, matLib.get('castIronDark'));
+  chuckBodyMesh.castShadow = true;
+  chuckBodyMesh.receiveShadow = true;
+  registerNode(chuckBodyMesh, {
+    id: 'drive.chuck.body',
+    nodeName: 'ChuckBody',
+    titleVi: 'Thân mâm cặp gang đúc (Chuck Body)',
+    titleEn: 'Cast-Iron Chuck Body',
+    functionVi:
+      'Thân trụ dày có lòng trung tâm thông suốt, mặt đầu gia công bậc và rãnh dẫn hướng 3 chấu kẹp.',
+    processVi: 'Đúc gang xám, tiện tinh các mặt trụ bậc và phay rãnh dẫn hướng 120°.',
+    dimensionsNote: 'Đường kính ngoài mô phỏng Ø2.24u, chiều dày 0.86u, lỗ thông tâm Ø0.724u.',
+    materialName: 'Gang xám đúc (Charcoal Cast Iron)',
+  });
+  chuckAssembly.add(chuckBodyMesh);
+
+  // 1.2 Three Jaws placed accurately at 0°, 120°, 240° around X-axis
+  const jawAnglesDeg = [0, 120, 240];
+  const baseJawGeom = createChuckJawGeometry({
+    innerRadius: 0.36,
+    outerRadius: 1.02,
+    jawThickness: 0.22,
+    baseLengthX: 0.56,
+    gripLengthX: 0.37,
+  });
+
+  jawAnglesDeg.forEach((deg, idx) => {
+    const jawNum = String(idx + 1).padStart(2, '0');
+    const rad = (deg * Math.PI) / 180;
+    // Clone geometry and bake the 120° rotation & axial offset x = -0.82 so every jaw has clean world/local alignment
+    const jawGeom = baseJawGeom.clone();
+    jawGeom.translate(-0.82, 0, 0);
+    jawGeom.rotateX(rad);
+    jawGeom.computeVertexNormals();
+    disposableGeometries.push(jawGeom);
+
+    const jawMesh = new THREE.Mesh(jawGeom, matLib.get('hardenedJawSteel'));
+    jawMesh.castShadow = true;
+    jawMesh.receiveShadow = true;
+    registerNode(jawMesh, {
+      id: `drive.chuck.jaw-${jawNum}`,
+      nodeName: `Jaw_${jawNum}`,
+      titleVi: `Chấu kẹp số ${idx + 1} (Góc ${deg}°)`,
+      titleEn: `Chuck Jaw #${idx + 1} (${deg}°)`,
+      functionVi: `Chấu kẹp bậc bằng thép tôi bố trí tại góc ${deg}° quanh trục X, kẹp đồng tâm vào cổ kẹp Bậc 1 của trục.`,
+      processVi: 'Phay tạo hình bậc, vát cạnh 45° và tôi cứng bề mặt kẹp.',
+      dimensionsNote: `Bố trí cách đều 120° (vị trí ${deg}°), bán kính mặt kẹp R = 0.36u.`,
+      materialName: 'Thép hợp kim tôi cứng (Hardened Steel)',
+    });
+    chuckAssembly.add(jawMesh);
+  });
+  baseJawGeom.dispose();
+
+  // ============================================================================
+  // 2. FIVE-STEP DRIVE SHAFT (Trục truyền động 5 bậc + Rãnh then chìm)
+  // ============================================================================
+  const driveShaft = new THREE.Group();
+  registerNode(driveShaft, {
+    id: 'drive.shaft',
+    nodeName: 'DriveShaft',
+    titleVi: 'Trục truyền động 5 bậc (5-Step Drive Shaft)',
+    titleEn: '5-Step Machined Drive Shaft',
+    functionVi:
+      'Chi tiết trục cơ khí đồng trục gồm 5 bậc đường kính rõ ràng, rãnh then phay chìm, cổ lắp ổ bi, ren ngoài và đầu vát 45°.',
+    processVi: 'Gia công kết hợp: tiện bậc ngoài, phay rãnh then, mài cổ trục và tiện ren.',
+  });
+  root.add(driveShaft);
+
+  // Step 1 — Clamping Neck (Bậc 1: Cổ kẹp, x = -1.38 to -0.45, radius = 0.36)
+  const clampingProfile = [
+    [-1.38, 0.0],
+    [-1.38, 0.32],
+    [-1.34, 0.36],
+    [-0.48, 0.36],
+    [-0.45, 0.40],
+    [-0.45, 0.0],
+  ];
+  const clampingGeom = createRevolvedXGeometry(clampingProfile, 64);
+  disposableGeometries.push(clampingGeom);
+  const clampingMesh = new THREE.Mesh(clampingGeom, matLib.get('clampingSteel'));
+  clampingMesh.castShadow = true;
+  clampingMesh.receiveShadow = true;
+  registerNode(clampingMesh, {
+    id: 'drive.shaft.clamping-neck',
+    nodeName: 'ClampingNeck',
+    titleVi: 'Bậc 1 — Cổ kẹp (Clamping Neck)',
+    titleEn: 'Step 1 — Clamping Neck',
+    functionVi:
+      'Đoạn đuôi trục nằm trong lòng mâm cặp và được 3 chấu kẹp giữ chặt đồng trục để truyền chuyển động quay.',
+    processVi: 'Tiện trụ ngoài đạt độ đồng tâm và vát mép đuôi trục.',
+    dimensionsNote: 'Đường kính mô phỏng Ø0.72u, chiều dài đoạn kẹp L = 0.93u.',
+    materialName: 'Thép C45 tiện chuẩn (Turned Carbon Steel)',
+  });
+  driveShaft.add(clampingMesh);
+
+  // Step 2 — Polished Body with True Carved Keyway Opening (Bậc 2: Thân trụ bóng chính, x = -0.45 to +1.05, radius = 0.44)
+  const polishedBodyGeom = createSlottedShaftBodyGeometry({
+    xStart: -0.45,
+    xEnd: 1.05,
+    radius: 0.44,
+    keywayXStart: -0.18,
+    keywayXEnd: 0.78,
+    keywayWidth: 0.22,
+    keywayDepth: 0.11,
+    radialSegments: 72,
+  });
+  disposableGeometries.push(polishedBodyGeom);
+  const polishedBodyMesh = new THREE.Mesh(polishedBodyGeom, matLib.get('polishedSteel'));
+  polishedBodyMesh.castShadow = true;
+  polishedBodyMesh.receiveShadow = true;
+  registerNode(polishedBodyMesh, {
+    id: 'drive.shaft.polished-body',
+    nodeName: 'PolishedBody',
+    titleVi: 'Bậc 2 — Thân trụ tiện tinh (Polished Main Body)',
+    titleEn: 'Step 2 — Polished Main Shaft Body',
+    functionVi:
+      'Đoạn thân chính có đường kính lớn nhất (Ø0.88u), bề mặt tiện tinh bóng tự nhiên để lắp bánh răng hoặc puli truyền lực.',
+    processVi: 'Tiện tinh ngoài đạt độ bóng bề mặt cao (Ra thấp).',
+    dimensionsNote: 'Đường kính mô phỏng Ø0.88u, chiều dài L = 1.50u.',
+    materialName: 'Thép hợp kim tiện tinh (Polished Machined Steel)',
+  });
+  driveShaft.add(polishedBodyMesh);
+
+  // Step 2b — Recessed Keyway (Rãnh then chìm thực sự trên thân trụ chính)
+  const keywayGeom = createKeywayPocketGeometry({
+    radius: 0.44,
+    keywayXStart: -0.18,
+    keywayXEnd: 0.78,
+    keywayWidth: 0.22,
+    keywayDepth: 0.11,
+  });
+  disposableGeometries.push(keywayGeom);
+  const keywayMesh = new THREE.Mesh(keywayGeom, matLib.get('keywayRecessSteel'));
+  keywayMesh.castShadow = true;
+  keywayMesh.receiveShadow = true;
+  registerNode(keywayMesh, {
+    id: 'drive.shaft.keyway',
+    nodeName: 'Keyway',
+    titleVi: 'Rãnh then chìm (Recessed Keyway Pocket)',
+    titleEn: 'Recessed Milled Keyway',
+    functionVi:
+      'Rãnh chìm có đáy phẳng và thành đứng nằm sâu dưới mặt trụ thân chính, dùng để lắp then bằng truyền mô-men xoắn.',
+    processVi:
+      'Gia công bằng nguyên công phay rãnh then (dao phay ngón / dao phay đĩa), không phải nguyên công tiện.',
+    dimensionsNote: 'Chiều dài L = 0.96u, chiều rộng b = 0.22u, chiều sâu thực t1 = 0.11u.',
+    materialName: 'Bề mặt rãnh thép phay (Milled Steel Keyway)',
+  });
+  driveShaft.add(keywayMesh);
+
+  // Step 3 — Bearing Journal (Bậc 3: Cổ lắp vòng bi, x = +1.05 to +1.70, radius = 0.34 with grinding relief undercuts)
+  const bearingProfile = [
+    [1.05, 0.0],
+    [1.05, 0.40],
+    [1.07, 0.322], // Grinding relief undercut at shoulder
+    [1.11, 0.322],
+    [1.12, 0.34],  // Precision ground bearing seat diameter
+    [1.64, 0.34],
+    [1.65, 0.322], // Exit relief undercut
+    [1.68, 0.322],
+    [1.70, 0.28],
+    [1.70, 0.0],
+  ];
+  const bearingGeom = createRevolvedXGeometry(bearingProfile, 64);
+  disposableGeometries.push(bearingGeom);
+  const bearingMesh = new THREE.Mesh(bearingGeom, matLib.get('bearingGroundSteel'));
+  bearingMesh.castShadow = true;
+  bearingMesh.receiveShadow = true;
+  registerNode(bearingMesh, {
+    id: 'drive.shaft.bearing-journal',
+    nodeName: 'BearingJournal',
+    titleVi: 'Bậc 3 — Cổ lắp vòng bi (Bearing Journal)',
+    titleEn: 'Step 3 — Precision Ground Bearing Journal',
+    functionVi:
+      'Bậc trụ định vị và lắp ghép vòng trong của ổ lăn (vòng bi), có rãnh thoát đá mài ở sát vai trục.',
+    processVi: 'Tiện bậc, tiện rãnh thoát đá và mài tròn ngoài độ chính xác cấp IT6.',
+    dimensionsNote: 'Đường kính mô phỏng Ø0.68u, chiều dài L = 0.65u, có rãnh thoát đá mài.',
+    materialName: 'Thép mài bóng chính xác (Ground Bearing Steel)',
+  });
+  driveShaft.add(bearingMesh);
+
+  // Step 4 — External Threaded Neck (Bậc 4: Đầu ren ngoài xoắn ốc 3D, x = +1.70 to +2.35)
+  const threadGeom = createExternalThreadGeometry({
+    xStart: 1.70,
+    xEnd: 2.35,
+    majorRadius: 0.265,
+    minorRadius: 0.212,
+    turns: 10,
+    segmentsPerTurn: 48,
+  });
+  disposableGeometries.push(threadGeom);
+  const threadMesh = new THREE.Mesh(threadGeom, matLib.get('threadedSteel'));
+  threadMesh.castShadow = true;
+  threadMesh.receiveShadow = true;
+  registerNode(threadMesh, {
+    id: 'drive.shaft.threaded-neck',
+    nodeName: 'ThreadedNeck',
+    titleVi: 'Bậc 4 — Đầu ren ngoài 3D (External Threaded Neck)',
+    titleEn: 'Step 4 — Helical External Thread',
+    functionVi:
+      'Đoạn ren ngoài có biên dạng xoắn ốc 3D liên tục dùng để lắp đai ốc hãm cố định vòng bi và chi tiết trên trục.',
+    processVi: 'Tiện ren ngoài bằng dao tiện định hình hoặc cán ren theo bước xoắn.',
+    dimensionsNote: 'Đường kính đỉnh ren Ø0.53u, đường kính chân ren Ø0.424u, 10 vòng xoắn dọc chiều dài 0.65u.',
+    materialName: 'Thép tiện ren (Threaded Steel)',
+  });
+  driveShaft.add(threadMesh);
+
+  // Step 5 — 45° Chamfer Point (Bậc 5: Đầu vát 45°, x = +2.35 to +2.55)
+  // Taper from r = 0.215 down to r = 0.065 over dx = 0.15 (exact 45-degree bevel slope dr/dx = 1.0!) plus center hole recess
+  const chamferProfile = [
+    [2.35, 0.0],
+    [2.35, 0.215],
+    [2.50, 0.065], // Exact 45° chamfer: dx = 0.15, dr = -0.15
+    [2.50, 0.032],
+    [2.46, 0.012], // 60° center-drill hole dimple on shaft nose
+    [2.46, 0.0],
+  ];
+  const chamferGeom = createRevolvedXGeometry(chamferProfile, 64);
+  disposableGeometries.push(chamferGeom);
+  const chamferMesh = new THREE.Mesh(chamferGeom, matLib.get('polishedSteel'));
+  chamferMesh.castShadow = true;
+  chamferMesh.receiveShadow = true;
+  registerNode(chamferMesh, {
+    id: 'drive.shaft.chamfer-point',
+    nodeName: 'ChamferPoint',
+    titleVi: 'Bậc 5 — Đầu vát 45° (45° Chamfer Point)',
+    titleEn: 'Step 5 — 45° Chamfered Shaft Nose',
+    functionVi:
+      'Mặt côn vát 45° ở đầu trục kèm lỗ tâm định vị giúp dẫn hướng đai ốc vào ren dễ dàng và tránh sứt mẻ vòng ren đầu.',
+    processVi: 'Tiện vát mép 45° và khoan lỗ tâm 60° ở mặt đầu.',
+    dimensionsNote: 'Côn vát 45° (dx = 0.15u, dr = 0.15u), có lỗ tâm định vị ở đầu mút.',
+    materialName: 'Thép tiện tinh (Machined Steel)',
+  });
+  driveShaft.add(chamferMesh);
+
+  // ============================================================================
+  // 3. DELTA-TIME ANIMATION CONTROLLER (Coaxial X-axis rotation)
+  // ============================================================================
+  const animState = {
+    isPlaying: options.autoPlay !== undefined ? Boolean(options.autoPlay) : true,
+    referenceRpm: 750,
+    // Visual angular velocity scale so 1.0x speed is smooth and inspectable in 3D while reporting reference RPM
+    visualRpmScale: 0.08, // 750 RPM * 0.08 = 60 visual RPM (1 rev/sec at 1.0x speed) so keyway & thread are clearly visible!
+    speedMultiplier: 1.0,
+    angleRad: 0,
+  };
+
+  function applyRotation() {
+    // Both chuck and shaft rotate coaxially around the X-axis
+    chuckAssembly.rotation.x = animState.angleRad;
+    driveShaft.rotation.x = animState.angleRad;
+  }
+
+  const animation = {
+    start() {
+      animState.isPlaying = true;
+    },
+    play() {
+      animState.isPlaying = true;
+    },
+    pause() {
+      animState.isPlaying = false;
+    },
+    reset() {
+      animState.angleRad = 0;
+      applyRotation();
+    },
+    setSpeed(multiplier) {
+      const m = Number(multiplier);
+      if (Number.isFinite(m) && m >= 0) {
+        animState.speedMultiplier = m;
+      }
+    },
+    getSpeed() {
+      return animState.speedMultiplier;
+    },
+    isPlaying() {
+      return animState.isPlaying;
+    },
+    getState() {
+      const effectiveHudRpm = Math.round(animState.referenceRpm * animState.speedMultiplier);
+      return {
+        isPlaying: animState.isPlaying,
+        speedMultiplier: animState.speedMultiplier,
+        referenceRpm: animState.referenceRpm,
+        hudRpm: animState.isPlaying ? effectiveHudRpm : 0,
+        angleRad: animState.angleRad,
+        angleDeg: Math.round(((animState.angleRad * 180) / Math.PI) % 360),
+        rpmNote: '750 RPM (tốc độ tham khảo minh họa, làm chậm tỷ lệ trực quan để quan sát rãnh then & ren)',
+      };
+    },
+    update(deltaTime) {
+      if (!animState.isPlaying) return;
+      const dt = Math.min(Math.max(Number(deltaTime) || 0, 0), 0.1);
+      const visualRpm = animState.referenceRpm * animState.visualRpmScale * animState.speedMultiplier;
+      const omegaRadPerSec = (visualRpm * Math.PI * 2) / 60;
+      animState.angleRad = (animState.angleRad + omegaRadPerSec * dt) % (Math.PI * 2000);
+      applyRotation();
+    },
+  };
+
+  const metadata = {
+    id: '01-drive-shaft-chuck',
+    rootName: 'DriveShaftAssembly',
+    titleVi: 'Cụm Trục Truyền Động 5 Bậc & Mâm Cặp 3 Chấu',
+    titleEn: '5-Step Drive Shaft & 3-Jaw Chuck Assembly',
+    coordinateSystem: {
+      upAxis: 'Y',
+      primaryRotationAxis: 'X',
+      units: 'normalized_model_units',
+      scaleNote:
+        'Kích thước trực quan hóa (normalized units), không phải kích thước chế tạo theo bản vẽ kỹ thuật.',
+    },
+    componentIds: Object.keys(components),
+    simulation: {
+      referenceRpm: 750,
+      axis: 'X',
+      coaxialVerified: true,
+    },
+  };
+
+  function dispose() {
+    disposableGeometries.forEach((g) => g.dispose());
+    if (ownsMatLib) {
+      matLib.disposeAll();
+    }
+  }
+
+  return {
+    root,
+    components,
+    metadata,
+    animation,
+    dispose,
+  };
+}
+
+    // ============================================================================
+    // OBJECT 02 — INDUSTRIAL VERTICAL DRILL PRESS MODEL
+    // ============================================================================
+    /**
+ * OBJECT 02 — INDUSTRIAL VERTICAL DRILL PRESS
+ * Root Name: DrillPressAssembly
+ * Axis: Vertical Y-axis (Column at z = -0.45, Spindle & Twist Drill Bit coaxial at x = 0, z = +0.45)
+ * Contract: createModel(options) => ({ root, components, metadata, animation, dispose })
+ */
+function createDrillPressModel(options = {}) {
+  const matLib = options.materialLibrary || createMaterialLibrary();
+  const ownsMatLib = !options.materialLibrary;
+
+  const root = new THREE.Group();
+  root.name = 'DrillPressAssembly';
+  root.userData = {
+    componentId: 'drill.root',
+    modelId: '02-industrial-drill-press',
+    titleVi: 'Máy Khoan Đứng Công Nghiệp (Industrial Vertical Drill Press)',
+    titleEn: 'Industrial Vertical Drill Press',
+    primaryAxis: 'Y',
+    units: 'normalized_model_units',
+    scaleNote:
+      'Kích thước mô phỏng trực quan hóa nhất quán; lỗ khoan minh họa bằng hình học trụ-côn kết hợp trạng thái tiến dao, không dùng phép trừ CSG thời gian thực.',
+  };
+
+  const components = {};
+  const disposableGeometries = [];
+
+  function registerNode(node, meta) {
+    node.name = meta.nodeName;
+    node.userData = {
+      componentId: meta.id,
+      nodeName: meta.nodeName,
+      titleVi: meta.titleVi,
+      titleEn: meta.titleEn,
+      functionVi: meta.functionVi,
+      processVi: meta.processVi,
+      dimensionsNote: meta.dimensionsNote || 'Tỷ lệ mô phỏng trực quan hóa (normalized units)',
+      materialName: meta.materialName || '',
+    };
+    components[meta.id] = node;
+    return node;
+  }
+
+  // Key spatial coordinates (Y-up):
+  // Column center: (x = 0, z = -0.45)
+  // Drilling / Spindle axis: (x = 0, z = +0.45)
+  const COL_Z = -0.45;
+  const DRILL_Z = 0.45;
+
+  // ============================================================================
+  // 1. BASE (Đế máy gang đúc — drill.base)
+  // Floor at y = -2.10, stepped cast-iron platform with T-slots, ribs, and rear column flange boss
+  // ============================================================================
+  const baseSubGeoms = [];
+  // Lower main slab (y = -2.10 to -1.92)
+  const baseSlab = new THREE.BoxGeometry(1.56, 0.18, 1.88);
+  baseSlab.translate(0, -2.01, 0.02);
+  baseSubGeoms.push(baseSlab);
+
+  // Upper machined T-slot pad on base front (y = -1.92 to -1.84, split into 3 strips to form 2 real recessed T-slots)
+  const stripWidths = [0.34, 0.36, 0.34];
+  const stripX = [-0.42, 0.0, 0.42];
+  for (let i = 0; i < 3; i++) {
+    const strip = new THREE.BoxGeometry(stripWidths[i], 0.08, 1.18);
+    strip.translate(stripX[i], -1.88, 0.26);
+    baseSubGeoms.push(strip);
+  }
+
+  // Heavy cylindrical column mounting flange boss at rear (x = 0, z = COL_Z)
+  const colBoss = new THREE.CylinderGeometry(0.34, 0.40, 0.32, 36);
+  colBoss.translate(0, -1.78, COL_Z);
+  baseSubGeoms.push(colBoss);
+
+  // Diagonal reinforcing webs from column boss forward to base slab
+  const leftRib = new THREE.BoxGeometry(0.10, 0.22, 0.72);
+  leftRib.rotateY(0.22);
+  leftRib.translate(-0.22, -1.84, -0.12);
+  baseSubGeoms.push(leftRib);
+
+  const rightRib = new THREE.BoxGeometry(0.10, 0.22, 0.72);
+  rightRib.rotateY(-0.22);
+  rightRib.translate(0.22, -1.84, -0.12);
+  baseSubGeoms.push(rightRib);
+
+  // 4 corner anchor bolt bosses
+  const boltCorners = [
+    [-0.66, -0.78],
+    [0.66, -0.78],
+    [-0.66, 0.82],
+    [0.66, 0.82],
+  ];
+  boltCorners.forEach(([bx, bz]) => {
+    const boss = new THREE.CylinderGeometry(0.08, 0.09, 0.22, 16);
+    boss.translate(bx, -1.99, bz);
+    baseSubGeoms.push(boss);
+  });
+
+  const baseGeom = mergeGeometries(baseSubGeoms);
+  baseSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(baseGeom);
+
+  const baseMesh = new THREE.Mesh(baseGeom, matLib.get('castIronDark'));
+  baseMesh.castShadow = true;
+  baseMesh.receiveShadow = true;
+  registerNode(baseMesh, {
+    id: 'drill.base',
+    nodeName: 'Base',
+    titleVi: 'Đế máy gang đúc (Cast-Iron Base)',
+    titleEn: 'Heavy Cast-Iron Base',
+    functionVi:
+      'Đế máy đúc dày có gân tăng cứng, rãnh chữ T và lỗ bắt bu-lông nền giúp chịu tải trọng toàn máy và triệt tiêu rung động khi khoan.',
+    processVi: 'Đúc gang xám, phay phẳng mặt đáy, phay rãnh chữ T và doa cổ lắp trụ.',
+    dimensionsNote: 'Kích thước đế 1.56u × 1.88u, chiều dày bậc 0.26u, có gân tăng cứng và 4 gối bu-lông nền.',
+    materialName: 'Gang xám đúc (Charcoal Cast Iron)',
+  });
+  root.add(baseMesh);
+
+  // ============================================================================
+  // 2. COLUMN (Trụ máy đứng — drill.column)
+  // Vertical precision steel column centered at (x = 0, z = COL_Z = -0.45)
+  // ============================================================================
+  const colSubGeoms = [];
+  const mainColCyl = new THREE.CylinderGeometry(0.20, 0.20, 3.36, 48);
+  mainColCyl.translate(0, -0.10, COL_Z);
+  colSubGeoms.push(mainColCyl);
+
+  // Lower & upper retaining collars on column
+  const lowerColRing = new THREE.CylinderGeometry(0.24, 0.25, 0.12, 36);
+  lowerColRing.translate(0, -1.58, COL_Z);
+  colSubGeoms.push(lowerColRing);
+
+  // Vertical elevation gear rack strip along front of column (between base and head)
+  const gearRack = new THREE.BoxGeometry(0.06, 2.35, 0.045);
+  gearRack.translate(0, -0.22, COL_Z + 0.205);
+  colSubGeoms.push(gearRack);
+
+  const columnGeom = mergeGeometries(colSubGeoms);
+  colSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(columnGeom);
+
+  const columnMesh = new THREE.Mesh(columnGeom, matLib.get('polishedSteel'));
+  columnMesh.castShadow = true;
+  columnMesh.receiveShadow = true;
+  registerNode(columnMesh, {
+    id: 'drill.column',
+    nodeName: 'Column',
+    titleVi: 'Trụ máy đứng (Vertical Column)',
+    titleEn: 'Precision Ground Vertical Column',
+    functionVi:
+      'Trụ trụ tròn thẳng đứng có độ cứng vững cao, liên kết đế máy với cụm đầu khoan và làm chuẩn dẫn hướng cho bàn gá phôi.',
+    processVi: 'Tiện, mài tròn ngoài độ bóng cao và lắp thanh răng nâng hạ bàn máy.',
+    dimensionsNote: 'Đường kính trụ Ø0.40u, chiều cao 3.36u, đặt tại tâm Z = -0.45u.',
+    materialName: 'Thép hợp kim mài bóng (Precision Ground Steel)',
+  });
+  root.add(columnMesh);
+
+  // ============================================================================
+  // 3. WORKTABLE (Bàn gá phôi — drill.worktable)
+  // Top surface at y = -0.48, includes column clamp collar + cantilevered support arm + slotted table deck
+  // ============================================================================
+  const worktableGroup = new THREE.Group();
+  registerNode(worktableGroup, {
+    id: 'drill.worktable',
+    nodeName: 'Worktable',
+    titleVi: 'Bàn gá phôi có rãnh chữ T (Slotted Worktable)',
+    titleEn: 'Adjustable Slotted Worktable',
+    functionVi:
+      'Bàn máy dày ôm quanh trụ đứng, mặt trên có các rãnh chữ T để gá đặt và kẹp chặt ê-tô hoặc phôi gia công.',
+    processVi: 'Đúc gang, doa lỗ ôm trụ, phay phẳng mặt bàn và phay rãnh chữ T.',
+    dimensionsNote: 'Mặt bàn tại cao độ Y = -0.48u, kích thước bàn 1.36u × 1.08u, có cổ kẹp ôm trụ.',
+    materialName: 'Gang đúc gia công (Machined Cast Iron)',
+  });
+  root.add(worktableGroup);
+
+  const tableSubGeoms = [];
+  // Column clamping sleeve around (0, -0.64, COL_Z)
+  const tableCollar = new THREE.CylinderGeometry(0.285, 0.285, 0.36, 36);
+  tableCollar.translate(0, -0.64, COL_Z);
+  tableSubGeoms.push(tableCollar);
+
+  // Cantilevered support bracket connecting collar (z = -0.45) to table center (z = +0.45)
+  const tableArm = new THREE.BoxGeometry(0.42, 0.22, 0.86);
+  tableArm.translate(0, -0.66, 0.0);
+  tableSubGeoms.push(tableArm);
+
+  // Table lower structural base plate (y = -0.62 to -0.53)
+  const tableUnderPlate = new THREE.BoxGeometry(1.36, 0.09, 1.08);
+  tableUnderPlate.translate(0, -0.575, DRILL_Z);
+  tableSubGeoms.push(tableUnderPlate);
+
+  // Table top machined deck split into 4 parallel strips along X so 3 genuine recessed T-slots run across the table!
+  // Top surface strictly at y = -0.48 (height = 0.05 from -0.53 to -0.48)
+  const deckStripX = [-0.525, -0.175, 0.175, 0.525];
+  deckStripX.forEach((sx) => {
+    const deckStrip = new THREE.BoxGeometry(0.28, 0.05, 1.08);
+    deckStrip.translate(sx, -0.505, DRILL_Z);
+    tableSubGeoms.push(deckStrip);
+  });
+
+  // Table elevation crank handle on left side of column collar
+  const crankShaft = new THREE.CylinderGeometry(0.03, 0.03, 0.24, 16);
+  crankShaft.rotateZ(Math.PI / 2);
+  crankShaft.translate(-0.34, -0.66, COL_Z + 0.15);
+  tableSubGeoms.push(crankShaft);
+
+  const tableGeom = mergeGeometries(tableSubGeoms);
+  tableSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(tableGeom);
+
+  const worktableMesh = new THREE.Mesh(tableGeom, matLib.get('castIronMachined'));
+  worktableMesh.name = 'Worktable_Mesh';
+  worktableMesh.castShadow = true;
+  worktableMesh.receiveShadow = true;
+  worktableGroup.add(worktableMesh);
+
+  // ============================================================================
+  // 4. DRILL VISE & WORKPIECE (Ê-tô và Phôi thép — drill.vise & drill.workpiece)
+  // Resting flush on Worktable top surface (y = -0.48), centered at (x = 0, z = DRILL_Z = +0.45)
+  // ============================================================================
+  const drillViseGroup = new THREE.Group();
+  registerNode(drillViseGroup, {
+    id: 'drill.vise',
+    nodeName: 'DrillVise',
+    titleVi: 'Ê-tô bàn khoan (Machine Drill Vise)',
+    titleEn: 'Machine Drill Press Vise',
+    functionVi:
+      'Đồ gá kẹp chặt phôi thép trên mặt bàn máy, giữ phôi đứng yên hoàn toàn, không bị xoay hoặc bị kéo lên khi mũi khoan cắt gọt.',
+    processVi: 'Lắp ghép từ thân ê-tô, má tĩnh, má động và trục vít me chữ T.',
+    dimensionsNote: 'Đặt trực tiếp trên mặt bàn tại Y = -0.48u, tâm kẹp tại (X = 0, Z = +0.45u).',
+  });
+  worktableGroup.add(drillViseGroup);
+
+  // 4.1 Vise Body (Thân ê-tô + Trục vít me — drill.vise.body)
+  const viseBodySubGeoms = [];
+  // Left and right base guideways (leaving a central chip/clearance channel under the workpiece)
+  const leftWay = new THREE.BoxGeometry(0.24, 0.14, 0.86);
+  leftWay.translate(-0.34, -0.41, DRILL_Z + 0.04);
+  viseBodySubGeoms.push(leftWay);
+
+  const rightWay = new THREE.BoxGeometry(0.24, 0.14, 0.86);
+  rightWay.translate(0.34, -0.41, DRILL_Z + 0.04);
+  viseBodySubGeoms.push(rightWay);
+
+  // Rear tie bridge & front leadscrew nut lug
+  const rearBridge = new THREE.BoxGeometry(0.92, 0.14, 0.18);
+  rearBridge.translate(0, -0.41, DRILL_Z - 0.32);
+  viseBodySubGeoms.push(rearBridge);
+
+  const frontBridge = new THREE.BoxGeometry(0.92, 0.22, 0.16);
+  frontBridge.translate(0, -0.37, DRILL_Z + 0.42);
+  viseBodySubGeoms.push(frontBridge);
+
+  // Side mounting ears with hold-down bolts onto the worktable T-slots
+  const leftEar = new THREE.BoxGeometry(0.18, 0.06, 0.26);
+  leftEar.translate(-0.54, -0.45, DRILL_Z);
+  viseBodySubGeoms.push(leftEar);
+
+  const rightEar = new THREE.BoxGeometry(0.18, 0.06, 0.26);
+  rightEar.translate(0.54, -0.45, DRILL_Z);
+  viseBodySubGeoms.push(rightEar);
+
+  // Clamping leadscrew & swivel handle bar in front (+Z)
+  const leadScrew = new THREE.CylinderGeometry(0.042, 0.042, 0.48, 20);
+  leadScrew.rotateX(Math.PI / 2);
+  leadScrew.translate(0, -0.26, DRILL_Z + 0.44);
+  viseBodySubGeoms.push(leadScrew);
+
+  const viseHandle = new THREE.CylinderGeometry(0.022, 0.022, 0.42, 16);
+  viseHandle.rotateZ(Math.PI / 2);
+  viseHandle.translate(0, -0.26, DRILL_Z + 0.66);
+  viseBodySubGeoms.push(viseHandle);
+
+  const viseBodyGeom = mergeGeometries(viseBodySubGeoms);
+  viseBodySubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(viseBodyGeom);
+
+  const viseBodyMesh = new THREE.Mesh(viseBodyGeom, matLib.get('castIronHousing'));
+  viseBodyMesh.castShadow = true;
+  viseBodyMesh.receiveShadow = true;
+  registerNode(viseBodyMesh, {
+    id: 'drill.vise.body',
+    nodeName: 'ViseBody',
+    titleVi: 'Thân ê-tô và trục vít me (Vise Body & Leadscrew)',
+    titleEn: 'Vise Body & Clamping Leadscrew',
+    functionVi:
+      'Thân dẫn hướng bằng gang đúc bắt chặt trên mặt bàn khoan, mang trục vít me điều khiển lực kẹp.',
+    processVi: 'Đúc gang, phay rãnh trượt chữ nhật và lắp trục vít me.',
+    materialName: 'Gang đúc sơn công nghiệp & Thép',
+  });
+  drillViseGroup.add(viseBodyMesh);
+
+  // 4.2 Fixed Jaw (Má kẹp cố định — drill.vise.fixed-jaw)
+  // Rear jaw block at z = DRILL_Z - 0.24 (clamping face at z = DRILL_Z - 0.17 = +0.28)
+  const fixedJawSubGeoms = [];
+  const fixedBlock = new THREE.BoxGeometry(0.84, 0.34, 0.12);
+  fixedBlock.translate(0, -0.17, DRILL_Z - 0.25);
+  fixedJawSubGeoms.push(fixedBlock);
+
+  const fixedPlate = new THREE.BoxGeometry(0.82, 0.30, 0.03);
+  fixedPlate.translate(0, -0.16, DRILL_Z - 0.175);
+  fixedJawSubGeoms.push(fixedPlate);
+
+  const fixedJawGeom = mergeGeometries(fixedJawSubGeoms);
+  fixedJawSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(fixedJawGeom);
+
+  const fixedJawMesh = new THREE.Mesh(fixedJawGeom, matLib.get('hardenedJawSteel'));
+  fixedJawMesh.castShadow = true;
+  fixedJawMesh.receiveShadow = true;
+  registerNode(fixedJawMesh, {
+    id: 'drill.vise.fixed-jaw',
+    nodeName: 'FixedJaw',
+    titleVi: 'Má kẹp cố định (Fixed Jaw)',
+    titleEn: 'Fixed Vise Jaw',
+    functionVi:
+      'Má kẹp cố định phía sau làm mặt chuẩn định vị chính xác cho phôi thép dưới tâm trục chính.',
+    processVi: 'Phay vuông góc và lắp tấm hàm thép tôi cứng.',
+    materialName: 'Thép dụng cụ tôi cứng (Hardened Jaw Steel)',
+  });
+  drillViseGroup.add(fixedJawMesh);
+
+  // 4.3 Moving Jaw (Má kẹp di động — drill.vise.moving-jaw)
+  // Front jaw block clamping against front face of workpiece at z = DRILL_Z + 0.16 = +0.61
+  const movingJawSubGeoms = [];
+  const movingBlock = new THREE.BoxGeometry(0.84, 0.34, 0.14);
+  movingBlock.translate(0, -0.17, DRILL_Z + 0.245);
+  movingJawSubGeoms.push(movingBlock);
+
+  const movingPlate = new THREE.BoxGeometry(0.82, 0.30, 0.03);
+  movingPlate.translate(0, -0.16, DRILL_Z + 0.16);
+  movingJawSubGeoms.push(movingPlate);
+
+  const movingJawGeom = mergeGeometries(movingJawSubGeoms);
+  movingJawSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(movingJawGeom);
+
+  const movingJawMesh = new THREE.Mesh(movingJawGeom, matLib.get('hardenedJawSteel'));
+  movingJawMesh.castShadow = true;
+  movingJawMesh.receiveShadow = true;
+  registerNode(movingJawMesh, {
+    id: 'drill.vise.moving-jaw',
+    nodeName: 'MovingJaw',
+    titleVi: 'Má kẹp di động (Moving Jaw)',
+    titleEn: 'Sliding Moving Vise Jaw',
+    functionVi:
+      'Má kẹp trượt dọc băng dẫn hướng nhờ trục vít me, ép chặt mặt trước của phôi thép vào má cố định.',
+    processVi: 'Phay sống trượt và lắp tấm hàm thép tôi.',
+    materialName: 'Thép dụng cụ tôi cứng (Hardened Jaw Steel)',
+  });
+  drillViseGroup.add(movingJawMesh);
+
+  // 4.4 Steel Workpiece (Phôi thép — drill.workpiece)
+  // Clamped between FixedJaw (z = +0.29) and MovingJaw (z = +0.61), centered at (x = 0, z = DRILL_Z = +0.45)
+  // Bottom at y = -0.28, top surface at y = +0.08 (height = 0.36, width = 0.68, depth = 0.30)
+  const workpieceGroup = new THREE.Group();
+  workpieceGroup.position.set(0, 0.08, DRILL_Z); // Local origin right at top surface center (0, +0.08, +0.45)
+  registerNode(workpieceGroup, {
+    id: 'drill.workpiece',
+    nodeName: 'Workpiece',
+    titleVi: 'Phôi thép gia công (Steel Workpiece)',
+    titleEn: 'Clamped Steel Workpiece Block',
+    functionVi:
+      'Khối phôi thép hình hộp được kẹp chặt cố định giữa hai má ê-tô, có lỗ khoan đồng trục hoàn toàn với trục chính máy khoan.',
+    processVi: 'Phôi thép C45 phay phẳng 6 mặt, đang thực hiện nguyên công khoan lỗ đồng trục.',
+    dimensionsNote:
+      'Kích thước 0.68u × 0.36u × 0.30u; mặt trên tại Y = +0.08u, mặt đáy tại Y = -0.28u. Lỗ khoan mô phỏng trạng thái hình học (không dùng CSG thời gian thực).',
+    materialName: 'Thép kết cấu C45 (Machined Steel Block)',
+  });
+  drillViseGroup.add(workpieceGroup);
+
+  const wpGeom = createPerforatedWorkpieceGeometry({
+    width: 0.68,
+    height: 0.36,
+    depth: 0.30,
+    holeRadius: 0.114,
+    holeSegments: 48,
+  });
+  disposableGeometries.push(wpGeom);
+  const wpBlockMesh = new THREE.Mesh(wpGeom, matLib.get('workpieceSteel'));
+  wpBlockMesh.name = 'WorkpieceBlock_Mesh';
+  wpBlockMesh.castShadow = true;
+  wpBlockMesh.receiveShadow = true;
+  workpieceGroup.add(wpBlockMesh);
+
+  // 4.4b Drilled Hole Visual (Trạng thái hình học lỗ khoan — DrilledHoleVisual / drill.workpiece.hole)
+  // Cylindrical bore + 118° conical blind-hole bottom inside the workpiece
+  const holeSubGeoms = [];
+  const boreWall = new THREE.CylinderGeometry(0.112, 0.112, 0.22, 48, 1, true);
+  boreWall.translate(0, -0.11, 0);
+  holeSubGeoms.push(boreWall);
+
+  // 118° conical bottom seat (tip length = 0.112 / tan(59°) ≈ 0.067)
+  const boreCone = new THREE.ConeGeometry(0.112, 0.068, 48);
+  boreCone.rotateX(Math.PI); // point downwards
+  boreCone.translate(0, -0.254, 0);
+  holeSubGeoms.push(boreCone);
+
+  // Top chamfer ring around the drilled hole entry
+  const entryChamfer = new THREE.RingGeometry(0.112, 0.128, 48);
+  entryChamfer.rotateX(-Math.PI / 2);
+  entryChamfer.translate(0, 0.001, 0);
+  holeSubGeoms.push(entryChamfer);
+
+  const drilledHoleGeom = mergeGeometries(holeSubGeoms);
+  holeSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(drilledHoleGeom);
+
+  const drilledHoleMesh = new THREE.Mesh(drilledHoleGeom, matLib.get('drilledHoleInterior'));
+  drilledHoleMesh.castShadow = false;
+  drilledHoleMesh.receiveShadow = true;
+  registerNode(drilledHoleMesh, {
+    id: 'drill.workpiece.hole',
+    nodeName: 'DrilledHoleVisual',
+    titleVi: 'Lỗ khoan trên phôi (Drilled Bore Visual)',
+    titleEn: 'Drilled Blind Hole Geometry (118° Cone Seat)',
+    functionVi:
+      'Biểu diễn hình học thành lỗ trụ Ø0.224u và đáy côn 118° trên phôi thép; hỗ trợ chuyển trạng thái trước/đang/sau khi khoan.',
+    processVi:
+      'Mô phỏng hình học lỗ khoan theo hành trình tiến dao (không phải mô phỏng bóc vật liệu CSG thời gian thực).',
+    dimensionsNote: 'Đường kính lỗ Ø0.224u, chiều sâu tối đa 0.28u (nằm hoàn toàn trong phôi dày 0.36u).',
+    materialName: 'Bề mặt lòng lỗ thép khoan (Drilled Steel Bore)',
+  });
+  workpieceGroup.add(drilledHoleMesh);
+
+  // ============================================================================
+  // 5. DRILL HEAD ASSEMBLY (Cụm đầu khoan — drill.head)
+  // ============================================================================
+  const drillHeadGroup = new THREE.Group();
+  registerNode(drillHeadGroup, {
+    id: 'drill.head',
+    nodeName: 'DrillHead',
+    titleVi: 'Cụm đầu khoan (Drill Head Assembly)',
+    titleEn: 'Industrial Drill Press Head Assembly',
+    functionVi:
+      'Cụm đầu máy đặt trên đỉnh trụ đứng, bao gồm vỏ hộp truyền động, động cơ, trục chính, đầu kẹp 3 ngàm và mũi khoan ruột gà.',
+    processVi: 'Lắp ghép cơ khí chính xác, đảm bảo độ đồng tâm và vuông góc giữa trục chính với mặt bàn.',
+  });
+  root.add(drillHeadGroup);
+
+  // 5.1 Head Housing (Vỏ đầu khoan, hộp puli & động cơ — drill.head.housing)
+  const headSubGeoms = [];
+  // Main cast-iron head body bridging column (z = -0.45) to spindle axis (z = +0.45) at y = 1.25..1.72
+  const mainHeadBox = new THREE.BoxGeometry(0.56, 0.46, 1.12);
+  mainHeadBox.translate(0, 1.48, 0.02);
+  headSubGeoms.push(mainHeadBox);
+
+  // Front cylindrical quill housing boss at (0, 1.44, DRILL_Z)
+  const frontQuillBoss = new THREE.CylinderGeometry(0.24, 0.22, 0.56, 36);
+  frontQuillBoss.translate(0, 1.45, DRILL_Z);
+  headSubGeoms.push(frontQuillBoss);
+
+  // Upper belt-drive guard housing (classic elongated stepped dome on top of drill press)
+  const beltGuardMid = new THREE.BoxGeometry(0.60, 0.28, 1.28);
+  beltGuardMid.translate(0, 1.85, -0.05);
+  headSubGeoms.push(beltGuardMid);
+
+  const beltGuardFrontCyl = new THREE.CylinderGeometry(0.30, 0.30, 0.28, 32);
+  beltGuardFrontCyl.translate(0, 1.85, 0.59);
+  headSubGeoms.push(beltGuardFrontCyl);
+
+  const beltGuardRearCyl = new THREE.CylinderGeometry(0.30, 0.30, 0.28, 32);
+  beltGuardRearCyl.translate(0, 1.85, -0.69);
+  headSubGeoms.push(beltGuardRearCyl);
+
+  // Rear vertical electric drive motor cylinder + cooling fins at z = -0.82
+  const motorBody = new THREE.CylinderGeometry(0.26, 0.26, 0.54, 32);
+  motorBody.translate(0, 1.42, -0.82);
+  headSubGeoms.push(motorBody);
+
+  // 3-spoke feed handwheel (Captain's wheel) on the right side of the head (x = +0.34, y = 1.46, z = 0.20)
+  const feedHub = new THREE.CylinderGeometry(0.09, 0.09, 0.14, 24);
+  feedHub.rotateZ(Math.PI / 2);
+  feedHub.translate(0.33, 1.46, 0.20);
+  headSubGeoms.push(feedHub);
+
+  for (let i = 0; i < 3; i++) {
+    const spokeAngle = (i * 120 * Math.PI) / 180 + 0.35;
+    const spoke = new THREE.CylinderGeometry(0.018, 0.022, 0.36, 12);
+    spoke.translate(0, 0.18, 0);
+    spoke.rotateX(spokeAngle);
+    spoke.translate(0.37, 1.46, 0.20);
+    headSubGeoms.push(spoke);
+  }
+
+  const headHousingGeom = mergeGeometries(headSubGeoms);
+  headSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(headHousingGeom);
+
+  const headHousingMesh = new THREE.Mesh(headHousingGeom, matLib.get('castIronHousing'));
+  headHousingMesh.castShadow = true;
+  headHousingMesh.receiveShadow = true;
+  registerNode(headHousingMesh, {
+    id: 'drill.head.housing',
+    nodeName: 'HeadHousing',
+    titleVi: 'Vỏ hộp đầu khoan, hộp đai & động cơ (Head Housing)',
+    titleEn: 'Drill Head Housing, Belt Guard & Motor',
+    functionVi:
+      'Thân vỏ gang đúc đỡ động cơ điện phía sau, hộp truyền đai bậc phía trên, ống dẫn hướng trục chính phía trước và tay quay ăn dao 3 chấu bên hông.',
+    processVi: 'Đúc gang, doa đồng trục ổ trục chính và sơn tĩnh điện công nghiệp.',
+    materialName: 'Gang đúc sơn công nghiệp (Industrial Cast Iron)',
+  });
+  drillHeadGroup.add(headHousingMesh);
+
+  // 5.2 Spindle (Trục chính máy khoan — drill.spindle)
+  // Local origin at (x = 0, y = 1.05, z = DRILL_Z) so rotating around .rotation.y spins purely around the vertical drilling axis!
+  const spindleSubGeoms = [];
+  const upperQuill = new THREE.CylinderGeometry(0.11, 0.11, 0.32, 36);
+  upperQuill.translate(0, 0.10, 0);
+  spindleSubGeoms.push(upperQuill);
+
+  const lowerSpindleArbor = new THREE.CylinderGeometry(0.075, 0.068, 0.16, 36);
+  lowerSpindleArbor.translate(0, -0.12, 0);
+  spindleSubGeoms.push(lowerSpindleArbor);
+
+  const spindleGeom = mergeGeometries(spindleSubGeoms);
+  spindleSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(spindleGeom);
+
+  const spindleBaseY = 1.08;
+  const spindleMesh = new THREE.Mesh(spindleGeom, matLib.get('bearingGroundSteel'));
+  spindleMesh.position.set(0, spindleBaseY, DRILL_Z);
+  spindleMesh.castShadow = true;
+  spindleMesh.receiveShadow = true;
+  registerNode(spindleMesh, {
+    id: 'drill.spindle',
+    nodeName: 'Spindle',
+    titleVi: 'Trục chính máy khoan (Spindle & Quill)',
+    titleEn: 'Rotating & Translating Drill Spindle',
+    functionVi:
+      'Thực hiện đồng thời hai chuyển động: chuyển động cắt chính (quay tròn quanh trục Y) và chuyển động chạy dao (tịnh tiến dọc trục Y xuống phôi).',
+    processVi: 'Thép hợp kim tiện và mài tròn ngoài độ đồng tâm cao.',
+    dimensionsNote: 'Đồng trục tại (X = 0, Z = +0.45u), hành trình chạy dao mô phỏng tối đa 0.38u.',
+    materialName: 'Thép hợp kim mài bóng (Precision Ground Steel)',
+  });
+  drillHeadGroup.add(spindleMesh);
+
+  // 5.3 Drill Chuck (Đầu kẹp mũi khoan — drill.chuck)
+  // Local origin at (x = 0, y = 0.80, z = DRILL_Z)
+  const chuckSubGeoms = [];
+  // Upper collar
+  const chuckTop = new THREE.CylinderGeometry(0.125, 0.145, 0.08, 36);
+  chuckTop.translate(0, 0.09, 0);
+  chuckSubGeoms.push(chuckTop);
+
+  // Knurled/fluted main sleeve body (faceted 24-sided grip ring)
+  const chuckSleeve = new THREE.CylinderGeometry(0.148, 0.148, 0.14, 24);
+  chuckSleeve.translate(0, -0.01, 0);
+  chuckSubGeoms.push(chuckSleeve);
+
+  // Tapered nose cone
+  const chuckNose = new THREE.CylinderGeometry(0.142, 0.092, 0.09, 36);
+  chuckNose.translate(0, -0.125, 0);
+  chuckSubGeoms.push(chuckNose);
+
+  // 3 protruding angled chuck jaws gripping the drill bit shank at 120° intervals
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 120 * Math.PI) / 180;
+    const jaw = new THREE.BoxGeometry(0.032, 0.065, 0.042);
+    jaw.rotateZ(0.18);
+    jaw.translate(0.056, -0.18, 0);
+    jaw.rotateY(a);
+    chuckSubGeoms.push(jaw);
+  }
+
+  const drillChuckGeom = mergeGeometries(chuckSubGeoms);
+  chuckSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(drillChuckGeom);
+
+  const chuckBaseY = 0.80;
+  const drillChuckMesh = new THREE.Mesh(drillChuckGeom, matLib.get('hardenedJawSteel'));
+  drillChuckMesh.position.set(0, chuckBaseY, DRILL_Z);
+  drillChuckMesh.castShadow = true;
+  drillChuckMesh.receiveShadow = true;
+  registerNode(drillChuckMesh, {
+    id: 'drill.chuck',
+    nodeName: 'DrillChuck',
+    titleVi: 'Đầu kẹp mũi khoan 3 ngàm (3-Jaw Drill Chuck)',
+    titleEn: '3-Jaw Industrial Drill Chuck',
+    functionVi:
+      'Đầu kẹp dạng trụ bậc có 3 ngàm kẹp đồng tâm giữ chặt phần chuôi trụ của mũi khoan ruột gà.',
+    processVi: 'Tiện bậc, lăn nhám áo ngoài và nhiệt luyện 3 ngàm kẹp.',
+    dimensionsNote: 'Đường kính ngoài Ø0.296u, chiều cao 0.34u, đồng trục với trục chính và mũi khoan.',
+    materialName: 'Thép dụng cụ tôi cứng (Hardened Steel)',
+  });
+  drillHeadGroup.add(drillChuckMesh);
+
+  // 5.4 Twist Drill Bit (Mũi khoan ruột gà hai me xoắn phủ TiN — drill.twist-bit)
+  // Local origin at (x = 0, y = 0.62, z = DRILL_Z)
+  // Fluted body length = 0.36, tip length = 0.066 => total below y = 0.62 is 0.426
+  // At rest (feedOffset = 0): tip apex is at y = 0.62 - 0.426 = +0.194 (well above workpiece top y = +0.08)
+  // At maxFeedTravel = 0.38: tip apex reaches y = +0.194 - 0.38 = -0.186 (inside blind hole, 0.094u above workpiece bottom y = -0.28!)
+  const shankCyl = new THREE.CylinderGeometry(0.072, 0.095, 0.12, 36);
+  shankCyl.translate(0, 0.06, 0);
+
+  const helicalFlutes = createHelicalTwistDrillGeometry({
+    totalFluteLength: 0.36,
+    tipLength: 0.066,
+    radius: 0.11,
+    webRadius: 0.036,
+    helicalTurns: 4.0, // 4 full revolutions of a 2-flute helix = 8 helical flute turns visible along the body!
+    axialSegments: 140,
+    radialSegments: 64,
+  });
+
+  const twistDrillGeom = mergeGeometries([shankCyl, helicalFlutes]);
+  shankCyl.dispose();
+  helicalFlutes.dispose();
+  disposableGeometries.push(twistDrillGeom);
+
+  const drillBitBaseY = 0.62;
+  const twistDrillMesh = new THREE.Mesh(twistDrillGeom, matLib.get('tinCoatedGold'));
+  twistDrillMesh.position.set(0, drillBitBaseY, DRILL_Z);
+  twistDrillMesh.castShadow = true;
+  twistDrillMesh.receiveShadow = true;
+  registerNode(twistDrillMesh, {
+    id: 'drill.twist-bit',
+    nodeName: 'TwistDrillBit',
+    titleVi: 'Mũi khoan ruột gà hai me xoắn phủ TiN (2-Flute Twist Drill Bit)',
+    titleEn: 'TiN-Coated 2-Flute Helical Twist Drill Bit (118° Point)',
+    functionVi:
+      'Dụng cụ cắt tạo lỗ có hai rãnh xoắn sâu đối xứng (~8 vòng đường xoắn dọc thân) giúp thoát phoi và dẫn dung dịch trơn nguội, hai lưỡi cắt chính và góc đỉnh 118°.',
+    processVi:
+      'Phay/mài 2 rãnh xoắn đối xứng, mài sắc mặt sau hai lưỡi cắt chính góc 118° và phủ lớp Titanium Nitride (TiN) vàng kim.',
+    dimensionsNote:
+      'Đường kính mũi khoan Ø0.22u, góc đỉnh 118°, 2 me cắt với 8 vòng đường xoắn dọc phần làm việc.',
+    materialName: 'Thép gió HSS phủ TiN vàng kim (TiN-Coated High-Speed Steel)',
+  });
+  drillHeadGroup.add(twistDrillMesh);
+
+  // ============================================================================
+  // 6. METAL CHIPS (Phoi kim loại xoắn — drill.chips)
+  // Controlled spiral swarf ribbons right at the hole mouth (x = 0, y = +0.082, z = DRILL_Z)
+  // ============================================================================
+  const chipsGroup = new THREE.Group();
+  chipsGroup.position.set(0, 0.082, DRILL_Z);
+  registerNode(chipsGroup, {
+    id: 'drill.chips',
+    nodeName: 'DrillChips',
+    titleVi: 'Phoi kim loại xoắn (Curled Metal Chips)',
+    titleEn: 'Spiral Metal Swarf Chips (Illustrative Thermal Tint)',
+    functionVi:
+      'Các dải phoi xoắn thoát ra từ hai rãnh mũi khoan tại miệng lỗ phôi khi mũi khoan ăn sâu vào thép (có thể bật/tắt).',
+    processVi:
+      'Màu xanh lam ánh kim là hiệu ứng tạo hình minh họa nhiệt cắt/nhấn kỹ thuật, không phải khẳng định màu của mọi phoi kim loại.',
+    dimensionsNote: 'Giới hạn gọn quanh miệng lỗ khoan tại (X = 0, Y = +0.082u, Z = +0.45u).',
+    materialName: 'Thép biến dạng nhiệt minh họa (Illustrative Cyan-Blue Tinted Swarf)',
+  });
+  root.add(chipsGroup);
+
+  const chipSubGeoms = [];
+  for (let i = 0; i < 3; i++) {
+    const chip = createSpiralChipGeometry({
+      startRadius: 0.045,
+      endRadius: 0.11,
+      height: 0.09,
+      turns: 1.8,
+      ribbonWidth: 0.018,
+      segments: 36,
+    });
+    chip.rotateZ(0.28);
+    chip.rotateY((i * Math.PI * 2) / 3);
+    chip.translate(Math.cos((i * Math.PI * 2) / 3) * 0.06, 0.005, Math.sin((i * Math.PI * 2) / 3) * 0.06);
+    chipSubGeoms.push(chip);
+  }
+  const chipsMergedGeom = mergeGeometries(chipSubGeoms);
+  chipSubGeoms.forEach((g) => g.dispose());
+  disposableGeometries.push(chipsMergedGeom);
+
+  const chipsMesh = new THREE.Mesh(chipsMergedGeom, matLib.get('technicalCyanChip'));
+  chipsMesh.name = 'DrillChips_Mesh';
+  chipsGroup.add(chipsMesh);
+
+  // ============================================================================
+  // 7. DELTA-TIME ANIMATION CONTROLLER (Spindle Rotation + Reciprocating Feed)
+  // ============================================================================
+  const animParams = {
+    rotationSpeed: 10.5, // rad/s at 1.0x speed
+    feedSpeed: 0.22,     // normalized units/s at 1.0x speed
+    maxFeedTravel: 0.38, // exact reference travel in specification (never penetrates bottom of workpiece)
+    pauseAtBottom: 0.45, // seconds dwell at bottom of blind hole before retracting
+    loop: true,
+    isPlaying: options.autoPlay !== undefined ? Boolean(options.autoPlay) : true,
+    speedMultiplier: 1.0,
+    holeMode: 'auto', // 'auto' | 'pre' | 'post'
+    chipsEnabled: true,
+  };
+
+  const cycleState = {
+    phase: 'feeding_down', // 'feeding_down' | 'dwell_bottom' | 'retracting_up' | 'dwell_top'
+    feedOffset: 0.0,
+    dwellTimer: 0.0,
+    spindleAngleRad: 0.0,
+    maxReachedDepth: 0.14, // start partially drilled so hole is immediately inspectable
+  };
+
+  function syncKinematics() {
+    // 1. Apply vertical feed travel ONLY to Spindle, DrillChuck, and TwistDrillBit
+    // Workpiece and Vise remain 100% stationary!
+    const dy = -cycleState.feedOffset;
+    spindleMesh.position.y = spindleBaseY + dy;
+    drillChuckMesh.position.y = chuckBaseY + dy;
+    twistDrillMesh.position.y = drillBitBaseY + dy;
+
+    // 2. Apply coaxial Y-axis rotation to Spindle, DrillChuck, and TwistDrillBit
+    spindleMesh.rotation.y = cycleState.spindleAngleRad;
+    drillChuckMesh.rotation.y = cycleState.spindleAngleRad;
+    twistDrillMesh.rotation.y = cycleState.spindleAngleRad;
+
+    // 3. Update DrilledHoleVisual state (pre / auto / post)
+    // Drill tip enters workpiece top (y = +0.08) when feedOffset > 0.114
+    const activePenetration = Math.max(0, cycleState.feedOffset - 0.114);
+    if (activePenetration > cycleState.maxReachedDepth) {
+      cycleState.maxReachedDepth = activePenetration;
+    }
+
+    if (animParams.holeMode === 'pre') {
+      // Shallow center-punched starter dimple before drilling
+      drilledHoleMesh.visible = true;
+      drilledHoleMesh.scale.set(1, 0.12, 1);
+    } else if (animParams.holeMode === 'post') {
+      // Fully drilled blind hole
+      drilledHoleMesh.visible = true;
+      drilledHoleMesh.scale.set(1, 1.0, 1);
+    } else {
+      // 'auto': depth reflects progress of drilling stroke
+      drilledHoleMesh.visible = true;
+      const depthScale = Math.min(1.0, Math.max(0.25, cycleState.maxReachedDepth / 0.26));
+      drilledHoleMesh.scale.set(1, depthScale, 1);
+    }
+
+    // 4. Update curled chips animation when cutting inside the hole
+    if (animParams.chipsEnabled) {
+      const isCutting = cycleState.feedOffset > 0.10;
+      const chipScale = isCutting
+        ? 0.65 + 0.35 * Math.min(1, (cycleState.feedOffset - 0.10) / 0.25)
+        : 0.45;
+      chipsMesh.scale.set(chipScale, chipScale, chipScale);
+      chipsMesh.rotation.y = cycleState.spindleAngleRad * 0.6;
+    }
+  }
+
+  // Initialize starting visual state
+  syncKinematics();
+
+  const animation = {
+    start() {
+      animParams.isPlaying = true;
+    },
+    play() {
+      animParams.isPlaying = true;
+    },
+    pause() {
+      animParams.isPlaying = false;
+    },
+    reset() {
+      cycleState.phase = 'feeding_down';
+      cycleState.feedOffset = 0.0;
+      cycleState.dwellTimer = 0.0;
+      cycleState.spindleAngleRad = 0.0;
+      cycleState.maxReachedDepth = 0.14;
+      syncKinematics();
+    },
+    setSpeed(multiplier) {
+      const m = Number(multiplier);
+      if (Number.isFinite(m) && m >= 0) {
+        animParams.speedMultiplier = m;
+      }
+    },
+    getSpeed() {
+      return animParams.speedMultiplier;
+    },
+    setHoleMode(mode) {
+      if (['auto', 'pre', 'post'].includes(mode)) {
+        animParams.holeMode = mode;
+        syncKinematics();
+      }
+    },
+    getHoleMode() {
+      return animParams.holeMode;
+    },
+    setChipsVisible(visible) {
+      animParams.chipsEnabled = Boolean(visible);
+      chipsGroup.visible = animParams.chipsEnabled;
+    },
+    setParams(newParams = {}) {
+      Object.assign(animParams, newParams);
+      syncKinematics();
+    },
+    isPlaying() {
+      return animParams.isPlaying;
+    },
+    getState() {
+      return {
+        isPlaying: animParams.isPlaying,
+        speedMultiplier: animParams.speedMultiplier,
+        phase: cycleState.phase,
+        feedOffset: Number(cycleState.feedOffset.toFixed(3)),
+        maxFeedTravel: animParams.maxFeedTravel,
+        holeMode: animParams.holeMode,
+        chipsVisible: chipsGroup.visible,
+        spindleRpmHud: animParams.isPlaying ? Math.round(980 * animParams.speedMultiplier) : 0,
+      };
+    },
+    update(deltaTime) {
+      if (!animParams.isPlaying) return;
+      const dt = Math.min(Math.max(Number(deltaTime) || 0, 0), 0.1) * animParams.speedMultiplier;
+      if (dt <= 0) return;
+
+      // 1. Primary cutting motion: spindle & twist drill bit rotate around Y
+      cycleState.spindleAngleRad =
+        (cycleState.spindleAngleRad + animParams.rotationSpeed * dt) % (Math.PI * 2000);
+
+      // 2. Axial feed motion along Y: feed down -> dwell at bottom -> retract up
+      const maxTravel = Math.min(0.38, Math.max(0.05, animParams.maxFeedTravel));
+      if (cycleState.phase === 'feeding_down') {
+        cycleState.feedOffset += animParams.feedSpeed * dt;
+        if (cycleState.feedOffset >= maxTravel) {
+          cycleState.feedOffset = maxTravel;
+          cycleState.phase = 'dwell_bottom';
+          cycleState.dwellTimer = 0;
+        }
+      } else if (cycleState.phase === 'dwell_bottom') {
+        cycleState.dwellTimer += dt;
+        if (cycleState.dwellTimer >= animParams.pauseAtBottom) {
+          cycleState.phase = 'retracting_up';
+        }
+      } else if (cycleState.phase === 'retracting_up') {
+        // Retract slightly faster than cutting feed
+        cycleState.feedOffset -= animParams.feedSpeed * 1.45 * dt;
+        if (cycleState.feedOffset <= 0) {
+          cycleState.feedOffset = 0;
+          if (animParams.loop) {
+            cycleState.phase = 'dwell_top';
+            cycleState.dwellTimer = 0;
+          } else {
+            animParams.isPlaying = false;
+            cycleState.phase = 'feeding_down';
+          }
+        }
+      } else if (cycleState.phase === 'dwell_top') {
+        cycleState.dwellTimer += dt;
+        if (cycleState.dwellTimer >= 0.25) {
+          cycleState.phase = 'feeding_down';
+        }
+      }
+
+      syncKinematics();
+    },
+  };
+
+  const metadata = {
+    id: '02-industrial-drill-press',
+    rootName: 'DrillPressAssembly',
+    titleVi: 'Máy Khoan Đứng Công Nghiệp (Industrial Vertical Drill Press)',
+    titleEn: 'Industrial Vertical Drill Press',
+    coordinateSystem: {
+      upAxis: 'Y',
+      primarySpindleAxis: 'Y',
+      spindleAxisXZ: [0, DRILL_Z],
+      columnAxisXZ: [0, COL_Z],
+      units: 'normalized_model_units',
+    },
+    componentIds: Object.keys(components),
+    simulation: {
+      maxFeedTravel: animParams.maxFeedTravel,
+      pointAngleDeg: 118,
+      fluteCount: 2,
+      helicalFluteTurns: 8,
+      workpiecePenetrationSafe: true,
+      holeSimulationMethod:
+        'Mesh trạng thái trước/đang/sau khi khoan kết hợp lòng lỗ trụ + đáy côn 118° (không dùng phép trừ boolean CSG thời gian thực).',
+    },
+  };
+
+  function dispose() {
+    disposableGeometries.forEach((g) => g.dispose());
+    if (ownsMatLib) {
+      matLib.disposeAll();
+    }
+  }
+
+  return {
+    root,
+    components,
+    metadata,
+    animation,
+    dispose,
+  };
+}
+
+    // ============================================================================
+    // STANDALONE GLTF 2.0 BINARY (.GLB) EXPORTER
+    // ============================================================================
+    /**
+ * ExportManager — Exports each standalone model root (`DriveShaftAssembly` or `DrillPressAssembly`)
+ * to a spec-compliant binary glTF 2.0 (.glb) file.
+ *
+ * Key Guarantees (Shared Technical Contract Section 5):
+ * - Exports ONLY the model root (`DriveShaftAssembly` or `DrillPressAssembly`), meshes, PBR materials,
+ *   node hierarchy, `extras` metadata, and keyframe animation clips.
+ * - Never includes UI helpers, studio grid, lights, cameras, or the other model.
+ * - Preserves every component as an independent named glTF node (never merges the whole model into one mesh).
+ * - Embeds a glTF 2.0 AnimationClip so external glTF viewers can play the mechanical animation directly,
+ *   while JavaScript deltaTime controller handles interactive speed/pause/hole-state logic in the app.
+ */
+function buildGlbBufferFromModel(modelInstance) {
+  const root = modelInstance.root;
+  // Reset animation to clean rest pose before capturing node transforms
+  if (modelInstance.animation && typeof modelInstance.animation.reset === 'function') {
+    modelInstance.animation.reset();
+  }
+  root.updateMatrixWorld(true);
+
+  const gltfNodes = [];
+  const gltfMeshes = [];
+  const gltfMaterials = [];
+  const gltfAccessors = [];
+  const gltfBufferViews = [];
+  const materialMap = new Map();
+  const nodeIndexMap = new Map();
+
+  const binaryChunks = [];
+  let byteOffset = 0;
+
+  function appendBinaryChunk(typedArray, target) {
+    const u8 = new Uint8Array(typedArray.buffer, typedArray.byteOffset, typedArray.byteLength);
+    const pad = (4 - (u8.byteLength % 4)) % 4;
+    const viewIndex = gltfBufferViews.length;
+    const viewDef = {
+      buffer: 0,
+      byteOffset,
+      byteLength: u8.byteLength,
+    };
+    if (target) {
+      viewDef.target = target;
+    }
+    gltfBufferViews.push(viewDef);
+
+    binaryChunks.push(u8);
+    if (pad > 0) {
+      binaryChunks.push(new Uint8Array(pad));
+    }
+    byteOffset += u8.byteLength + pad;
+    return viewIndex;
+  }
+
+  function addAccessor(typedArray, componentType, count, type, target, computeMinMax = false) {
+    const bufferView = appendBinaryChunk(typedArray, target);
+    const acc = {
+      bufferView,
+      byteOffset: 0,
+      componentType,
+      count,
+      type,
+    };
+
+    if (computeMinMax && count > 0) {
+      const stride = type === 'VEC3' ? 3 : type === 'VEC4' ? 4 : type === 'VEC2' ? 2 : 1;
+      const min = new Array(stride).fill(Infinity);
+      const max = new Array(stride).fill(-Infinity);
+      for (let i = 0; i < count; i++) {
+        for (let k = 0; k < stride; k++) {
+          const val = typedArray[i * stride + k];
+          if (val < min[k]) min[k] = val;
+          if (val > max[k]) max[k] = val;
+        }
+      }
+      acc.min = min.map((n) => Number(n.toFixed(6)));
+      acc.max = max.map((n) => Number(n.toFixed(6)));
+    }
+
+    const accIndex = gltfAccessors.length;
+    gltfAccessors.push(acc);
+    return accIndex;
+  }
+
+  function getOrCreateMaterialIndex(threeMat) {
+    const mat = threeMat.userData?.__origMaterial || threeMat;
+    const key = mat.uuid || mat.name || 'default';
+    if (materialMap.has(key)) {
+      return materialMap.get(key);
+    }
+
+    const color = mat.color ? [mat.color.r, mat.color.g, mat.color.b, 1.0] : [0.8, 0.8, 0.8, 1.0];
+    const gltfMat = {
+      name: mat.name || 'IndustrialMaterial',
+      pbrMetallicRoughness: {
+        baseColorFactor: color.map((c) => Number(c.toFixed(4))),
+        metallicFactor: Number((mat.metalness !== undefined ? mat.metalness : 0.8).toFixed(4)),
+        roughnessFactor: Number((mat.roughness !== undefined ? mat.roughness : 0.35).toFixed(4)),
+      },
+      doubleSided: Boolean(mat.side === THREE.DoubleSide),
+    };
+
+    if (mat.emissive && (mat.emissive.r > 0 || mat.emissive.g > 0 || mat.emissive.b > 0)) {
+      const intensity = mat.emissiveIntensity !== undefined ? mat.emissiveIntensity : 1.0;
+      gltfMat.emissiveFactor = [
+        Number(Math.min(1, mat.emissive.r * intensity).toFixed(4)),
+        Number(Math.min(1, mat.emissive.g * intensity).toFixed(4)),
+        Number(Math.min(1, mat.emissive.b * intensity).toFixed(4)),
+      ];
+    }
+
+    const idx = gltfMaterials.length;
+    gltfMaterials.push(gltfMat);
+    materialMap.set(key, idx);
+    return idx;
+  }
+
+  function buildMeshIndex(threeMesh) {
+    const geom = threeMesh.geometry;
+    const posAttr = geom.attributes.position;
+    if (!posAttr || posAttr.count === 0) return undefined;
+
+    if (!geom.attributes.normal) {
+      geom.computeVertexNormals();
+    }
+    const normAttr = geom.attributes.normal;
+    const uvAttr = geom.attributes.uv;
+
+    const posArray = new Float32Array(posAttr.array);
+    const posAccessor = addAccessor(posArray, 5126, posAttr.count, 'VEC3', 34962, true);
+
+    const attributes = {
+      POSITION: posAccessor,
+    };
+
+    if (normAttr) {
+      const normArray = new Float32Array(normAttr.array);
+      // Normalize every normal vector strictly to unit length for glTF 2.0 validator compliance
+      for (let i = 0; i < normArray.length; i += 3) {
+        const nx = normArray[i];
+        const ny = normArray[i + 1];
+        const nz = normArray[i + 2];
+        const len = Math.hypot(nx, ny, nz) || 1;
+        normArray[i] = nx / len;
+        normArray[i + 1] = ny / len;
+        normArray[i + 2] = nz / len;
+      }
+      attributes.NORMAL = addAccessor(normArray, 5126, normAttr.count, 'VEC3', 34962, false);
+    }
+
+    if (uvAttr) {
+      const uvArray = new Float32Array(uvAttr.array);
+      attributes.TEXCOORD_0 = addAccessor(uvArray, 5126, uvAttr.count, 'VEC2', 34962, false);
+    }
+
+    const primitive = {
+      attributes,
+      material: getOrCreateMaterialIndex(threeMesh.material),
+      mode: 4, // TRIANGLES
+    };
+
+    if (geom.index && geom.index.count > 0) {
+      const idxSrc = geom.index.array;
+      const useU32 = posAttr.count > 65535;
+      const idxArray = useU32 ? new Uint32Array(idxSrc) : new Uint16Array(idxSrc);
+      const compType = useU32 ? 5125 : 5123; // UNSIGNED_INT or UNSIGNED_SHORT
+      primitive.indices = addAccessor(idxArray, compType, idxArray.length, 'SCALAR', 34963, true);
+    }
+
+    const meshIdx = gltfMeshes.length;
+    gltfMeshes.push({
+      name: `${threeMesh.name || 'Component'}_Geo`,
+      primitives: [primitive],
+    });
+    return meshIdx;
+  }
+
+  function traverseNode(obj) {
+    const nodeIdx = gltfNodes.length;
+    const nodeDef = {
+      name: obj.name || `Node_${nodeIdx}`,
+    };
+    gltfNodes.push(nodeDef);
+    nodeIndexMap.set(obj.name, nodeIdx);
+
+    // Local TRS transform
+    if (obj.position && (obj.position.x !== 0 || obj.position.y !== 0 || obj.position.z !== 0)) {
+      nodeDef.translation = [
+        Number(obj.position.x.toFixed(6)),
+        Number(obj.position.y.toFixed(6)),
+        Number(obj.position.z.toFixed(6)),
+      ];
+    }
+    if (obj.quaternion) {
+      const q = obj.quaternion;
+      if (q.x !== 0 || q.y !== 0 || q.z !== 0 || q.w !== 1) {
+        nodeDef.rotation = [
+          Number(q.x.toFixed(6)),
+          Number(q.y.toFixed(6)),
+          Number(q.z.toFixed(6)),
+          Number(q.w.toFixed(6)),
+        ];
+      }
+    }
+    if (obj.scale && (obj.scale.x !== 1 || obj.scale.y !== 1 || obj.scale.z !== 1)) {
+      nodeDef.scale = [
+        Number(obj.scale.x.toFixed(6)),
+        Number(obj.scale.y.toFixed(6)),
+        Number(obj.scale.z.toFixed(6)),
+      ];
+    }
+
+    // Preserve structured component metadata in node extras
+    if (obj.userData && Object.keys(obj.userData).length > 0) {
+      const cleanExtras = {};
+      for (const [k, v] of Object.entries(obj.userData)) {
+        if (!k.startsWith('__') && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')) {
+          cleanExtras[k] = v;
+        }
+      }
+      if (Object.keys(cleanExtras).length > 0) {
+        nodeDef.extras = cleanExtras;
+      }
+    }
+
+    if (obj.isMesh && obj.geometry) {
+      const mIdx = buildMeshIndex(obj);
+      if (mIdx !== undefined) {
+        nodeDef.mesh = mIdx;
+      }
+    }
+
+    if (obj.children && obj.children.length > 0) {
+      const childIndices = [];
+      for (const child of obj.children) {
+        childIndices.push(traverseNode(child));
+      }
+      nodeDef.children = childIndices;
+    }
+
+    return nodeIdx;
+  }
+
+  const rootNodeIndex = traverseNode(root);
+
+  // Build embedded glTF 2.0 AnimationClips for standard glTF viewers
+  const animations = [];
+  if (root.name === 'DriveShaftAssembly') {
+    const chuckIdx = nodeIndexMap.get('ChuckAssembly');
+    const shaftIdx = nodeIndexMap.get('DriveShaft');
+    if (chuckIdx !== undefined && shaftIdx !== undefined) {
+      const times = new Float32Array([0.0, 0.5, 1.0, 1.5, 2.0]);
+      // Quaternion keyframes for 360° rotation around +X axis over 2.0 seconds
+      const quats = new Float32Array([
+        0, 0, 0, 1,
+        Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4),
+        Math.sin(Math.PI / 2), 0, 0, Math.cos(Math.PI / 2),
+        Math.sin((3 * Math.PI) / 4), 0, 0, Math.cos((3 * Math.PI) / 4),
+        0, 0, 0, -1,
+      ]);
+      const timeAcc = addAccessor(times, 5126, 5, 'SCALAR', undefined, true);
+      const quatAcc = addAccessor(quats, 5126, 5, 'VEC4', undefined, false);
+      animations.push({
+        name: 'DriveShaft_Coaxial_Rotation_X',
+        samplers: [{ input: timeAcc, interpolation: 'LINEAR', output: quatAcc }],
+        channels: [
+          { sampler: 0, target: { node: chuckIdx, path: 'rotation' } },
+          { sampler: 0, target: { node: shaftIdx, path: 'rotation' } },
+        ],
+      });
+    }
+  } else if (root.name === 'DrillPressAssembly') {
+    const spindleIdx = nodeIndexMap.get('Spindle');
+    const chuckIdx = nodeIndexMap.get('DrillChuck');
+    const bitIdx = nodeIndexMap.get('TwistDrillBit');
+    if (spindleIdx !== undefined && chuckIdx !== undefined && bitIdx !== undefined) {
+      const times = new Float32Array([0.0, 1.0, 2.0, 3.0, 4.0]);
+      // Rotation around +Y axis
+      const quats = new Float32Array([
+        0, 0, 0, 1,
+        0, Math.sin(Math.PI / 2), 0, Math.cos(Math.PI / 2),
+        0, 0, 0, -1,
+        0, Math.sin((3 * Math.PI) / 2), 0, Math.cos((3 * Math.PI) / 2),
+        0, 0, 0, 1,
+      ]);
+      const timeAcc = addAccessor(times, 5126, 5, 'SCALAR', undefined, true);
+      const quatAcc = addAccessor(quats, 5126, 5, 'VEC4', undefined, false);
+
+      // Vertical feed translation along Y (0 -> -0.38 -> -0.38 -> 0)
+      const zPos = 0.45;
+      const spindleTrans = new Float32Array([
+        0, 1.08, zPos,
+        0, 1.08 - 0.19, zPos,
+        0, 1.08 - 0.38, zPos,
+        0, 1.08 - 0.38, zPos,
+        0, 1.08, zPos,
+      ]);
+      const chuckTrans = new Float32Array([
+        0, 0.80, zPos,
+        0, 0.80 - 0.19, zPos,
+        0, 0.80 - 0.38, zPos,
+        0, 0.80 - 0.38, zPos,
+        0, 0.80, zPos,
+      ]);
+      const bitTrans = new Float32Array([
+        0, 0.62, zPos,
+        0, 0.62 - 0.19, zPos,
+        0, 0.62 - 0.38, zPos,
+        0, 0.62 - 0.38, zPos,
+        0, 0.62, zPos,
+      ]);
+
+      const spTransAcc = addAccessor(spindleTrans, 5126, 5, 'VEC3', undefined, true);
+      const chTransAcc = addAccessor(chuckTrans, 5126, 5, 'VEC3', undefined, true);
+      const btTransAcc = addAccessor(bitTrans, 5126, 5, 'VEC3', undefined, true);
+
+      animations.push({
+        name: 'DrillPress_SpindleRotation_And_FeedStroke',
+        samplers: [
+          { input: timeAcc, interpolation: 'LINEAR', output: quatAcc },
+          { input: timeAcc, interpolation: 'LINEAR', output: spTransAcc },
+          { input: timeAcc, interpolation: 'LINEAR', output: chTransAcc },
+          { input: timeAcc, interpolation: 'LINEAR', output: btTransAcc },
+        ],
+        channels: [
+          { sampler: 0, target: { node: spindleIdx, path: 'rotation' } },
+          { sampler: 0, target: { node: chuckIdx, path: 'rotation' } },
+          { sampler: 0, target: { node: bitIdx, path: 'rotation' } },
+          { sampler: 1, target: { node: spindleIdx, path: 'translation' } },
+          { sampler: 2, target: { node: chuckIdx, path: 'translation' } },
+          { sampler: 3, target: { node: bitIdx, path: 'translation' } },
+        ],
+      });
+    }
+  }
+
+  const gltfJson = {
+    asset: {
+      version: '2.0',
+      generator: 'Agent-A Industrial 3D Mechanical GLB Exporter',
+      copyright: 'Cong Nghe 11 Mechanical Visualization Asset - Agent A',
+    },
+    scene: 0,
+    scenes: [
+      {
+        name: root.name,
+        nodes: [rootNodeIndex],
+      },
+    ],
+    nodes: gltfNodes,
+    meshes: gltfMeshes,
+    materials: gltfMaterials,
+    accessors: gltfAccessors,
+    bufferViews: gltfBufferViews,
+    buffers: [
+      {
+        byteLength: byteOffset,
+      },
+    ],
+  };
+
+  if (animations.length > 0) {
+    gltfJson.animations = animations;
+  }
+
+  const jsonString = JSON.stringify(gltfJson);
+  const encoder = new TextEncoder();
+  const jsonBytes = encoder.encode(jsonString);
+  const jsonPad = (4 - (jsonBytes.byteLength % 4)) % 4;
+  const jsonChunkLength = jsonBytes.byteLength + jsonPad;
+
+  const binChunkLength = byteOffset;
+  const totalByteLength = 12 + 8 + jsonChunkLength + 8 + binChunkLength;
+
+  const glbBuffer = new ArrayBuffer(totalByteLength);
+  const dataView = new DataView(glbBuffer);
+  const outBytes = new Uint8Array(glbBuffer);
+
+  // 12-byte GLB Header: magic 'glTF' (0x46546C67), version 2, total length
+  dataView.setUint32(0, 0x46546c67, true);
+  dataView.setUint32(4, 2, true);
+  dataView.setUint32(8, totalByteLength, true);
+
+  // Chunk 0: JSON (type 0x4E4F534A)
+  dataView.setUint32(12, jsonChunkLength, true);
+  dataView.setUint32(16, 0x4e4f534a, true);
+  outBytes.set(jsonBytes, 20);
+  for (let i = 0; i < jsonPad; i++) {
+    outBytes[20 + jsonBytes.byteLength + i] = 0x20; // pad JSON with spaces
+  }
+
+  // Chunk 1: BIN (type 0x004E4942)
+  const binChunkStart = 20 + jsonChunkLength;
+  dataView.setUint32(binChunkStart, binChunkLength, true);
+  dataView.setUint32(binChunkStart + 4, 0x004e4942, true);
+
+  let writePos = binChunkStart + 8;
+  for (const chunk of binaryChunks) {
+    outBytes.set(chunk, writePos);
+    writePos += chunk.byteLength;
+  }
+
+  return glbBuffer;
+}
+
+class ExportManager {
+  exportModelToGlb(modelInstance, filename) {
+    const glbBuffer = buildGlbBufferFromModel(modelInstance);
+    const blob = new Blob([glbBuffer], { type: 'model/gltf-binary' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    return glbBuffer.byteLength;
+  }
+}
+
+    // ============================================================================
+    // SELF-CONTAINED SPHERICAL ORBIT / PAN / ZOOM CAMERA CONTROLLER
+    // ============================================================================
+    class StudioCameraController {
+      constructor(camera, domElement) {
+        this.camera = camera;
+        this.domElement = domElement;
+        this.target = new THREE.Vector3(0.2, 0.0, 0.0);
+        this.spherical = { radius: 4.8, phi: 1.08, theta: 0.72 };
+        this.targetSpherical = { radius: 4.8, phi: 1.08, theta: 0.72 };
+        this.panOffset = new THREE.Vector3(0, 0, 0);
+
+        this._isDragging = false;
+        this._dragMode = 'orbit'; // 'orbit' | 'pan'
+        this._prevPointer = { x: 0, y: 0 };
+
+        this._initListeners();
+        this.updateCameraTransform();
+      }
+
+      _initListeners() {
+        const el = this.domElement;
+        el.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        el.addEventListener('pointerdown', (e) => {
+          this._isDragging = true;
+          this._prevPointer.x = e.clientX;
+          this._prevPointer.y = e.clientY;
+          if (e.button === 2 || e.button === 1 || e.shiftKey) {
+            this._dragMode = 'pan';
+          } else {
+            this._dragMode = 'orbit';
+          }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!this._isDragging) return;
+          const dx = e.clientX - this._prevPointer.x;
+          const dy = e.clientY - this._prevPointer.y;
+          this._prevPointer.x = e.clientX;
+          this._prevPointer.y = e.clientY;
+
+          if (this._dragMode === 'orbit') {
+            this.targetSpherical.theta -= dx * 0.0075;
+            this.targetSpherical.phi = Math.max(
+              0.08,
+              Math.min(Math.PI - 0.08, this.targetSpherical.phi - dy * 0.0075)
+            );
+          } else {
+            // Pan perpendicular to view direction
+            const panScale = this.targetSpherical.radius * 0.0015;
+            const forward = new THREE.Vector3()
+              .subVectors(this.target, this.camera.position)
+              .normalize();
+            const right = new THREE.Vector3().crossVectors(forward, this.camera.up).normalize();
+            const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+            this.target.addScaledVector(right, -dx * panScale);
+            this.target.addScaledVector(up, dy * panScale);
+          }
+        });
+
+        window.addEventListener('pointerup', () => {
+          this._isDragging = false;
+        });
+
+        el.addEventListener(
+          'wheel',
+          (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 1.09 : 0.91;
+            this.targetSpherical.radius = Math.max(
+              0.8,
+              Math.min(22.0, this.targetSpherical.radius * factor)
+            );
+          },
+          { passive: false }
+        );
+      }
+
+      update() {
+        // Smooth damping interpolation
+        this.spherical.radius += (this.targetSpherical.radius - this.spherical.radius) * 0.18;
+        this.spherical.phi += (this.targetSpherical.phi - this.spherical.phi) * 0.18;
+        this.spherical.theta += (this.targetSpherical.theta - this.spherical.theta) * 0.18;
+        this.updateCameraTransform();
+      }
+
+      updateCameraTransform() {
+        const r = this.spherical.radius;
+        const sinPhi = Math.sin(this.spherical.phi);
+        const x = this.target.x + r * sinPhi * Math.sin(this.spherical.theta);
+        const y = this.target.y + r * Math.cos(this.spherical.phi);
+        const z = this.target.z + r * sinPhi * Math.cos(this.spherical.theta);
+        this.camera.position.set(x, y, z);
+        this.camera.lookAt(this.target);
+      }
+
+      fitToObject(rootObject, preset = 'iso') {
+        if (!rootObject) return;
+        const box = new THREE.Box3().setFromObject(rootObject);
+        if (box.isEmpty()) return;
+
+        const center = new THREE.Vector3();
+        const size = new THREE.Vector3();
+        box.getCenter(center);
+        box.getSize(size);
+
+        const maxDim = Math.max(size.x, size.y, size.z, 1.0);
+        const fovRad = (this.camera.fov * Math.PI) / 180;
+        const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.32;
+
+        this.target.copy(center);
+        this.targetSpherical.radius = dist;
+
+        switch (preset) {
+          case 'front':
+            this.targetSpherical.theta = 0.0;
+            this.targetSpherical.phi = Math.PI / 2 - 0.06;
+            break;
+          case 'side':
+            this.targetSpherical.theta = Math.PI / 2;
+            this.targetSpherical.phi = Math.PI / 2 - 0.06;
+            break;
+          case 'top':
+            this.targetSpherical.theta = 0.0;
+            this.targetSpherical.phi = 0.08;
+            break;
+          case 'iso':
+          default:
+            this.targetSpherical.theta = 0.72;
+            this.targetSpherical.phi = 1.05;
+            break;
+        }
+      }
+
+      resetCamera(rootObject) {
+        this.fitToObject(rootObject, 'iso');
+      }
+
+      setPresetView(preset, rootObject) {
+        this.fitToObject(rootObject, preset);
+      }
+    }
+
+    // ============================================================================
+    // RAYCASTER COMPONENT PICKER
+    // ============================================================================
+    class StudioComponentPicker {
+      constructor(camera, domElement, onSelectCallback) {
+        this.camera = camera;
+        this.domElement = domElement;
+        this.onSelect = onSelectCallback;
+        this.raycaster = new THREE.Raycaster();
+        this.pointer = new THREE.Vector2();
+        this.activeRoot = null;
+        this.selectedComponentId = null;
+        this.highlightedMeshes = [];
+
+        let downX = 0;
+        let downY = 0;
+        domElement.addEventListener('pointerdown', (e) => {
+          downX = e.clientX;
+          downY = e.clientY;
+        });
+        domElement.addEventListener('pointerup', (e) => {
+          if (Math.hypot(e.clientX - downX, e.clientY - downY) < 5 && e.button === 0) {
+            this.pickAtEvent(e);
+          }
+        });
+      }
+
+      setActiveModelRoot(root) {
+        this.clearHighlight();
+        this.activeRoot = root;
+        this.selectedComponentId = null;
+      }
+
+      pickAtEvent(event) {
+        if (!this.activeRoot) return;
+        const rect = this.domElement.getBoundingClientRect();
+        this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.pointer, this.camera);
+        const hits = this.raycaster.intersectObject(this.activeRoot, true);
+        const validHit = hits.find((h) => h.object && h.object.visible);
+        if (!validHit) {
+          this.selectComponentNode(null);
+          return;
+        }
+
+        let curr = validHit.object;
+        while (curr && (!curr.userData || !curr.userData.componentId)) {
+          curr = curr.parent;
+        }
+        this.selectComponentNode(curr || null);
+      }
+
+      selectComponentNode(node) {
+        this.clearHighlight();
+        if (!node || !node.userData || !node.userData.componentId) {
+          this.selectedComponentId = null;
+          if (this.onSelect) this.onSelect(null);
+          return;
+        }
+
+        this.selectedComponentId = node.userData.componentId;
+        node.traverse((child) => {
+          if (child.isMesh && child.material) {
+            const origMat = child.material;
+            const cloned = origMat.clone();
+            if (cloned.emissive) {
+              cloned.emissive.setHex(0x0284c7);
+              cloned.emissiveIntensity = 0.45;
+            }
+            child.userData.__origMaterial = origMat;
+            child.material = cloned;
+            this.highlightedMeshes.push(child);
+          }
+        });
+
+        if (this.onSelect) this.onSelect(node.userData, node);
+      }
+
+      clearHighlight() {
+        this.highlightedMeshes.forEach((mesh) => {
+          if (mesh.userData.__origMaterial) {
+            if (mesh.material && mesh.material !== mesh.userData.__origMaterial) {
+              mesh.material.dispose();
+            }
+            mesh.material = mesh.userData.__origMaterial;
+            delete mesh.userData.__origMaterial;
+          }
+        });
+        this.highlightedMeshes = [];
+      }
+    }
+
+    // ============================================================================
+    // APPLICATION BOOTSTRAP
+    // ============================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('viewport-container');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x090d16);
+
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+      const camera = new THREE.PerspectiveCamera(40, width / height, 0.05, 100);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if ('outputEncoding' in renderer && THREE.sRGBEncoding) {
+        renderer.outputEncoding = THREE.sRGBEncoding;
+      }
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.18;
+      container.appendChild(renderer.domElement);
+
+      // Studio Industrial Lighting
+      const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x1e293b, 0.9);
+      hemiLight.position.set(0, 8, 0);
+      scene.add(hemiLight);
+
+      const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.65);
+      keyLight.position.set(5.5, 7.5, 6.0);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      scene.add(keyLight);
+
+      const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.95);
+      rimLight.position.set(-5.0, 3.8, -4.5);
+      scene.add(rimLight);
+
+      const bottomFill = new THREE.DirectionalLight(0x94a3b8, 0.55);
+      bottomFill.position.set(-2.5, -3.5, 4.0);
+      scene.add(bottomFill);
+
+      const gridHelper = new THREE.GridHelper(10, 20, 0x1e3a5f, 0x131c2e);
+      scene.add(gridHelper);
+
+      const modelStage = new THREE.Group();
+      modelStage.name = 'ActiveModelStage';
+      scene.add(modelStage);
+
+      const cameraController = new StudioCameraController(camera, renderer.domElement);
+      const exportManager = new ExportManager();
+      const sharedMaterials = createMaterialLibrary();
+
+      const models = {
+        '01-drive-shaft-chuck': createDriveShaftModel({ materialLibrary: sharedMaterials, autoPlay: true }),
+        '02-industrial-drill-press': createDrillPressModel({ materialLibrary: sharedMaterials, autoPlay: true }),
+      };
+
+      let activeModelKey = '01-drive-shaft-chuck';
+
+      const picker = new StudioComponentPicker(camera, renderer.domElement, (meta) => {
+        renderInspector(meta);
+        highlightTreeRow(meta ? meta.componentId : null);
+      });
+
+      function getActiveModel() {
+        return models[activeModelKey];
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById('export-toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3200);
+      }
+
+      function updatePlayBadge() {
+        const playing = getActiveModel().animation.isPlaying();
+        const badge = document.getElementById('anim-state-badge');
+        const dot = document.getElementById('hud-status-dot');
+        if (badge) {
+          badge.textContent = playing ? 'PLAYING' : 'PAUSED';
+          badge.className = playing
+            ? 'text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+            : 'text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        }
+        if (dot) {
+          dot.className = playing
+            ? 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse'
+            : 'w-2 h-2 rounded-full bg-amber-400';
+        }
+      }
+
+      function switchModel(modelKey) {
+        if (!models[modelKey]) return;
+        activeModelKey = modelKey;
+        const model = getActiveModel();
+
+        while (modelStage.children.length > 0) {
+          modelStage.remove(modelStage.children[0]);
+        }
+        modelStage.add(model.root);
+
+        const box = new THREE.Box3().setFromObject(model.root);
+        if (!box.isEmpty()) {
+          gridHelper.position.y = box.min.y - 0.03;
+        }
+
+        picker.setActiveModelRoot(model.root);
+        cameraController.fitToObject(model.root, 'iso');
+
+        // Update active model tab styling
+        document.querySelectorAll('[data-model-switch]').forEach((btn) => {
+          const active = btn.getAttribute('data-model-switch') === modelKey;
+          btn.className = active
+            ? 'px-2.5 sm:px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-sky-600 text-white shadow-sm'
+            : 'px-2.5 sm:px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800';
+        });
+
+        const drillExtra = document.getElementById('drill-extra-controls');
+        if (drillExtra) {
+          drillExtra.classList.toggle('hidden', modelKey !== '02-industrial-drill-press');
+        }
+
+        const spd = model.animation.getSpeed();
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        if (speedSlider) speedSlider.value = String(spd);
+        if (speedValue) speedValue.textContent = `${spd.toFixed(1)}x`;
+
+        updatePlayBadge();
+        buildComponentTree(modelKey);
+        renderInspector(null);
+      }
+
+      function buildComponentTree(modelKey) {
+        const treeEl = document.getElementById('component-tree');
+        if (!treeEl) return;
+        treeEl.innerHTML = '';
+
+        const manifestModel = manifest.models.find((m) => m.id === modelKey);
+        const model = getActiveModel();
+        if (!manifestModel || !model) return;
+
+        manifestModel.components.forEach((comp) => {
+          const node = model.components[comp.id];
+          if (!node) return;
+
+          const isChild = comp.parent !== manifestModel.rootName;
+          const row = document.createElement('div');
+          row.dataset.compId = comp.id;
+          row.className = `flex items-center justify-between gap-1.5 px-2 py-1.5 rounded border border-slate-800/80 bg-slate-900/70 hover:border-sky-500/40 transition ${isChild ? 'ml-3' : ''}`;
+
+          const infoBtn = document.createElement('button');
+          infoBtn.type = 'button';
+          infoBtn.className = 'flex-1 text-left min-w-0';
+          infoBtn.innerHTML = `
+            <div class="text-[10px] font-mono-tech text-sky-400 truncate">${comp.id}</div>
+            <div class="text-xs text-slate-200 font-medium truncate">${comp.titleVi}</div>
+          `;
+          infoBtn.addEventListener('click', () => {
+            picker.selectComponentNode(node);
+          });
+
+          const visBtn = document.createElement('button');
+          visBtn.type = 'button';
+          const updateVisStyle = () => {
+            visBtn.textContent = node.visible ? 'Hiện' : 'Ẩn';
+            visBtn.className = node.visible
+              ? 'px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-emerald-300 border border-emerald-500/30 hover:bg-slate-700'
+              : 'px-2 py-0.5 rounded text-[10px] font-medium bg-slate-900 text-slate-500 border border-slate-700 hover:bg-slate-800';
+          };
+          updateVisStyle();
+
+          visBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            node.visible = !node.visible;
+            updateVisStyle();
+          });
+
+          row.appendChild(infoBtn);
+          row.appendChild(visBtn);
+          treeEl.appendChild(row);
+        });
+      }
+
+      function highlightTreeRow(compId) {
+        document.querySelectorAll('#component-tree > div').forEach((row) => {
+          const match = row.dataset.compId === compId;
+          row.classList.toggle('ring-1', match);
+          row.classList.toggle('ring-sky-400', match);
+          row.classList.toggle('bg-sky-950/50', match);
+        });
+      }
+
+      function renderInspector(meta) {
+        const el = document.getElementById('component-inspector');
+        if (!el) return;
+        const manifestModel = manifest.models.find((m) => m.id === activeModelKey);
+
+        if (!meta) {
+          el.innerHTML = `
+            <div class="p-2 rounded bg-slate-900/90 border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono-tech text-sky-400">${manifestModel ? manifestModel.rootName : ''}</span>
+                <span class="text-[10px] font-mono-tech text-slate-400">Trục chính: ${manifestModel ? manifestModel.primaryAxis : ''}</span>
+              </div>
+              <div class="font-semibold text-slate-100">${manifestModel ? manifestModel.titleVi : ''}</div>
+              <p class="text-[11px] text-slate-300 leading-relaxed">${manifestModel ? manifestModel.descriptionVi : ''}</p>
+              <p class="text-[10.5px] text-amber-300/90 pt-1 border-t border-slate-800">
+                💡 Nhấp chuột trực tiếp vào từng chi tiết trên mô hình 3D hoặc chọn trong cây bên dưới để xem chức năng và nguyên công gia công.
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        el.innerHTML = `
+          <div class="p-2.5 rounded bg-sky-950/30 border border-sky-500/40 space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono-tech font-semibold text-sky-300">${meta.componentId}</span>
+              <span class="text-[10px] font-mono-tech text-slate-400">Node: ${meta.nodeName}</span>
+            </div>
+            <div class="text-xs font-bold text-white">${meta.titleVi}</div>
+            <div class="text-[11px] text-slate-200 leading-relaxed">
+              <span class="text-sky-400 font-semibold">Chức năng:</span> ${meta.functionVi || ''}
+            </div>
+            <div class="text-[11px] text-slate-300 leading-relaxed">
+              <span class="text-emerald-400 font-semibold">Nguyên công:</span> ${meta.processVi || ''}
+            </div>
+            <div class="text-[10.5px] text-slate-400 font-mono-tech pt-1 border-t border-slate-800/80">
+              ${meta.dimensionsNote || ''}
+            </div>
+          </div>
+        `;
+      }
+
+      function updateHudTelemetry() {
+        const hudEl = document.getElementById('hud-telemetry');
+        if (!hudEl) return;
+        const model = getActiveModel();
+        const st = model.animation.getState();
+
+        if (activeModelKey === '01-drive-shaft-chuck') {
+          hudEl.textContent = `DriveShaftAssembly · Trục X · ${st.hudRpm} RPM (Tham khảo minh họa) · Góc quay: ${st.angleDeg}° · Tốc độ: ${st.speedMultiplier.toFixed(1)}x`;
+        } else {
+          const phaseMap = {
+            feeding_down: 'Tiến dao cắt (-Y)',
+            dwell_bottom: 'Dừng đáy lỗ (118°)',
+            retracting_up: 'Rút dao nhanh (+Y)',
+            dwell_top: 'Chuẩn bị chu kỳ mới',
+          };
+          hudEl.textContent = `DrillPressAssembly · Trục Y · ${st.spindleRpmHud} RPM · Hành trình ăn dao: ${st.feedOffset.toFixed(2)} / ${st.maxFeedTravel}u · ${phaseMap[st.phase] || st.phase}`;
+        }
+      }
+
+      // Wire up UI Event Listeners
+      document.querySelectorAll('[data-model-switch]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          switchModel(btn.getAttribute('data-model-switch'));
+        });
+      });
+
+      document.querySelectorAll('[data-cam-view]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const view = btn.getAttribute('data-cam-view');
+          const root = getActiveModel().root;
+          if (view === 'fit') cameraController.fitToObject(root, 'iso');
+          else if (view === 'reset') cameraController.resetCamera(root);
+          else cameraController.setPresetView(view, root);
+        });
+      });
+
+      document.getElementById('btn-play').addEventListener('click', () => {
+        getActiveModel().animation.play();
+        updatePlayBadge();
+      });
+
+      document.getElementById('btn-pause').addEventListener('click', () => {
+        getActiveModel().animation.pause();
+        updatePlayBadge();
+      });
+
+      document.getElementById('btn-reset-anim').addEventListener('click', () => {
+        getActiveModel().animation.reset();
+        updateHudTelemetry();
+      });
+
+      document.getElementById('speed-slider').addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        getActiveModel().animation.setSpeed(val);
+        document.getElementById('speed-value').textContent = `${val.toFixed(1)}x`;
+      });
+
+      document.getElementById('btn-clear-selection').addEventListener('click', () => {
+        picker.selectComponentNode(null);
+      });
+
+      document.getElementById('btn-show-all').addEventListener('click', () => {
+        const model = getActiveModel();
+        Object.values(model.components).forEach((node) => {
+          node.visible = true;
+        });
+        buildComponentTree(activeModelKey);
+      });
+
+      document.querySelectorAll('[data-hole-mode]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode = btn.getAttribute('data-hole-mode');
+          models['02-industrial-drill-press'].animation.setHoleMode(mode);
+          document.querySelectorAll('[data-hole-mode]').forEach((b) => {
+            b.className =
+              b === btn
+                ? 'hole-mode-btn py-1 px-2 rounded text-[11px] font-medium bg-sky-600 text-white'
+                : 'hole-mode-btn py-1 px-2 rounded text-[11px] font-medium bg-slate-800 text-slate-300 hover:bg-slate-700';
+          });
+        });
+      });
+
+      document.getElementById('toggle-chips').addEventListener('change', (e) => {
+        models['02-industrial-drill-press'].animation.setChipsVisible(e.target.checked);
+        buildComponentTree(activeModelKey);
+      });
+
+      document.getElementById('btn-export-01').addEventListener('click', () => {
+        const bytes = exportManager.exportModelToGlb(
+          models['01-drive-shaft-chuck'],
+          '01-drive-shaft-chuck.glb'
+        );
+        showToast(`Đã xuất 01-drive-shaft-chuck.glb (${(bytes / 1024).toFixed(1)} KB)`);
+      });
+
+      document.getElementById('btn-export-02').addEventListener('click', () => {
+        const bytes = exportManager.exportModelToGlb(
+          models['02-industrial-drill-press'],
+          '02-industrial-drill-press.glb'
+        );
+        showToast(`Đã xuất 02-industrial-drill-press.glb (${(bytes / 1024).toFixed(1)} KB)`);
+      });
+
+      window.addEventListener('resize', () => {
+        const w = container.clientWidth || window.innerWidth;
+        const h = container.clientHeight || window.innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+
+      // Start with Model 01
+      switchModel('01-drive-shaft-chuck');
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const dt = clock.getDelta();
+        getActiveModel().animation.update(dt);
+        cameraController.update();
+        updateHudTelemetry();
+        renderer.render(scene, camera);
+      }
+      animate();
+    });
+  </script>
+</body>
+</html>

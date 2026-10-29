@@ -260,7 +260,8 @@ window.addEventListener('keydown', e => {
   }
 });
 
-// Wheel & touch navigation
+// Wheel navigation disabled per user request: allows mouse wheel zoom inside 3D models without changing slides
+/*
 let lastWheel = 0;
 window.addEventListener('wheel', e => {
   if (isOverviewOpen) return;
@@ -269,6 +270,7 @@ window.addEventListener('wheel', e => {
   lastWheel = now;
   goSlide(currentSlide + (e.deltaY > 0 ? 1 : -1));
 }, { passive: true });
+*/
 
 let touchStartX = 0;
 window.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });

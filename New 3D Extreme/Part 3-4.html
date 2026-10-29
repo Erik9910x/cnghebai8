@@ -1,0 +1,4646 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent B — Industrial Machine 3D Lab (Universal Lathe & Vertical Mill)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #0b0f17;
+      color: #e2e8f0;
+      overflow: hidden;
+      user-select: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.35);
+      border-radius: 9999px;
+    }
+    input[type="range"] {
+      accent-color: #06b6d4;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="w-screen h-screen flex flex-col bg-slate-950 text-slate-100">
+  <!-- Top Industrial Technical Lab Header -->
+  <header class="h-14 shrink-0 border-b border-slate-800/90 bg-slate-950/95 px-4 flex items-center justify-between gap-3 z-20">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#06b6d4] shrink-0"></div>
+      <div class="truncate">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold">AGENT B · INDUSTRIAL 3D LAB</span>
+          <span class="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Công nghệ 11 · Gia công cơ khí</span>
+        </div>
+        <p id="hud-machine-badge" class="text-[11px] font-mono text-slate-400 truncate">OBJECT 03 · UNIVERSAL ENGINE LATHE (MÁY TIỆN VẠN NĂNG)</p>
+      </div>
+    </div>
+
+    <!-- Model Switcher -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button id="btn-model-lathe" type="button" class="px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm">
+        03 · Máy tiện vạn năng
+      </button>
+      <button id="btn-model-mill" type="button" class="px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-slate-900/80 border-slate-700 text-slate-300 hover:border-slate-500">
+        04 · Máy phay đứng
+      </button>
+    </div>
+
+    <!-- GLB Standalone Export Actions -->
+    <div class="hidden md:flex items-center gap-2 shrink-0">
+      <button id="btn-export-lathe" type="button" class="px-2.5 py-1.5 rounded text-xs font-mono border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 transition">
+        ⬇ Export 03-universal-lathe.glb
+      </button>
+      <button id="btn-export-mill" type="button" class="px-2.5 py-1.5 rounded text-xs font-mono border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 transition">
+        ⬇ Export 04-vertical-milling-machine.glb
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <div class="flex-1 relative flex overflow-hidden">
+    <!-- Left Sidebar: Scene Graph Tree & Camera / Animation Controls -->
+    <aside class="w-72 lg:w-80 shrink-0 h-full border-r border-slate-800/90 bg-slate-950/90 backdrop-blur-md flex flex-col z-10 overflow-y-auto custom-scrollbar p-3 gap-3">
+      <!-- Camera View Presets -->
+      <section class="rounded-lg border border-slate-800/90 bg-slate-900/50 p-2.5">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">Camera & Góc nhìn</h2>
+          <div class="flex gap-1">
+            <button id="btn-cam-fit" type="button" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">Fit Model</button>
+            <button id="btn-cam-reset" type="button" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">Reset</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <button id="btn-view-front" type="button" class="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">Front</button>
+          <button id="btn-view-side" type="button" class="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">Side</button>
+          <button id="btn-view-top" type="button" class="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">Top</button>
+          <button id="btn-view-iso" type="button" class="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">Isometric</button>
+          <button id="btn-view-overview" type="button" class="py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">Tổng quan</button>
+          <button id="btn-view-cutting" type="button" class="py-1 px-2 rounded bg-cyan-950/70 hover:bg-cyan-900/70 border border-cyan-500/40 text-cyan-300 font-medium">Cận cảnh cắt</button>
+        </div>
+      </section>
+
+      <!-- Animation & Kinematic Controls -->
+      <section class="rounded-lg border border-slate-800/90 bg-slate-900/50 p-2.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">Điều khiển Động học (Δt)</h2>
+          <div class="flex items-center gap-1">
+            <button id="btn-anim-play" type="button" class="px-2 py-0.5 rounded text-xs border border-cyan-400 bg-cyan-500/25 text-cyan-200">Play</button>
+            <button id="btn-anim-pause" type="button" class="px-2 py-0.5 rounded text-xs border border-slate-700 bg-slate-800 text-slate-300">Pause</button>
+            <button id="btn-anim-reset" type="button" class="px-2 py-0.5 rounded text-xs border border-slate-700 bg-slate-800 text-slate-300">Reset</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300">Tốc độ cắt chính (Vc)</span>
+            <span id="val-spindle-speed" class="font-mono text-cyan-300">1.0x</span>
+          </div>
+          <input id="slider-spindle-speed" type="range" min="0.2" max="2.5" step="0.1" value="1.0" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300">Tốc độ chạy dao (Sd)</span>
+            <span id="val-feed-speed" class="font-mono text-amber-300">1.0x</span>
+          </div>
+          <input id="slider-feed-speed" type="range" min="0.0" max="2.5" step="0.1" value="1.0" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+        </div>
+
+        <div class="pt-1 flex flex-col gap-1.5 text-xs border-t border-slate-800/80">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-slate-300">Hiệu ứng phoi vùng cắt</span>
+            <input id="chk-cutting-effects" type="checkbox" checked class="rounded accent-cyan-400" />
+          </label>
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-slate-300">Mũi tên chuyển động (Vc, Sd)</span>
+            <input id="chk-motion-arrows" type="checkbox" checked class="rounded accent-cyan-400" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Component Hierarchy Tree -->
+      <section class="flex-1 flex flex-col min-h-[220px] rounded-lg border border-slate-800/90 bg-slate-900/50 p-2.5">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">Cây cấu trúc Scene Graph</h2>
+          <button id="btn-tree-show-all" type="button" class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+            Hiện tất cả
+          </button>
+        </div>
+        <div id="component-tree-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-1"></div>
+      </section>
+    </aside>
+
+    <!-- Center 3D WebGL Viewport -->
+    <main class="flex-1 relative h-full overflow-hidden bg-slate-950">
+      <div id="viewport-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+      <!-- Bottom Telemetry Bar -->
+      <div class="absolute bottom-3 left-3 right-3 md:right-80 pointer-events-none flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-950/85 border border-slate-800/90 backdrop-blur-md text-xs">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 text-cyan-300 font-mono">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>Vc: Vận tốc cắt chính
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-amber-300 font-mono">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>Sd: Chuyển động chạy dao
+          </span>
+        </div>
+        <div id="hud-kinematic-readout" class="font-mono text-[11px] text-slate-300">
+          Vc: 420 RPM · Sd: Chạy dao dọc trục X
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div id="status-toast" class="fixed bottom-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-slate-900/95 border border-cyan-500/60 text-cyan-200 text-xs font-mono shadow-xl transition-all duration-300 opacity-0 pointer-events-none translate-y-2 z-50">
+        Ready
+      </div>
+    </main>
+
+    <!-- Right Inspector Panel -->
+    <aside class="w-72 lg:w-80 shrink-0 h-full border-l border-slate-800/90 bg-slate-950/90 backdrop-blur-md flex flex-col z-10 overflow-y-auto custom-scrollbar p-3 gap-3">
+      <section class="rounded-lg border border-slate-800/90 bg-slate-900/60 p-3 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">Thông tin Bộ phận</span>
+          <span id="inspector-comp-id" class="text-[11px] font-mono text-amber-300">lathe.*</span>
+        </div>
+        <h3 id="inspector-comp-title" class="text-sm font-bold text-white leading-snug">
+          Universal Engine Lathe (Máy tiện vạn năng)
+        </h3>
+        <div class="grid grid-cols-2 gap-1.5 text-[11px] pt-1 border-t border-slate-800/80">
+          <div>
+            <span class="text-slate-400 block">Node Scene Graph:</span>
+            <span id="inspector-comp-node" class="font-mono text-slate-200">UniversalLatheAssembly</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Nhóm kết cấu:</span>
+            <span id="inspector-comp-category" class="text-slate-200">Tổng thành máy</span>
+          </div>
+        </div>
+        <div class="text-[11px] pt-1 border-t border-slate-800/80">
+          <span class="text-slate-400 block">Vai trò động học:</span>
+          <span id="inspector-comp-kinematic" class="text-cyan-300 font-medium">Vc: Phôi quay trục X | Sd: Dao tịnh tiến trục X</span>
+        </div>
+        <div class="pt-1 border-t border-slate-800/80">
+          <span class="text-slate-400 text-[11px] block mb-1">Chức năng & Nguyên lý kỹ thuật:</span>
+          <p id="inspector-comp-desc" class="text-xs text-slate-300 leading-relaxed">
+            Nhấp trực tiếp vào bất kỳ chi tiết 3D nào trên mô hình hoặc chọn trong cây cấu trúc bên trái để xem định danh kỹ thuật, vai trò động học và nguyên lý làm việc.
+          </p>
+        </div>
+      </section>
+
+      <!-- Educational Curriculum Card (Công nghệ 11) -->
+      <section class="rounded-lg border border-cyan-500/30 bg-cyan-950/20 p-3 space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <h4 class="text-xs font-mono uppercase tracking-wider text-cyan-300 font-semibold">Trọng tâm Bài giảng Công nghệ 11</h4>
+        </div>
+        <blockquote id="edu-summary-text" class="text-xs text-slate-200 leading-relaxed border-l-2 border-cyan-400 pl-2.5 italic">
+          Trong cấu hình tiện điển hình này, phôi quay quanh trục chính để tạo vận tốc cắt; dao dịch chuyển tương đối với phôi nhằm gia công các bề mặt tròn xoay. Băng máy, đầu trục chính, mâm cặp, bàn xe dao và ụ động giúp người học nhận diện các bộ phận cơ bản của máy tiện.
+        </blockquote>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+// ============================================================================
+// AGENT B — BUNDLED SINGLE-FILE CANVAS VIEWER (Universal Lathe & Vertical Mill)
+// Generated from modular ES sources in industrial-3d-agent-b/src/
+// ============================================================================
+const modelManifest = {
+  "project": "industrial-3d-agent-b",
+  "agent": "Agent B — Mechanical Visualization Engineer",
+  "curriculum": "Công nghệ 11 — Cơ khí Chế tạo (Gia công cắt gọt kim loại)",
+  "conventions": {
+    "upAxis": "Y",
+    "unit": "meters (normalized model units)",
+    "pbrWorkflow": "Metallic-Roughness (MeshStandardMaterial, GLTF 2.0 compatible)"
+  },
+  "models": [
+    {
+      "objectCode": "OBJECT 03",
+      "id": "03-universal-lathe",
+      "nameVi": "Máy tiện vạn năng",
+      "nameEn": "Universal Engine Lathe",
+      "rootNode": "UniversalLatheAssembly",
+      "exportFile": "public/exports/03-universal-lathe.glb",
+      "spindleAxis": "X",
+      "feedAxis": "X (longitudinal) / Z (cross-slide)",
+      "educationalSummary": "Trong cấu hình tiện điển hình này, phôi quay quanh trục chính để tạo vận tốc cắt; dao dịch chuyển tương đối với phôi nhằm gia công các bề mặt tròn xoay. Băng máy, đầu trục chính, mâm cặp, bàn xe dao và ụ động giúp người học nhận diện các bộ phận cơ bản của máy tiện.",
+      "sceneGraph": {
+        "name": "UniversalLatheAssembly",
+        "children": [
+          {
+            "name": "LatheBed",
+            "componentId": "lathe.bed",
+            "children": [
+              {
+                "name": "BedBase",
+                "componentId": "lathe.bed.base"
+              },
+              {
+                "name": "GuideRail_Left",
+                "componentId": "lathe.bed.guideways"
+              },
+              {
+                "name": "GuideRail_Right",
+                "componentId": "lathe.bed.guideways"
+              }
+            ]
+          },
+          {
+            "name": "HeadstockAssembly",
+            "componentId": "lathe.headstock",
+            "children": [
+              {
+                "name": "HeadstockHousing",
+                "componentId": "lathe.headstock"
+              },
+              {
+                "name": "Spindle",
+                "componentId": "lathe.headstock.spindle"
+              },
+              {
+                "name": "ChuckAssembly",
+                "componentId": "lathe.chuck",
+                "children": [
+                  {
+                    "name": "ChuckBody",
+                    "componentId": "lathe.chuck.body"
+                  },
+                  {
+                    "name": "Jaw_01",
+                    "componentId": "lathe.chuck.jaw-01"
+                  },
+                  {
+                    "name": "Jaw_02",
+                    "componentId": "lathe.chuck.jaw-02"
+                  },
+                  {
+                    "name": "Jaw_03",
+                    "componentId": "lathe.chuck.jaw-03"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "WorkpieceAssembly",
+            "children": [
+              {
+                "name": "RotatingWorkpiece",
+                "componentId": "lathe.workpiece"
+              }
+            ]
+          },
+          {
+            "name": "TailstockAssembly",
+            "componentId": "lathe.tailstock",
+            "children": [
+              {
+                "name": "TailstockBase",
+                "componentId": "lathe.tailstock.base"
+              },
+              {
+                "name": "TailstockHousing",
+                "componentId": "lathe.tailstock.housing"
+              },
+              {
+                "name": "Quill",
+                "componentId": "lathe.tailstock.quill"
+              },
+              {
+                "name": "CenterPoint",
+                "componentId": "lathe.tailstock.center"
+              }
+            ]
+          },
+          {
+            "name": "CarriageAssembly",
+            "componentId": "lathe.carriage",
+            "children": [
+              {
+                "name": "Saddle",
+                "componentId": "lathe.carriage.saddle"
+              },
+              {
+                "name": "CrossSlide",
+                "componentId": "lathe.carriage.cross-slide"
+              },
+              {
+                "name": "ToolPost",
+                "componentId": "lathe.carriage.tool-post"
+              },
+              {
+                "name": "ToolHolder",
+                "componentId": "lathe.cutting-tool.holder"
+              },
+              {
+                "name": "CuttingInsert",
+                "componentId": "lathe.cutting-tool.insert"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "objectCode": "OBJECT 04",
+      "id": "04-vertical-milling-machine",
+      "nameVi": "Máy phay đứng",
+      "nameEn": "Vertical Milling Machine",
+      "rootNode": "VerticalMillAssembly",
+      "exportFile": "public/exports/04-vertical-milling-machine.glb",
+      "spindleAxis": "Y",
+      "feedAxis": "X (table longitudinal feed)",
+      "educationalSummary": "Trong cấu hình phay đứng minh họa, dao phay quay để tạo chuyển động cắt; bàn máy mang phôi chuyển động tương đối với dao. Máy phay có thể gia công các bề mặt phẳng, rãnh và nhiều biên dạng khác tùy loại dao, cấu hình máy và cách gá đặt.",
+      "sceneGraph": {
+        "name": "VerticalMillAssembly",
+        "children": [
+          {
+            "name": "MachineBase",
+            "componentId": "mill.base"
+          },
+          {
+            "name": "VerticalColumn",
+            "componentId": "mill.column"
+          },
+          {
+            "name": "SpindleHead",
+            "componentId": "mill.spindle-head",
+            "children": [
+              {
+                "name": "HeadHousing",
+                "componentId": "mill.spindle-head.housing"
+              },
+              {
+                "name": "Spindle",
+                "componentId": "mill.spindle"
+              },
+              {
+                "name": "ToolHolder",
+                "componentId": "mill.tool-holder",
+                "children": [
+                  {
+                    "name": "Collet",
+                    "componentId": "mill.tool-holder.collet"
+                  },
+                  {
+                    "name": "EndMill",
+                    "componentId": "mill.end-mill"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "MillingTableAssembly",
+            "componentId": "mill.table-assembly",
+            "children": [
+              {
+                "name": "TableBase",
+                "componentId": "mill.table-base"
+              },
+              {
+                "name": "Worktable",
+                "componentId": "mill.worktable",
+                "children": [
+                  {
+                    "name": "TSlot_01",
+                    "componentId": "mill.worktable.t-slot-01"
+                  },
+                  {
+                    "name": "TSlot_02",
+                    "componentId": "mill.worktable.t-slot-02"
+                  },
+                  {
+                    "name": "TSlot_03",
+                    "componentId": "mill.worktable.t-slot-03"
+                  }
+                ]
+              },
+              {
+                "name": "WorkholdingFixture",
+                "componentId": "mill.workholding-fixture"
+              },
+              {
+                "name": "Workpiece",
+                "componentId": "mill.workpiece"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+};
+
+// --- Module: src/materials/MaterialLibrary.js ---
+/**
+ * MaterialLibrary — PBR Materials for Industrial Mechanical Visualization
+ * Designed for GLTF 2.0 compatibility (MeshStandardMaterial) and realistic technical shading.
+ * Follows Agent B shared contract:
+ * - Charcoal cast iron with higher roughness
+ * - Machined silver steel with high metalness and low roughness
+ * - TiN gold cutting insert accent
+ * - Restrained technical cyan accent (#06b6d4)
+ */
+function createMaterialLibrary() {
+  const materials = {
+    castIronDark: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_Dark',
+      color: new THREE.Color(0x2b3138),
+      metalness: 0.35,
+      roughness: 0.72
+    }),
+    castIronMedium: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_Medium',
+      color: new THREE.Color(0x37414b),
+      metalness: 0.38,
+      roughness: 0.66
+    }),
+    castIronHousing: new THREE.MeshStandardMaterial({
+      name: 'Mat_CastIron_Housing',
+      color: new THREE.Color(0x3f4a56),
+      metalness: 0.40,
+      roughness: 0.60
+    }),
+    machinedSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_MachinedSteel',
+      color: new THREE.Color(0xcbd5e1),
+      metalness: 0.86,
+      roughness: 0.24
+    }),
+    polishedSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_PolishedSteel',
+      color: new THREE.Color(0xe2e8f0),
+      metalness: 0.92,
+      roughness: 0.15
+    }),
+    hardenedSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_HardenedSteel',
+      color: new THREE.Color(0x64748b),
+      metalness: 0.78,
+      roughness: 0.34
+    }),
+    rawWorkpieceSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_RawWorkpieceSteel',
+      color: new THREE.Color(0x94a3b8),
+      metalness: 0.80,
+      roughness: 0.38
+    }),
+    turnedWorkpieceSteel: new THREE.MeshStandardMaterial({
+      name: 'Mat_TurnedWorkpieceSteel',
+      color: new THREE.Color(0xdbeafe),
+      metalness: 0.90,
+      roughness: 0.18
+    }),
+    tinCoatedInsert: new THREE.MeshStandardMaterial({
+      name: 'Mat_TiN_Insert',
+      color: new THREE.Color(0xf59e0b),
+      metalness: 0.82,
+      roughness: 0.22
+    }),
+    carbideFlute: new THREE.MeshStandardMaterial({
+      name: 'Mat_Carbide_Flute',
+      color: new THREE.Color(0xd1d5db),
+      metalness: 0.92,
+      roughness: 0.16
+    }),
+    tSlotCavity: new THREE.MeshStandardMaterial({
+      name: 'Mat_TSlot_Cavity',
+      color: new THREE.Color(0x1e252d),
+      metalness: 0.50,
+      roughness: 0.58
+    }),
+    technicalCyan: new THREE.MeshStandardMaterial({
+      name: 'Mat_TechnicalCyan',
+      color: new THREE.Color(0x06b6d4),
+      metalness: 0.45,
+      roughness: 0.35,
+      emissive: new THREE.Color(0x033844),
+      emissiveIntensity: 0.35
+    }),
+    controlBlack: new THREE.MeshStandardMaterial({
+      name: 'Mat_ControlBlack',
+      color: new THREE.Color(0x181c20),
+      metalness: 0.25,
+      roughness: 0.55
+    }),
+    brassAccent: new THREE.MeshStandardMaterial({
+      name: 'Mat_BrassAccent',
+      color: new THREE.Color(0xd97706),
+      metalness: 0.80,
+      roughness: 0.28
+    }),
+    chipSwarf: new THREE.MeshStandardMaterial({
+      name: 'Mat_ChipSwarf',
+      color: new THREE.Color(0x93c5fd),
+      metalness: 0.88,
+      roughness: 0.25,
+      side: THREE.DoubleSide
+    }),
+    sparkPoint: new THREE.MeshBasicMaterial({
+      name: 'Mat_SparkPoint',
+      color: new THREE.Color(0xfbbf24)
+    }),
+    arrowVc: new THREE.MeshBasicMaterial({
+      name: 'Mat_ArrowVc',
+      color: new THREE.Color(0x06b6d4)
+    }),
+    arrowSd: new THREE.MeshBasicMaterial({
+      name: 'Mat_ArrowSd',
+      color: new THREE.Color(0xf59e0b)
+    })
+  };
+
+  function dispose() {
+    Object.values(materials).forEach((mat) => {
+      if (mat && typeof mat.dispose === 'function') {
+        mat.dispose();
+      }
+    });
+  }
+
+  return {
+    ...materials,
+    dispose
+  };
+}
+
+// --- Module: src/geometry/MechanicalPrimitives.js ---
+/**
+ * Extrudes a 2D closed polygon profile (array of [u, v] points in CCW order)
+ * along a linear axis ('x', 'y', or 'z') from minCoord to maxCoord.
+ * Returns a clean indexed THREE.BufferGeometry with split hard-edge normals.
+ */
+function createProfileExtrusionGeometry(profile2D, minCoord, maxCoord, axis = 'x') {
+  const n = profile2D.length;
+  const positions = [];
+  const indices = [];
+
+  function mapPoint(u, v, w) {
+    if (axis === 'x') return [w, v, u];
+    if (axis === 'y') return [u, w, v];
+    return [u, v, w];
+  }
+
+  // Side quads (split vertices per face for crisp mechanical crease normals)
+  for (let i = 0; i < n; i++) {
+    const [u0, v0] = profile2D[i];
+    const [u1, v1] = profile2D[(i + 1) % n];
+
+    const p00 = mapPoint(u0, v0, minCoord);
+    const p10 = mapPoint(u1, v1, minCoord);
+    const p11 = mapPoint(u1, v1, maxCoord);
+    const p01 = mapPoint(u0, v0, maxCoord);
+
+    const baseIdx = positions.length / 3;
+    positions.push(...p00, ...p10, ...p11, ...p01);
+    if (axis === 'x') {
+      indices.push(baseIdx, baseIdx + 2, baseIdx + 1);
+      indices.push(baseIdx, baseIdx + 3, baseIdx + 2);
+    } else {
+      indices.push(baseIdx, baseIdx + 1, baseIdx + 2);
+      indices.push(baseIdx, baseIdx + 2, baseIdx + 3);
+    }
+  }
+
+  // Triangulate simple/convex or ear-clipped polygon for end caps
+  const capTris = triangulatePolygon2D(profile2D);
+
+  // Start cap at minCoord
+  const startBase = positions.length / 3;
+  for (let i = 0; i < n; i++) {
+    const [u, v] = profile2D[i];
+    positions.push(...mapPoint(u, v, minCoord));
+  }
+  for (let t = 0; t < capTris.length; t += 3) {
+    if (axis === 'x') {
+      indices.push(startBase + capTris[t], startBase + capTris[t + 1], startBase + capTris[t + 2]);
+    } else {
+      indices.push(startBase + capTris[t], startBase + capTris[t + 2], startBase + capTris[t + 1]);
+    }
+  }
+
+  // End cap at maxCoord
+  const endBase = positions.length / 3;
+  for (let i = 0; i < n; i++) {
+    const [u, v] = profile2D[i];
+    positions.push(...mapPoint(u, v, maxCoord));
+  }
+  for (let t = 0; t < capTris.length; t += 3) {
+    if (axis === 'x') {
+      indices.push(endBase + capTris[t], endBase + capTris[t + 2], endBase + capTris[t + 1]);
+    } else {
+      indices.push(endBase + capTris[t], endBase + capTris[t + 1], endBase + capTris[t + 2]);
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+/**
+ * Ear-clipping triangulation for arbitrary 2D simple polygons (supports concave profiles like T-slots and V-ways)
+ */
+function triangulatePolygon2D(points) {
+  const n = points.length;
+  if (n < 3) return [];
+
+  // Compute signed area to determine winding
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[(i + 1) % n];
+    area += x0 * y1 - x1 * y0;
+  }
+  const ccw = area >= 0;
+
+  const V = [];
+  for (let i = 0; i < n; i++) V.push(i);
+
+  const tris = [];
+  let count = 2 * n;
+  let v = n - 1;
+
+  function isEar(u, vIdx, w, polyLen) {
+    const [ax, ay] = points[V[u]];
+    const [bx, by] = points[V[vIdx]];
+    const [cx, cy] = points[V[w]];
+
+    const cross = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    if (ccw ? cross <= 1e-9 : cross >= -1e-9) return false;
+
+    for (let p = 0; p < polyLen; p++) {
+      if (p === u || p === vIdx || p === w) continue;
+      const [px, py] = points[V[p]];
+      if (pointInTriangle(px, py, ax, ay, bx, by, cx, cy)) return false;
+    }
+    return true;
+  }
+
+  let nv = n;
+  while (nv > 2) {
+    if (count-- <= 0) break;
+    let u = v;
+    if (nv <= u) u = 0;
+    v = u + 1;
+    if (nv <= v) v = 0;
+    let w = v + 1;
+    if (nv <= w) w = 0;
+
+    if (isEar(u, v, w, nv)) {
+      if (ccw) {
+        tris.push(V[u], V[v], V[w]);
+      } else {
+        tris.push(V[u], V[w], V[v]);
+      }
+      V.splice(v, 1);
+      nv--;
+      count = 2 * nv;
+    }
+  }
+  return tris;
+}
+
+function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+  const v0x = cx - ax;
+  const v0y = cy - ay;
+  const v1x = bx - ax;
+  const v1y = by - ay;
+  const v2x = px - ax;
+  const v2y = py - ay;
+
+  const dot00 = v0x * v0x + v0y * v0y;
+  const dot01 = v0x * v1x + v0y * v1y;
+  const dot02 = v0x * v2x + v0y * v2y;
+  const dot11 = v1x * v1x + v1y * v1y;
+  const dot12 = v1x * v2x + v1y * v2y;
+
+  const denom = dot00 * dot11 - dot01 * dot01;
+  if (Math.abs(denom) < 1e-12) return false;
+  const invDenom = 1 / denom;
+  const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+  const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+  return u >= -1e-6 && v >= -1e-6 && u + v <= 1 + 1e-6;
+}
+
+/**
+ * Creates a revolved solid along the X axis or Y axis from a sequence of [axialPos, radius] pairs.
+ */
+function createRevolvedSolidGeometry(profile, radialSegments = 48, axis = 'x') {
+  const positions = [];
+  const indices = [];
+  const rings = profile.length;
+
+  for (let i = 0; i < rings; i++) {
+    const [axial, r] = profile[i];
+    for (let j = 0; j <= radialSegments; j++) {
+      const theta = (j / radialSegments) * Math.PI * 2;
+      const c = Math.cos(theta) * r;
+      const s = Math.sin(theta) * r;
+      if (axis === 'x') {
+        positions.push(axial, c, s);
+      } else if (axis === 'y') {
+        positions.push(c, axial, s);
+      } else {
+        positions.push(c, s, axial);
+      }
+    }
+  }
+
+  const stride = radialSegments + 1;
+  for (let i = 0; i < rings - 1; i++) {
+    for (let j = 0; j < radialSegments; j++) {
+      const a = i * stride + j;
+      const b = (i + 1) * stride + j;
+      const c = (i + 1) * stride + j + 1;
+      const d = i * stride + j + 1;
+
+      if (axis === 'x') {
+        indices.push(a, c, b);
+        indices.push(a, d, c);
+      } else {
+        indices.push(a, b, c);
+        indices.push(a, c, d);
+      }
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+/**
+ * Creates an industrial Lathe guideway rail (combination inverted V-way + flat bearing shoulder)
+ * extruded along X from minX to maxX.
+ */
+function createGuidewayRailGeometry(minX, maxX, widthZ = 0.056, heightY = 0.055) {
+  const hw = widthZ * 0.5;
+  const baseH = heightY * 0.48;
+  // Profile in [z, y] where y=0 is bottom sitting on bed plateau
+  const profile = [
+    [-hw, 0],
+    [hw, 0],
+    [hw, baseH],
+    [hw * 0.65, baseH],
+    [0, heightY], // Inverted V-way apex
+    [-hw * 0.65, baseH],
+    [-hw, baseH]
+  ];
+  return createProfileExtrusionGeometry(profile, minX, maxX, 'x');
+}
+
+/**
+ * Creates a triangular/rhombic indexable carbide turning insert geometry with relief bevel
+ */
+function createIndexableInsertGeometry(radius = 0.016, thickness = 0.006) {
+  // 55-degree diamond/rhombic turning insert pointing toward -Z (workpiece) and -X (headstock)
+  const profile = [
+    [-0.014, 0.002],   // Cutting tip closest to workpiece (z ~ 0)
+    [0.004, 0.014],
+    [0.014, 0.026],
+    [-0.004, 0.018]
+  ];
+  return createProfileExtrusionGeometry(profile, -thickness * 0.5, thickness * 0.5, 'y');
+}
+
+/**
+ * Creates a 3-spoke industrial handwheel group
+ */
+function createHandwheelGroup(radius, rimRadius, materials, namePrefix = 'Handwheel') {
+  const group = new THREE.Group();
+  group.name = namePrefix;
+
+  const rimGeom = new THREE.TorusGeometry(radius, rimRadius, 12, 32);
+  const rim = new THREE.Mesh(rimGeom, materials.polishedSteel);
+  rim.name = `${namePrefix}_Rim`;
+  group.add(rim);
+
+  const hubGeom = new THREE.CylinderGeometry(radius * 0.25, radius * 0.28, rimRadius * 2.6, 16);
+  hubGeom.rotateX(Math.PI * 0.5);
+  const hub = new THREE.Mesh(hubGeom, materials.castIronDark);
+  hub.name = `${namePrefix}_Hub`;
+  group.add(hub);
+
+  for (let i = 0; i < 3; i++) {
+    const angle = (i * Math.PI * 2) / 3;
+    const spokeGeom = new THREE.CylinderGeometry(rimRadius * 0.65, rimRadius * 0.65, radius * 0.92, 10);
+    spokeGeom.translate(0, radius * 0.46, 0);
+    spokeGeom.rotateZ(angle);
+    const spoke = new THREE.Mesh(spokeGeom, materials.machinedSteel);
+    spoke.name = `${namePrefix}_Spoke_${i + 1}`;
+    group.add(spoke);
+  }
+
+  const gripGeom = new THREE.CylinderGeometry(rimRadius * 0.85, rimRadius * 0.7, radius * 0.45, 12);
+  gripGeom.rotateX(Math.PI * 0.5);
+  gripGeom.translate(radius, 0, radius * 0.24);
+  const grip = new THREE.Mesh(gripGeom, materials.controlBlack);
+  grip.name = `${namePrefix}_Grip`;
+  group.add(grip);
+
+  return group;
+}
+
+/**
+ * Creates a 3D Curved Rotational Arrow mesh (for Vc cutting velocity visualization)
+ */
+function createCurvedMotionArrow(radius, arcAngle, tubeRadius, material, axis = 'x') {
+  const group = new THREE.Group();
+  const arcGeom = new THREE.TorusGeometry(radius, tubeRadius, 10, 32, arcAngle);
+  if (axis === 'x') {
+    arcGeom.rotateY(Math.PI * 0.5);
+  } else if (axis === 'y') {
+    arcGeom.rotateX(Math.PI * 0.5);
+  }
+  const arcMesh = new THREE.Mesh(arcGeom, material);
+  group.add(arcMesh);
+
+  const coneGeom = new THREE.ConeGeometry(tubeRadius * 3.0, tubeRadius * 7.5, 14);
+  const coneMesh = new THREE.Mesh(coneGeom, material);
+  if (axis === 'x') {
+    coneMesh.position.set(0, Math.sin(arcAngle) * radius, Math.cos(arcAngle) * radius);
+    coneMesh.rotation.x = -arcAngle;
+  } else if (axis === 'y') {
+    coneMesh.position.set(Math.cos(arcAngle) * radius, 0, Math.sin(arcAngle) * radius);
+    coneMesh.rotation.z = -Math.PI * 0.5;
+    coneMesh.rotation.y = -arcAngle;
+  }
+  group.add(coneMesh);
+  return group;
+}
+
+/**
+ * Creates a 3D Linear Double/Single Motion Arrow (for Sd feed motion visualization)
+ */
+function createLinearMotionArrow(length, shaftRadius, material, bidirectional = false) {
+  const group = new THREE.Group();
+  const shaftGeom = new THREE.CylinderGeometry(shaftRadius, shaftRadius, length, 12);
+  shaftGeom.rotateZ(Math.PI * 0.5);
+  const shaft = new THREE.Mesh(shaftGeom, material);
+  group.add(shaft);
+
+  const headLen = shaftRadius * 7.0;
+  const headRad = shaftRadius * 2.8;
+
+  const headLeft = new THREE.Mesh(new THREE.ConeGeometry(headRad, headLen, 14), material);
+  headLeft.rotation.z = Math.PI * 0.5;
+  headLeft.position.x = -length * 0.5 - headLen * 0.4;
+  group.add(headLeft);
+
+  if (bidirectional) {
+    const headRight = new THREE.Mesh(new THREE.ConeGeometry(headRad, headLen, 14), material);
+    headRight.rotation.z = -Math.PI * 0.5;
+    headRight.position.x = length * 0.5 + headLen * 0.4;
+    group.add(headRight);
+  }
+
+  return group;
+}
+
+/**
+ * Creates a procedural spiral chip swarf ribbon for cutting visualization
+ */
+function createSwarfRibbonGeometry(turns = 3.5, radius = 0.012, pitch = 0.014, width = 0.004) {
+  const segments = 64;
+  const positions = [];
+  const indices = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = t * turns * Math.PI * 2;
+    const r = radius * (0.7 + 0.3 * t);
+    const x = -t * turns * pitch;
+    const y = Math.cos(angle) * r;
+    const z = Math.sin(angle) * r;
+
+    positions.push(x, y, z);
+    positions.push(x - width, y * 1.06, z * 1.06);
+  }
+
+  for (let i = 0; i < segments; i++) {
+    const a = i * 2;
+    const b = a + 1;
+    const c = a + 2;
+    const d = a + 3;
+    indices.push(a, b, c);
+    indices.push(b, d, c);
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+// --- Module: src/geometry/ChuckGeometry.js ---
+/**
+ * Creates the 3-Jaw Scroll Chuck Body with mounting flange, front bevel,
+ * through-bore, and 3 recessed radial jaw guideways at 120° intervals.
+ * Aligned along the X-axis (centered at X = 0 locally, spanning X from -0.08 to +0.06).
+ */
+function createChuckBodyGeometry({
+  outerRadius = 0.145,
+  boreRadius = 0.049,
+  thickness = 0.115,
+  flangeThickness = 0.025
+} = {}) {
+  // Revolved profile [x, r] from backplate (-0.08) to front face (+0.06)
+  const backX = -thickness * 0.65;
+  const stepX = backX + flangeThickness;
+  const frontX = backX + thickness;
+
+  const profile = [
+    [backX, boreRadius],
+    [backX, outerRadius * 0.90],
+    [stepX, outerRadius * 0.90],
+    [stepX, outerRadius],
+    [frontX - 0.010, outerRadius],
+    [frontX, outerRadius * 0.94],
+    [frontX, boreRadius],
+    [backX, boreRadius]
+  ];
+
+  return createRevolvedSolidGeometry(profile, 60, 'x');
+}
+
+/**
+ * Creates a single stepped hardened 3-jaw chuck jaw geometry.
+ * Designed in local space where:
+ * - X is along spindle axis (jaw extends from X = -0.015 inside slot to X = +0.072 protruding forward)
+ * - Y is radial outward from spindle centerline (inner clamping face at Y = gripRadius)
+ * - Z is tangential thickness (jaw width = 0.032 m)
+ */
+function createChuckJawGeometry({
+  gripRadius = 0.048,
+  outerRadius = 0.138,
+  jawWidth = 0.032
+} = {}) {
+  const r0 = gripRadius; // Clamps tightly on workpiece outer radius (0.048 m)
+  const r1 = gripRadius + 0.028;
+  const r2 = gripRadius + 0.056;
+  const rTop = outerRadius;
+
+  // 2D profile in [z_UnusedOrX, y] -> we extrude in Z from -jawWidth/2 to +jawWidth/2
+  // Wait: in createProfileExtrusionGeometry(profile2D, minZ, maxZ, 'z'), profile2D is [x, y]!
+  const profileXY = [
+    [-0.022, r0 + 0.008],   // Rear guide tongue inside chuck body
+    [0.015, r0 + 0.008],
+    [0.015, r0],            // Inner clamping nose step
+    [0.070, r0],            // Clamping face along workpiece
+    [0.074, r0 + 0.005],    // Front safety chamfer
+    [0.074, r1],            // Step 1 front face
+    [0.050, r1],            // Step 1 shoulder
+    [0.050, r2],            // Step 2 front face
+    [0.026, r2],            // Step 2 shoulder
+    [0.026, rTop - 0.006],  // Step 3 outer face
+    [0.018, rTop],          // Outer chamfer
+    [-0.022, rTop]          // Base sitting in chuck radial slot
+  ];
+
+  return createProfileExtrusionGeometry(profileXY, -jawWidth * 0.5, jawWidth * 0.5, 'z');
+}
+
+// --- Module: src/geometry/EndMillGeometry.js ---
+/**
+ * EndMillGeometry — Procedural 4-Flute Helical End Mill (Dao phay ngón 4 me xoắn)
+ * Generates a true 3D indexed BufferGeometry along the vertical Y axis:
+ * - Bottom cutting tip at Y = 0 with 4 end-cutting teeth and center gash
+ * - Helical 4-flute cutting section (Y = 0 to fluteLength) with deep concave chip gullets,
+ *   hooked rake faces, and eccentric primary relief lands twisted at a 35° helix angle
+ * - Chamfered neck transition and cylindrical shank at top (Y = fluteLength to totalLength)
+ *   for clamping inside the ER32 collet.
+ */
+function createFourFluteEndMillGeometry({
+  cutterRadius = 0.022,
+  shankRadius = 0.020,
+  fluteLength = 0.092,
+  totalLength = 0.140,
+  flutes = 4,
+  helixAngleDeg = 35,
+  radialSegments = 96,
+  axialSegments = 64
+} = {}) {
+  const positions = [];
+  const indices = [];
+
+  const helixTan = Math.tan((helixAngleDeg * Math.PI) / 180);
+  const coreRadius = cutterRadius * 0.50;
+  const neckStart = fluteLength;
+  const shankStart = fluteLength + 0.012;
+
+  /**
+   * Computes radius at local flute phase u in [0, 1) for each of the 4 flutes:
+   * - u in [0.00, 0.06]: steep cutting rake face rising from gullet to cutting edge tip (r = cutterRadius)
+   * - u in [0.06, 0.28]: primary & secondary relief land (r drops slightly from 1.00*R to 0.91*R)
+   * - u in [0.28, 1.00]: deep helical chip flute gullet plunging down to coreRadius (0.50*R)
+   */
+  function evaluateFluteRadius(u) {
+    if (u < 0.06) {
+      const t = u / 0.06;
+      const smooth = t * t * (3 - 2 * t);
+      return coreRadius + (cutterRadius - coreRadius) * smooth;
+    } else if (u < 0.28) {
+      const t = (u - 0.06) / 0.22;
+      return cutterRadius * (1.0 - 0.08 * t);
+    } else {
+      const t = (u - 0.28) / 0.72;
+      // Smooth asymmetric chip gullet curve down to coreRadius
+      const gullet = Math.sin(t * Math.PI);
+      const landEnd = cutterRadius * 0.92;
+      const interp = landEnd + (coreRadius - landEnd) * (0.35 * t + 0.65 * gullet);
+      return Math.max(coreRadius, interp);
+    }
+  }
+
+  // Build axial rings from Y = 0 (bottom cutting end) to Y = totalLength (top of shank)
+  for (let i = 0; i <= axialSegments; i++) {
+    const v = i / axialSegments;
+    const y = v * totalLength;
+
+    // Helix twist angle along Y
+    const twistAngle = (y / cutterRadius) * helixTan;
+
+    // Determine blend factor between fluted section (0) and cylindrical shank (1)
+    let shankBlend = 0;
+    if (y >= shankStart) {
+      shankBlend = 1.0;
+    } else if (y > neckStart) {
+      const nt = (y - neckStart) / (shankStart - neckStart);
+      shankBlend = nt * nt * (3 - 2 * nt);
+    }
+
+    for (let j = 0; j <= radialSegments; j++) {
+      const theta = (j / radialSegments) * Math.PI * 2;
+      const localTheta = ((theta - twistAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      const sector = (localTheta * flutes) / (Math.PI * 2);
+      const u = sector - Math.floor(sector);
+
+      const rFlute = evaluateFluteRadius(u);
+      // Slight neck relief between fluteLength and shankStart
+      const rNeck = shankRadius * 0.92;
+      let r;
+      if (y <= neckStart) {
+        r = rFlute;
+      } else if (y < shankStart) {
+        const nt = (y - neckStart) / (shankStart - neckStart);
+        r = nt < 0.5
+          ? rFlute * (1 - nt * 2) + rNeck * (nt * 2)
+          : rNeck * (1 - (nt - 0.5) * 2) + shankRadius * ((nt - 0.5) * 2);
+      } else {
+        r = shankRadius;
+      }
+
+      // Corner chamfer at very bottom cutting edge (y = 0)
+      let yActual = y;
+      if (i === 0) {
+        // End-cutting tooth geometry: cutting edges (u near 0.06) protrude lowest at y = 0,
+        // while flute gullets are gashed upward by 0.0028 m to form visible end-cutting teeth
+        const endGash = (1.0 - (rFlute - coreRadius) / (cutterRadius - coreRadius)) * 0.0028;
+        yActual = endGash;
+      }
+
+      const x = Math.cos(theta) * r;
+      const z = Math.sin(theta) * r;
+      positions.push(x, yActual, z);
+    }
+  }
+
+  const stride = radialSegments + 1;
+  for (let i = 0; i < axialSegments; i++) {
+    for (let j = 0; j < radialSegments; j++) {
+      const a = i * stride + j;
+      const b = (i + 1) * stride + j;
+      const c = (i + 1) * stride + j + 1;
+      const d = i * stride + j + 1;
+      indices.push(a, b, c);
+      indices.push(a, c, d);
+    }
+  }
+
+  // Bottom center point with 4 end-cutting gash facets
+  const bottomCenterIndex = positions.length / 3;
+  positions.push(0, 0.0032, 0); // Slight center dish (end gash pocket)
+  for (let j = 0; j < radialSegments; j++) {
+    indices.push(bottomCenterIndex, j + 1, j);
+  }
+
+  // Top shank cap at Y = totalLength
+  const topCenterIndex = positions.length / 3;
+  positions.push(0, totalLength, 0);
+  const topRingStart = axialSegments * stride;
+  for (let j = 0; j < radialSegments; j++) {
+    indices.push(topCenterIndex, topRingStart + j, topRingStart + j + 1);
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+// --- Module: src/geometry/TSlotGeometry.js ---
+/**
+ * TSlotGeometry — Procedural Geometry for the Vertical Milling Machine Table and 3 T-Slots
+ * Avoids flat black rectangles! Builds true 3D recessed inverted-T slots along the X axis
+ * so both the worktable body and each individual T-slot (TSlot_01, TSlot_02, TSlot_03)
+ * have authentic 3D depth, undercut shoulders, and independent raycast selection.
+ */
+const T_SLOT_CENTERS_Z = [0.06, 0.16, 0.26];
+
+/**
+ * Creates the main cast-iron Worktable body extruded along X from -halfLength to +halfLength,
+ * with 3 recessed channels cut into its upper deck where the 3 T-slot profiles sit cleanly
+ * without any coplanar faces (zero z-fighting).
+ */
+function createWorktableBodyGeometry({
+  lengthX = 0.96,
+  minY = 0.680,
+  maxY = 0.755,
+  minZ = -0.03,
+  maxZ = 0.35,
+  slotCentersZ = T_SLOT_CENTERS_Z,
+  channelHalfWidth = 0.020,
+  channelBottomY = 0.715
+} = {}) {
+  const halfX = lengthX * 0.5;
+  // Build 2D profile in [z, y] (since axis='x' maps [u, v, w] -> [w, v, u] = [x, y, z])
+  const profileZY = [
+    [minZ, minY],
+    [maxZ, minY],
+    // Front apron drip edge & precision side face
+    [maxZ, maxY]
+  ];
+
+  // Traverse top surface from maxZ down to minZ, stepping down for each of the 3 T-slot recesses
+  const sortedSlotsDesc = [...slotCentersZ].sort((a, b) => b - a);
+  for (const sz of sortedSlotsDesc) {
+    profileZY.push(
+      [sz + channelHalfWidth, maxY],
+      [sz + channelHalfWidth, channelBottomY],
+      [sz - channelHalfWidth, channelBottomY],
+      [sz - channelHalfWidth, maxY]
+    );
+  }
+
+  profileZY.push([minZ, maxY]);
+
+  return createProfileExtrusionGeometry(profileZY, -halfX, halfX, 'x');
+}
+
+/**
+ * Creates a single true 3D inverted-T slot channel geometry extruded along X.
+ * Fits directly inside one of the Worktable channels (centered at z = 0 locally,
+ * spanning Z in [-channelHalfWidth, +channelHalfWidth] and Y in [channelBottomY, maxY]).
+ * The interior cavity is an authentic inverted-T cross-section:
+ * - Narrow top throat opening (width = 2 * throatHalfWidth = 0.016 m)
+ * - Wider lower T-bolt flange pocket (width = 2 * flangeHalfWidth = 0.030 m)
+ * - Solid recessed slot floor at Y = 0.722 m
+ */
+function createTSlotChannelGeometry({
+  lengthX = 0.96,
+  channelBottomY = 0.715,
+  maxY = 0.755,
+  channelHalfWidth = 0.020,
+  throatHalfWidth = 0.008,
+  flangeHalfWidth = 0.015,
+  pocketBottomY = 0.722,
+  pocketTopY = 0.736
+} = {}) {
+  const halfX = lengthX * 0.5;
+  const hw = channelHalfWidth;
+  const tw = throatHalfWidth;
+  const fw = flangeHalfWidth;
+
+  // Profile in local [z, y] centered at z = 0:
+  // Outer boundary matches channel walls [-hw, +hw] and channel floor channelBottomY;
+  // Inner boundary carves out the inverted-T slot cavity!
+  const profileZY = [
+    [-hw, channelBottomY],
+    [hw, channelBottomY],
+    [hw, maxY],
+    [tw, maxY],             // Right top lip of T-slot throat
+    [tw, pocketTopY],       // Right throat wall down to undercut
+    [fw, pocketTopY],       // Right T-undercut ceiling
+    [fw, pocketBottomY],    // Right T-pocket wall
+    [-fw, pocketBottomY],   // T-slot floor
+    [-fw, pocketTopY],      // Left T-pocket wall
+    [-tw, pocketTopY],      // Left T-undercut ceiling
+    [-tw, maxY],            // Left throat wall up to top surface
+    [-hw, maxY]
+  ];
+
+  return createProfileExtrusionGeometry(profileZY, -halfX, halfX, 'x');
+}
+
+// --- Module: src/models/UniversalLatheModel.js ---
+const LATHE_EDUCATIONAL_SUMMARY =
+  'Trong cấu hình tiện điển hình này, phôi quay quanh trục chính để tạo vận tốc cắt; dao dịch chuyển tương đối với phôi nhằm gia công các bề mặt tròn xoay. Băng máy, đầu trục chính, mâm cặp, bàn xe dao và ụ động giúp người học nhận diện các bộ phận cơ bản của máy tiện.';
+const LATHE_COMPONENT_METADATA = {
+  'lathe.bed': {
+    id: 'lathe.bed',
+    nodeName: 'LatheBed',
+    nameVi: 'Thân và băng máy tiện (Lathe Bed)',
+    nameEn: 'Lathe Bed Assembly',
+    category: 'Kết cấu nền tảng',
+    kinematicRole: 'Cố định (Stationary Base)',
+    functionVi:
+      'Kết cấu gang đúc chịu lực chính của máy tiện, nâng đỡ đầu trục chính, bàn xe dao và ụ động, đảm bảo độ cứng vững và đồng tâm dọc theo trục máy X.'
+  },
+  'lathe.bed.base': {
+    id: 'lathe.bed.base',
+    nodeName: 'BedBase',
+    nameVi: 'Bệ máy và thân băng gang đúc (Bed Base)',
+    nameEn: 'Cast-Iron Bed Base & Pedestals',
+    category: 'Kết cấu nền tảng',
+    kinematicRole: 'Cố định (Stationary)',
+    functionVi:
+      'Gồm hai chân đế gang đúc nặng, khay hứng phoi, dầm băng máy có gân tăng cứng và trục vít me / trục trơn chạy dao dọc phía trước.'
+  },
+  'lathe.bed.guideways': {
+    id: 'lathe.bed.guideways',
+    nodeName: 'GuideRail_Left / GuideRail_Right',
+    nameVi: 'Hệ ray dẫn hướng băng máy (Bed Guideways)',
+    nameEn: 'Precision Prismatic V-Flat Guideways',
+    category: 'Dẫn hướng chính xác',
+    kinematicRole: 'Dẫn hướng dọc trục X',
+    functionVi:
+      'Hai ray dẫn hướng song song (kết hợp sống trượt lăng trụ chữ V ngược và mặt phẳng) được mài chuẩn xác để dẫn hướng cho bàn xe dao và ụ động trượt dọc trục X.'
+  },
+  'lathe.headstock': {
+    id: 'lathe.headstock',
+    nodeName: 'HeadstockAssembly',
+    nameVi: 'Hộp tốc độ và đầu trục chính (Headstock)',
+    nameEn: 'Headstock & Speed Gearbox Assembly',
+    category: 'Cụm truyền động chính',
+    kinematicRole: 'Vỏ cố định, mang trục chính quay',
+    functionVi:
+      'Đặt ở bên trái băng máy, chứa cơ cấu biến đổi tốc độ và ổ đỡ trục chính để truyền chuyển động quay tạo vận tốc cắt chính (Vc) cho mâm cặp và phôi.'
+  },
+  'lathe.headstock.spindle': {
+    id: 'lathe.headstock.spindle',
+    nodeName: 'Spindle',
+    nameVi: 'Trục chính máy tiện (Main Spindle)',
+    nameEn: 'Lathe Main Spindle',
+    category: 'Cụm truyền động chính',
+    kinematicRole: 'Quay quanh trục ngang X (Vc)',
+    functionVi:
+      'Trục thép hợp kim có độ đồng tâm cao, đồng trục với phôi theo phương ngang X, đầu trục có mặt bích chuẩn lắp chặt với mâm cặp ba chấu.'
+  },
+  'lathe.chuck': {
+    id: 'lathe.chuck',
+    nodeName: 'ChuckAssembly',
+    nameVi: 'Mâm cặp ba chấu tự định tâm (3-Jaw Chuck)',
+    nameEn: 'Three-Jaw Self-Centering Scroll Chuck',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Quay đồng bộ quanh trục X cùng phôi',
+    functionVi:
+      'Cụm đồ gá kẹp chặt phôi trụ tròn xoay đồng tâm với trục chính và truyền mô-men xoắn làm quay phôi để thực hiện chuyển động cắt chính Vc.'
+  },
+  'lathe.chuck.body': {
+    id: 'lathe.chuck.body',
+    nodeName: 'ChuckBody',
+    nameVi: 'Thân mâm cặp (Chuck Body)',
+    nameEn: 'Hardened Steel Chuck Body',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Quay quanh trục X',
+    functionVi:
+      'Thân trụ thép tôi cứng có mặt bích lắp vào trục chính và 3 rãnh dẫn hướng hướng tâm cách nhau 120° để đỡ các chấu kẹp.'
+  },
+  'lathe.chuck.jaw-01': {
+    id: 'lathe.chuck.jaw-01',
+    nodeName: 'Jaw_01',
+    nameVi: 'Chấu kẹp số 1 (Chuck Jaw 01 - 0°)',
+    nameEn: 'Stepped Hardened Jaw #1 (0°)',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Kẹp hướng tâm & quay quanh trục X',
+    functionVi:
+      'Chấu kẹp bậc bằng thép tôi đặt tại góc 0°, dịch chuyển đồng bộ theo đĩa xoắn để định tâm và kẹp chặt đường kính ngoài của phôi.'
+  },
+  'lathe.chuck.jaw-02': {
+    id: 'lathe.chuck.jaw-02',
+    nodeName: 'Jaw_02',
+    nameVi: 'Chấu kẹp số 2 (Chuck Jaw 02 - 120°)',
+    nameEn: 'Stepped Hardened Jaw #2 (120°)',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Kẹp hướng tâm & quay quanh trục X',
+    functionVi:
+      'Chấu kẹp bậc đặt lệch 120° so với chấu số 1, phối hợp tạo lực kẹp ba điểm cân bằng giữ phôi tròn xoay đồng trục với trục chính.'
+  },
+  'lathe.chuck.jaw-03': {
+    id: 'lathe.chuck.jaw-03',
+    nodeName: 'Jaw_03',
+    nameVi: 'Chấu kẹp số 3 (Chuck Jaw 03 - 240°)',
+    nameEn: 'Stepped Hardened Jaw #3 (240°)',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Kẹp hướng tâm & quay quanh trục X',
+    functionVi:
+      'Chấu kẹp bậc đặt tại góc 240°, hoàn thiện hệ kẹp 3 chấu cách đều 120° tự định tâm cho chi tiết trụ tròn.'
+  },
+  'lathe.workpiece': {
+    id: 'lathe.workpiece',
+    nodeName: 'RotatingWorkpiece',
+    nameVi: 'Phôi gia công tròn xoay (Workpiece)',
+    nameEn: 'Cylindrical Steel Workpiece',
+    category: 'Chi tiết gia công',
+    kinematicRole: 'Chuyển động chính: Quay quanh trục X (Vc)',
+    functionVi:
+      'Thanh thép trụ tròn gắn đồng tâm từ lòng mâm cặp và được đỡ đầu phải bởi mũi tâm ụ động; thể hiện phần phôi thô và bề mặt trụ đã tiện tinh.'
+  },
+  'lathe.tailstock': {
+    id: 'lathe.tailstock',
+    nodeName: 'TailstockAssembly',
+    nameVi: 'Cụm ụ động (Tailstock Assembly)',
+    nameEn: 'Tailstock Assembly',
+    category: 'Cụm đỡ phụ trợ',
+    kinematicRole: 'Điều chỉnh dọc băng máy và khóa cố định khi tiện',
+    functionVi:
+      'Đặt bên phải phôi trên ray dẫn hướng băng máy, dùng để đỡ đầu tự do của phôi dài bằng mũi tâm hoặc lắp dụng cụ gia công lỗ đồng tâm.'
+  },
+  'lathe.tailstock.base': {
+    id: 'lathe.tailstock.base',
+    nodeName: 'TailstockBase',
+    nameVi: 'Đế ụ động (Tailstock Base)',
+    nameEn: 'Tailstock Sliding Shoe Base',
+    category: 'Cụm đỡ phụ trợ',
+    kinematicRole: 'Trượt trên ray dẫn hướng & kẹp chặt vào băng máy',
+    functionVi:
+      'Bệ trượt có mặt đáy ăn khớp với hai ray dẫn hướng của băng máy, cho phép dịch chuyển ụ động theo chiều dài phôi.'
+  },
+  'lathe.tailstock.housing': {
+    id: 'lathe.tailstock.housing',
+    nodeName: 'TailstockHousing',
+    nameVi: 'Thân ụ động (Tailstock Housing)',
+    nameEn: 'Cast-Iron Tailstock Body',
+    category: 'Cụm đỡ phụ trợ',
+    kinematicRole: 'Đỡ nòng ụ động đồng trục với trục chính',
+    functionVi:
+      'Thân gang đúc chứa lỗ trụ chính xác dẫn hướng cho nòng ụ động, kèm tay quay tiến nòng và cần khóa nòng.'
+  },
+  'lathe.tailstock.quill': {
+    id: 'lathe.tailstock.quill',
+    nodeName: 'Quill',
+    nameVi: 'Nòng ụ động (Tailstock Quill)',
+    nameEn: 'Precision Ground Tailstock Quill Barrel',
+    category: 'Cụm đỡ phụ trợ',
+    kinematicRole: 'Tịnh tiến dọc trục X khi điều chỉnh',
+    functionVi:
+      'Ống trụ thép mài bóng nhô ra từ thân ụ động về phía phôi, mang lỗ côn Morse để lắp mũi tâm chống tâm.'
+  },
+  'lathe.tailstock.center': {
+    id: 'lathe.tailstock.center',
+    nodeName: 'CenterPoint',
+    nameVi: 'Mũi tâm ụ động (Live Center Point)',
+    nameEn: '60° Conical Live Center',
+    category: 'Cụm đỡ phụ trợ',
+    kinematicRole: 'Đỡ đồng tâm đầu phôi (Quay theo phôi)',
+    functionVi:
+      'Mũi tâm hình nón góc 60° tiếp xúc vừa khít vào lỗ tâm ở đầu phải của phôi để chống võng phôi khi tiện dọc.'
+  },
+  'lathe.carriage': {
+    id: 'lathe.carriage',
+    nodeName: 'CarriageAssembly',
+    nameVi: 'Cụm bàn xe dao (Carriage Assembly)',
+    nameEn: 'Lathe Carriage & Apron Assembly',
+    category: 'Cụm chạy dao',
+    kinematicRole: 'Chuyển động chạy dao dọc trục X (Sd)',
+    functionVi:
+      'Cụm mang dao tiện trượt dọc trên ray băng máy để thực hiện chuyển động chạy dao dọc (Sd) và chạy dao ngang khi gia công.'
+  },
+  'lathe.carriage.saddle': {
+    id: 'lathe.carriage.saddle',
+    nodeName: 'Saddle',
+    nameVi: 'Bàn trượt dọc và hộp xe dao (Saddle & Apron)',
+    nameEn: 'Longitudinal Saddle & Apron',
+    category: 'Cụm chạy dao',
+    kinematicRole: 'Trượt dọc trục X trên băng máy (Sd)',
+    functionVi:
+      'Phần yên chữ H tựa trực tiếp lên hai ray dẫn hướng của băng máy kèm hộp xe dao phía trước để dẫn động bàn xe dao chạy dọc theo phôi.'
+  },
+  'lathe.carriage.cross-slide': {
+    id: 'lathe.carriage.cross-slide',
+    nodeName: 'CrossSlide',
+    nameVi: 'Bàn trượt ngang và bàn trượt trên (Cross Slide)',
+    nameEn: 'Cross-Slide & Compound Rest',
+    category: 'Cụm chạy dao',
+    kinematicRole: 'Đi cùng bàn trượt dọc & điều chỉnh chiều sâu cắt theo Z',
+    functionVi:
+      'Lắp trên sống trượt mang cá của bàn trượt dọc, cho phép điều chỉnh chiều sâu cắt vuông góc với trục phôi (trục Z) và xoay góc côn.'
+  },
+  'lathe.carriage.tool-post': {
+    id: 'lathe.carriage.tool-post',
+    nodeName: 'ToolPost',
+    nameVi: 'Đài gá dao vuông 4 vị trí (Square Tool Post)',
+    nameEn: 'Four-Way Indexable Turret Tool Post',
+    category: 'Cụm chạy dao',
+    kinematicRole: 'Định vị và kẹp chặt cán dao tiện',
+    functionVi:
+      'Đài dao hình khối vuông đặt trên bàn trượt, có các vít kẹp và tay khóa cam để giữ cán dao ở đúng độ cao tâm máy.'
+  },
+  'lathe.cutting-tool': {
+    id: 'lathe.cutting-tool',
+    nodeName: 'ToolHolder / CuttingInsert',
+    nameVi: 'Dao tiện ngoài gắn mảnh hợp kim (Turning Tool)',
+    nameEn: 'External Turning Tool Assembly',
+    category: 'Dụng cụ cắt',
+    kinematicRole: 'Chuyển động chạy dao Sd dọc theo bề mặt phôi',
+    functionVi:
+      'Tổ hợp gồm thân cán dao thép và mảnh cắt hợp kim cứng phủ TiN, trực tiếp bóc tách lớp kim loại khi phôi quay.'
+  },
+  'lathe.cutting-tool.holder': {
+    id: 'lathe.cutting-tool.holder',
+    nodeName: 'ToolHolder',
+    nameVi: 'Cán dao tiện (Tool Holder Shank)',
+    nameEn: 'Square Shank Turning Tool Holder',
+    category: 'Dụng cụ cắt',
+    kinematicRole: 'Truyền lực cắt và giữ mảnh dao',
+    functionVi:
+      'Thân cán dao tiết diện vuông bằng thép tôi được kẹp cứng trong đài dao, đầu cán có ổ định vị lắp mảnh hợp kim cắt.'
+  },
+  'lathe.cutting-tool.insert': {
+    id: 'lathe.cutting-tool.insert',
+    nodeName: 'CuttingInsert',
+    nameVi: 'Mảnh dao tiện hợp kim cứng (Cutting Insert)',
+    nameEn: 'Indexable Carbide Cutting Insert (TiN Accent)',
+    category: 'Dụng cụ cắt',
+    kinematicRole: 'Lưỡi cắt tiếp xúc vùng gia công trên phôi',
+    functionVi:
+      'Mảnh cắt hình thoi/tam giác có mũi cắt đặt sát mặt trụ phôi tại cao độ tâm trục chính (Y = 0.88 m) để thực hiện quá trình cắt gọt.'
+  }
+};
+function createUniversalLatheModel(options = {}) {
+  const materials = options.materials || createMaterialLibrary();
+  const ownsMaterials = !options.materials;
+
+  // Root Assembly required by contract: UniversalLatheAssembly
+  const root = new THREE.Group();
+  root.name = 'UniversalLatheAssembly';
+  root.userData = {
+    modelId: '03-universal-lathe',
+    modelName: 'Universal Engine Lathe (Máy tiện vạn năng)',
+    upAxis: 'Y',
+    spindleAxis: 'X',
+    spindleCenterY: 0.88,
+    educationalSummary: LATHE_EDUCATIONAL_SUMMARY
+  };
+
+  const components = {};
+  const createdGeometries = [];
+
+  function trackGeometry(geom) {
+    createdGeometries.push(geom);
+    return geom;
+  }
+
+  function registerComponent(node, componentId, extraIds = []) {
+    const meta = LATHE_COMPONENT_METADATA[componentId] || {
+      id: componentId,
+      nodeName: node.name,
+      nameVi: node.name,
+      nameEn: node.name,
+      category: 'Chi tiết máy tiện',
+      kinematicRole: 'Cơ cấu máy tiện',
+      functionVi: LATHE_EDUCATIONAL_SUMMARY
+    };
+    node.userData = {
+      ...node.userData,
+      componentId: meta.id,
+      nameVi: meta.nameVi,
+      nameEn: meta.nameEn,
+      category: meta.category,
+      kinematicRole: meta.kinematicRole,
+      functionVi: meta.functionVi
+    };
+    components[componentId] = node;
+    components[node.name] = node;
+    for (const alias of extraIds) {
+      components[alias] = node;
+    }
+  }
+
+  // =========================================================================
+  // 1. LATHE BED (lathe.bed -> BedBase, GuideRail_Left, GuideRail_Right)
+  // =========================================================================
+  const latheBed = new THREE.Group();
+  latheBed.name = 'LatheBed';
+  registerComponent(latheBed, 'lathe.bed');
+  root.add(latheBed);
+
+  const bedBase = new THREE.Group();
+  bedBase.name = 'BedBase';
+  registerComponent(bedBase, 'lathe.bed.base');
+  latheBed.add(bedBase);
+
+  // Floor mounting plate left & right pedestals
+  const leftFoot = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.64, 0.045, 0.64)),
+    materials.castIronDark
+  );
+  leftFoot.name = 'BedBase_LeftFoot';
+  leftFoot.position.set(-0.91, 0.0225, 0);
+  bedBase.add(leftFoot);
+
+  const leftPedestal = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.58, 0.56, 0.54)),
+    materials.castIronDark
+  );
+  leftPedestal.name = 'BedBase_LeftPedestal';
+  leftPedestal.position.set(-0.91, 0.30, 0);
+  bedBase.add(leftPedestal);
+
+  // Recessed side panel on left pedestal for realistic industrial relief
+  const leftPanelRecess = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.42, 0.36, 0.555)),
+    materials.castIronMedium
+  );
+  leftPanelRecess.name = 'BedBase_LeftPedestalPanel';
+  leftPanelRecess.position.set(-0.91, 0.30, 0);
+  bedBase.add(leftPanelRecess);
+
+  const rightFoot = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.52, 0.045, 0.64)),
+    materials.castIronDark
+  );
+  rightFoot.name = 'BedBase_RightFoot';
+  rightFoot.position.set(0.96, 0.0225, 0);
+  bedBase.add(rightFoot);
+
+  const rightPedestal = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.46, 0.56, 0.54)),
+    materials.castIronDark
+  );
+  rightPedestal.name = 'BedBase_RightPedestal';
+  rightPedestal.position.set(0.96, 0.30, 0);
+  bedBase.add(rightPedestal);
+
+  const rightPanelRecess = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.32, 0.36, 0.555)),
+    materials.castIronMedium
+  );
+  rightPanelRecess.name = 'BedBase_RightPedestalPanel';
+  rightPanelRecess.position.set(0.96, 0.30, 0);
+  bedBase.add(rightPanelRecess);
+
+  // Chip Pan / Coolant Tray between pedestals
+  const chipPanFloor = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(2.44, 0.035, 0.62)),
+    materials.castIronMedium
+  );
+  chipPanFloor.name = 'BedBase_ChipPan';
+  chipPanFloor.position.set(0.0, 0.25, 0.02);
+  bedBase.add(chipPanFloor);
+
+  const chipGuardBack = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(2.44, 0.48, 0.025)),
+    materials.castIronDark
+  );
+  chipGuardBack.name = 'BedBase_BackSplashGuard';
+  chipGuardBack.position.set(0.0, 0.88, -0.30);
+  bedBase.add(chipGuardBack);
+
+  // Main upper bed casting beam with contoured cross-section (Y from 0.27 to 0.64)
+  const bedBeamProfile = [
+    [-0.23, 0.27],
+    [0.23, 0.27],
+    [0.20, 0.34],
+    [0.19, 0.57],
+    [0.22, 0.60],
+    [0.22, 0.64],
+    [-0.22, 0.64],
+    [-0.22, 0.60],
+    [-0.19, 0.57],
+    [-0.20, 0.34]
+  ];
+  const mainBedCasting = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(bedBeamProfile, -1.21, 1.21, 'x')),
+    materials.castIronMedium
+  );
+  mainBedCasting.name = 'BedBase_MainBeam';
+  bedBase.add(mainBedCasting);
+
+  // Structural cast-iron stiffening ribs along the bed web
+  for (let i = 0; i < 6; i++) {
+    const rx = -0.45 + i * 0.23;
+    const rib = new THREE.Mesh(
+      trackGeometry(new THREE.BoxGeometry(0.028, 0.24, 0.41)),
+      materials.castIronDark
+    );
+    rib.name = `BedBase_WebRib_${i + 1}`;
+    rib.position.set(rx, 0.45, 0);
+    bedBase.add(rib);
+  }
+
+  // Front Leadscrew & Feed Rod along the bed front (Z = +0.235)
+  const leadscrewGeom = trackGeometry(new THREE.CylinderGeometry(0.014, 0.014, 1.72, 20));
+  leadscrewGeom.rotateZ(Math.PI * 0.5);
+  const leadscrewMesh = new THREE.Mesh(leadscrewGeom, materials.machinedSteel);
+  leadscrewMesh.name = 'BedBase_Leadscrew';
+  leadscrewMesh.position.set(0.31, 0.55, 0.235);
+  bedBase.add(leadscrewMesh);
+
+  const feedRodGeom = trackGeometry(new THREE.CylinderGeometry(0.010, 0.010, 1.72, 16));
+  feedRodGeom.rotateZ(Math.PI * 0.5);
+  const feedRodMesh = new THREE.Mesh(feedRodGeom, materials.polishedSteel);
+  feedRodMesh.name = 'BedBase_FeedRod';
+  feedRodMesh.position.set(0.31, 0.49, 0.235);
+  bedBase.add(feedRodMesh);
+
+  // Leadscrew left & right bearing brackets
+  for (const [bx, bName] of [
+    [-0.54, 'BedBase_LeadscrewBracket_Left'],
+    [1.16, 'BedBase_LeadscrewBracket_Right']
+  ]) {
+    const bracket = new THREE.Mesh(
+      trackGeometry(new THREE.BoxGeometry(0.04, 0.14, 0.06)),
+      materials.castIronDark
+    );
+    bracket.name = bName;
+    bracket.position.set(bx, 0.52, 0.225);
+    bedBase.add(bracket);
+  }
+
+  // GuideRail_Left (Front Guideway at Z = +0.155, spanning X from -0.55 to +1.20 so it never penetrates Headstock!)
+  const guideRailLeft = new THREE.Mesh(
+    trackGeometry(createGuidewayRailGeometry(-0.55, 1.20, 0.056, 0.055)),
+    materials.polishedSteel
+  );
+  guideRailLeft.name = 'GuideRail_Left';
+  guideRailLeft.position.set(0, 0.64, 0.155);
+  registerComponent(guideRailLeft, 'lathe.bed.guideways', ['lathe.bed.guideway-left']);
+  latheBed.add(guideRailLeft);
+
+  // GuideRail_Right (Rear Guideway at Z = -0.155, spanning X from -0.55 to +1.20)
+  const guideRailRight = new THREE.Mesh(
+    trackGeometry(createGuidewayRailGeometry(-0.55, 1.20, 0.056, 0.055)),
+    materials.polishedSteel
+  );
+  guideRailRight.name = 'GuideRail_Right';
+  guideRailRight.position.set(0, 0.64, -0.155);
+  registerComponent(guideRailRight, 'lathe.bed.guideways', ['lathe.bed.guideway-right']);
+  latheBed.add(guideRailRight);
+
+  // =========================================================================
+  // 2. HEADSTOCK ASSEMBLY (lathe.headstock -> HeadstockHousing, Spindle, ChuckAssembly)
+  // =========================================================================
+  const headstockAssembly = new THREE.Group();
+  headstockAssembly.name = 'HeadstockAssembly';
+  registerComponent(headstockAssembly, 'lathe.headstock');
+  root.add(headstockAssembly);
+
+  const headstockHousing = new THREE.Group();
+  headstockHousing.name = 'HeadstockHousing';
+  registerComponent(headstockHousing, 'lathe.headstock', ['lathe.headstock.housing']);
+  headstockAssembly.add(headstockHousing);
+
+  // Contoured cast-iron headstock body sitting on bed plateau Y = 0.64, X from -1.20 to -0.55
+  const hsProfileZY = [
+    [-0.25, 0.64],
+    [0.25, 0.64],
+    [0.25, 1.03],
+    [0.19, 1.13],
+    [-0.19, 1.13],
+    [-0.25, 1.03]
+  ];
+  const hsMainBody = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(hsProfileZY, -1.20, -0.55, 'x')),
+    materials.castIronHousing
+  );
+  hsMainBody.name = 'HeadstockHousing_MainCasting';
+  headstockHousing.add(hsMainBody);
+
+  // Top inspection cover plate with technical cyan accent trim
+  const hsTopCover = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.58, 0.024, 0.34)),
+    materials.castIronDark
+  );
+  hsTopCover.name = 'HeadstockHousing_TopCover';
+  hsTopCover.position.set(-0.875, 1.142, 0);
+  headstockHousing.add(hsTopCover);
+
+  const hsAccentStrip = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.56, 0.014, 0.008)),
+    materials.technicalCyan
+  );
+  hsAccentStrip.name = 'HeadstockHousing_CyanTrim';
+  hsAccentStrip.position.set(-0.875, 1.05, 0.252);
+  headstockHousing.add(hsAccentStrip);
+
+  // Stepped front bearing housing boss around spindle axis (Y = 0.88, Z = 0)
+  const bearingBossGeom = trackGeometry(new THREE.CylinderGeometry(0.165, 0.175, 0.04, 36));
+  bearingBossGeom.rotateZ(Math.PI * 0.5);
+  const bearingBoss = new THREE.Mesh(bearingBossGeom, materials.castIronDark);
+  bearingBoss.name = 'HeadstockHousing_BearingBoss';
+  bearingBoss.position.set(-0.535, 0.88, 0);
+  headstockHousing.add(bearingBoss);
+
+  // Gearbox speed-selector levers on front face (+Z = 0.25)
+  for (let i = 0; i < 2; i++) {
+    const lx = -0.98 + i * 0.22;
+    const dialBase = new THREE.Mesh(
+      trackGeometry(new THREE.CylinderGeometry(0.042, 0.045, 0.022, 24)),
+      materials.machinedSteel
+    );
+    dialBase.rotation.x = Math.PI * 0.5;
+    dialBase.position.set(lx, 0.86, 0.26);
+    dialBase.name = `HeadstockHousing_GearDial_${i + 1}`;
+    headstockHousing.add(dialBase);
+
+    const leverBar = new THREE.Mesh(
+      trackGeometry(new THREE.CylinderGeometry(0.007, 0.007, 0.09, 10)),
+      materials.polishedSteel
+    );
+    leverBar.position.set(lx, 0.82, 0.278);
+    leverBar.rotation.z = i === 0 ? -0.35 : 0.35;
+    leverBar.name = `HeadstockHousing_GearLever_${i + 1}`;
+    headstockHousing.add(leverBar);
+
+    const knob = new THREE.Mesh(
+      trackGeometry(new THREE.SphereGeometry(0.015, 14, 14)),
+      materials.controlBlack
+    );
+    knob.position.set(
+      lx + (i === 0 ? 0.03 : -0.03),
+      0.78,
+      0.278
+    );
+    knob.name = `HeadstockHousing_GearKnob_${i + 1}`;
+    headstockHousing.add(knob);
+  }
+
+  // Spindle (lathe.headstock.spindle) — Concentric at (Y = 0.88, Z = 0.0), extending X from -0.55 to -0.45
+  const spindleProfile = [
+    [-0.55, 0.048],
+    [-0.55, 0.115],
+    [-0.49, 0.115],
+    [-0.49, 0.132], // Camlock spindle nose flange
+    [-0.45, 0.132],
+    [-0.45, 0.048]
+  ];
+  const spindle = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(spindleProfile, 48, 'x')),
+    materials.machinedSteel
+  );
+  spindle.name = 'Spindle';
+  spindle.position.set(0, 0.88, 0);
+  registerComponent(spindle, 'lathe.headstock.spindle');
+  headstockAssembly.add(spindle);
+
+  // =========================================================================
+  // 3. CHUCK ASSEMBLY (lathe.chuck -> ChuckBody, Jaw_01, Jaw_02, Jaw_03)
+  // =========================================================================
+  const chuckAssembly = new THREE.Group();
+  chuckAssembly.name = 'ChuckAssembly';
+  chuckAssembly.position.set(-0.37, 0.88, 0);
+  registerComponent(chuckAssembly, 'lathe.chuck');
+  headstockAssembly.add(chuckAssembly);
+
+  const chuckBody = new THREE.Mesh(
+    trackGeometry(
+      createChuckBodyGeometry({
+        outerRadius: 0.145,
+        boreRadius: 0.048,
+        thickness: 0.12,
+        flangeThickness: 0.026
+      })
+    ),
+    materials.machinedSteel
+  );
+  chuckBody.name = 'ChuckBody';
+  registerComponent(chuckBody, 'lathe.chuck.body');
+  chuckAssembly.add(chuckBody);
+
+  // Three stepped jaws positioned 120° apart around the X axis, clamping tightly at R = 0.048
+  const jawGeom = trackGeometry(
+    createChuckJawGeometry({
+      gripRadius: 0.048,
+      outerRadius: 0.138,
+      jawWidth: 0.030
+    })
+  );
+
+  const jawConfigs = [
+    { name: 'Jaw_01', id: 'lathe.chuck.jaw-01', angle: 0 },
+    { name: 'Jaw_02', id: 'lathe.chuck.jaw-02', angle: (Math.PI * 2) / 3 },
+    { name: 'Jaw_03', id: 'lathe.chuck.jaw-03', angle: (Math.PI * 4) / 3 }
+  ];
+
+  jawConfigs.forEach(({ name, id, angle }) => {
+    const jawMesh = new THREE.Mesh(jawGeom, materials.hardenedSteel);
+    jawMesh.name = name;
+    jawMesh.rotation.x = angle;
+    registerComponent(jawMesh, id);
+    chuckAssembly.add(jawMesh);
+  });
+
+  // =========================================================================
+  // 4. WORKPIECE ASSEMBLY (WorkpieceAssembly -> RotatingWorkpiece)
+  // =========================================================================
+  const workpieceAssembly = new THREE.Group();
+  workpieceAssembly.name = 'WorkpieceAssembly';
+  workpieceAssembly.position.set(0, 0.88, 0);
+  root.add(workpieceAssembly);
+
+  // Stepped cylindrical workpiece starting inside chuck bore (X = -0.37) to tailstock center (X = +0.58)
+  // Unmachined stock radius = 0.048 (clamped by jaws X in [-0.35, -0.295]),
+  // shoulder step at X = -0.15, turned cylindrical surface radius = 0.038 from X = -0.135 to +0.58
+  const workpieceProfile = [
+    [-0.37, 0.000],
+    [-0.37, 0.048],
+    [-0.15, 0.048], // Raw stock shoulder
+    [-0.135, 0.038], // Chamfered turning shoulder
+    [0.575, 0.038], // Turned cylindrical zone
+    [0.580, 0.034], // Right end chamfer
+    [0.580, 0.012], // 60° center hole rim where tailstock center engages
+    [0.566, 0.000]  // Conical center drill apex
+  ];
+  const rotatingWorkpiece = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(workpieceProfile, 56, 'x')),
+    materials.turnedWorkpieceSteel
+  );
+  rotatingWorkpiece.name = 'RotatingWorkpiece';
+  registerComponent(rotatingWorkpiece, 'lathe.workpiece');
+  workpieceAssembly.add(rotatingWorkpiece);
+
+  // Add raw stock visual sleeve on the unmachined left portion so learners see before/after diameter difference
+  const rawSleeveProfile = [
+    [-0.368, 0.0475],
+    [-0.368, 0.0483],
+    [-0.150, 0.0483],
+    [-0.136, 0.0382],
+    [-0.136, 0.0378]
+  ];
+  const rawStockOverlay = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(rawSleeveProfile, 48, 'x')),
+    materials.rawWorkpieceSteel
+  );
+  rawStockOverlay.name = 'RotatingWorkpiece_RawStockSection';
+  rotatingWorkpiece.add(rawStockOverlay);
+
+  // =========================================================================
+  // 5. TAILSTOCK ASSEMBLY (lathe.tailstock -> TailstockBase, TailstockHousing, Quill, CenterPoint)
+  // =========================================================================
+  const tailstockAssembly = new THREE.Group();
+  tailstockAssembly.name = 'TailstockAssembly';
+  // Positioned at X = 0.84 so CenterPoint tip touches workpiece center hole at X = 0.58
+  tailstockAssembly.position.set(0.84, 0, 0);
+  registerComponent(tailstockAssembly, 'lathe.tailstock');
+  root.add(tailstockAssembly);
+
+  // TailstockBase sitting cleanly on the guideways (Y from 0.685 to 0.745, X local from -0.13 to +0.15)
+  const tsBaseProfileZY = [
+    [-0.19, 0.685],
+    [0.19, 0.685],
+    [0.18, 0.745],
+    [-0.18, 0.745]
+  ];
+  const tailstockBase = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(tsBaseProfileZY, -0.13, 0.15, 'x')),
+    materials.castIronDark
+  );
+  tailstockBase.name = 'TailstockBase';
+  registerComponent(tailstockBase, 'lathe.tailstock.base');
+  tailstockAssembly.add(tailstockBase);
+
+  // TailstockHousing rising from Y = 0.745 to 0.96, barrel centered at Y = 0.88
+  const tsHousingGroup = new THREE.Group();
+  tsHousingGroup.name = 'TailstockHousing';
+  registerComponent(tsHousingGroup, 'lathe.tailstock.housing');
+  tailstockAssembly.add(tsHousingGroup);
+
+  const tsColumn = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.24, 0.14, 0.24)),
+    materials.castIronHousing
+  );
+  tsColumn.name = 'TailstockHousing_LowerBody';
+  tsColumn.position.set(0.01, 0.815, 0);
+  tsHousingGroup.add(tsColumn);
+
+  const tsBarrelGeom = trackGeometry(new THREE.CylinderGeometry(0.068, 0.068, 0.28, 32));
+  tsBarrelGeom.rotateZ(Math.PI * 0.5);
+  const tsBarrel = new THREE.Mesh(tsBarrelGeom, materials.castIronHousing);
+  tsBarrel.name = 'TailstockHousing_Barrel';
+  tsBarrel.position.set(0.01, 0.88, 0);
+  tsHousingGroup.add(tsBarrel);
+
+  // Rear handwheel on TailstockHousing (at X_local = +0.18)
+  const tsHandwheel = createHandwheelGroup(0.068, 0.009, materials, 'Tailstock_Handwheel');
+  tsHandwheel.rotation.y = Math.PI * 0.5;
+  tsHandwheel.position.set(0.18, 0.88, 0);
+  tsHousingGroup.add(tsHandwheel);
+
+  // Quill (lathe.tailstock.quill) extending from X_local = -0.13 to -0.21 at Y = 0.88
+  const quillGeom = trackGeometry(new THREE.CylinderGeometry(0.036, 0.036, 0.10, 32));
+  quillGeom.rotateZ(Math.PI * 0.5);
+  const quill = new THREE.Mesh(quillGeom, materials.polishedSteel);
+  quill.name = 'Quill';
+  quill.position.set(-0.17, 0.88, 0);
+  registerComponent(quill, 'lathe.tailstock.quill');
+  tailstockAssembly.add(quill);
+
+  // CenterPoint (lathe.tailstock.center) — 60° conical live center from X_local = -0.21 to -0.264 (world X = 0.63 to 0.576)
+  const centerProfile = [
+    [-0.210, 0.024],
+    [-0.228, 0.028], // Bearing collar
+    [-0.236, 0.020],
+    [-0.264, 0.0015], // Conical 60° tip seated cleanly in workpiece center socket at X = 0.58
+    [-0.264, 0.000]
+  ];
+  const centerPoint = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(centerProfile, 36, 'x')),
+    materials.hardenedSteel
+  );
+  centerPoint.name = 'CenterPoint';
+  centerPoint.position.set(0, 0.88, 0);
+  registerComponent(centerPoint, 'lathe.tailstock.center');
+  tailstockAssembly.add(centerPoint);
+
+  // =========================================================================
+  // 6. CARRIAGE ASSEMBLY (lathe.carriage -> Saddle, CrossSlide, ToolPost, ToolHolder, CuttingInsert)
+  // =========================================================================
+  const carriageAssembly = new THREE.Group();
+  carriageAssembly.name = 'CarriageAssembly';
+  // Initial longitudinal position along the turned section
+  const INITIAL_CARRIAGE_X = 0.18;
+  carriageAssembly.position.set(INITIAL_CARRIAGE_X, 0, 0);
+  registerComponent(carriageAssembly, 'lathe.carriage');
+  root.add(carriageAssembly);
+
+  // 6.1 Saddle (lathe.carriage.saddle): bridge riding on guideways + front apron
+  const saddle = new THREE.Group();
+  saddle.name = 'Saddle';
+  registerComponent(saddle, 'lathe.carriage.saddle');
+  carriageAssembly.add(saddle);
+
+  // Saddle bridge riding atop GuideRail_Left & GuideRail_Right (Y from 0.695 to 0.742)
+  const saddleBridge = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.26, 0.046, 0.42)),
+    materials.castIronMedium
+  );
+  saddleBridge.name = 'Saddle_Bridge';
+  saddleBridge.position.set(0, 0.718, 0.01);
+  saddle.add(saddleBridge);
+
+  // Front Apron hanging in front of bed ways (Z in [0.19, 0.255], Y in [0.43, 0.70])
+  const apronBox = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.25, 0.26, 0.065)),
+    materials.castIronHousing
+  );
+  apronBox.name = 'Saddle_FrontApron';
+  apronBox.position.set(0, 0.57, 0.222);
+  saddle.add(apronBox);
+
+  // Apron traverse handwheel (rotates as carriage moves along X!)
+  const apronHandwheel = createHandwheelGroup(0.062, 0.008, materials, 'Saddle_TraverseHandwheel');
+  apronHandwheel.position.set(-0.06, 0.56, 0.27);
+  saddle.add(apronHandwheel);
+
+  // 6.2 CrossSlide (lathe.carriage.cross-slide): dovetail slide + compound rest
+  const crossSlide = new THREE.Group();
+  crossSlide.name = 'CrossSlide';
+  registerComponent(crossSlide, 'lathe.carriage.cross-slide');
+  carriageAssembly.add(crossSlide);
+
+  const crossSlidePlate = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.16, 0.045, 0.25)),
+    materials.machinedSteel
+  );
+  crossSlidePlate.name = 'CrossSlide_MainSlide';
+  crossSlidePlate.position.set(0, 0.764, 0.095);
+  crossSlide.add(crossSlidePlate);
+
+  const compoundRest = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.12, 0.038, 0.14)),
+    materials.castIronHousing
+  );
+  compoundRest.name = 'CrossSlide_CompoundRest';
+  compoundRest.position.set(0, 0.805, 0.105);
+  crossSlide.add(compoundRest);
+
+  // Cross-slide feed micrometer dial & crank at front (+Z)
+  const crossHandwheel = createHandwheelGroup(0.038, 0.006, materials, 'CrossSlide_Handwheel');
+  crossHandwheel.position.set(0, 0.764, 0.245);
+  crossSlide.add(crossHandwheel);
+
+  // 6.3 ToolPost (lathe.carriage.tool-post): 4-way square turret block
+  const toolPost = new THREE.Group();
+  toolPost.name = 'ToolPost';
+  registerComponent(toolPost, 'lathe.carriage.tool-post');
+  carriageAssembly.add(toolPost);
+
+  const turretBlock = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.092, 0.088, 0.092)),
+    materials.hardenedSteel
+  );
+  turretBlock.name = 'ToolPost_TurretBlock';
+  turretBlock.position.set(0, 0.868, 0.108);
+  toolPost.add(turretBlock);
+
+  const turretLockHub = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.022, 0.026, 0.032, 20)),
+    materials.machinedSteel
+  );
+  turretLockHub.name = 'ToolPost_LockingHub';
+  turretLockHub.position.set(0, 0.928, 0.108);
+  toolPost.add(turretLockHub);
+
+  const turretHandle = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.006, 0.006, 0.085, 10)),
+    materials.controlBlack
+  );
+  turretHandle.name = 'ToolPost_LockHandle';
+  turretHandle.rotation.z = Math.PI * 0.35;
+  turretHandle.position.set(0.032, 0.945, 0.108);
+  toolPost.add(turretHandle);
+
+  // 6.4 ToolHolder (lathe.cutting-tool.holder & lathe.cutting-tool)
+  // Clamped in the left slot of the tool post, extending toward the workpiece at Y = 0.878
+  const toolHolder = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.026, 0.026, 0.082)),
+    materials.hardenedSteel
+  );
+  toolHolder.name = 'ToolHolder';
+  toolHolder.position.set(-0.032, 0.876, 0.084);
+  registerComponent(toolHolder, 'lathe.cutting-tool.holder', ['lathe.cutting-tool']);
+  carriageAssembly.add(toolHolder);
+
+  // 6.5 CuttingInsert (lathe.cutting-tool.insert)
+  // Golden TiN-coated carbide insert seated at the tip of the tool holder,
+  // with cutting edge point at (X_local = -0.042, Y = 0.880, Z = +0.0385) right on the turned surface R = 0.038!
+  const cuttingInsert = new THREE.Mesh(
+    trackGeometry(createIndexableInsertGeometry(0.016, 0.006)),
+    materials.tinCoatedInsert
+  );
+  cuttingInsert.name = 'CuttingInsert';
+  cuttingInsert.position.set(-0.032, 0.882, 0.037);
+  registerComponent(cuttingInsert, 'lathe.cutting-tool.insert');
+  carriageAssembly.add(cuttingInsert);
+
+  // =========================================================================
+  // 7. EDUCATIONAL OVERLAYS: CUTTING EFFECTS & MOTION ARROWS (Excluded from GLB)
+  // =========================================================================
+  const helperOverlayGroup = new THREE.Group();
+  helperOverlayGroup.name = 'LatheEducationalOverlays';
+  helperOverlayGroup.userData = { isHelperOverlay: true };
+  root.add(helperOverlayGroup);
+
+  // 7.1 Cutting effect (Spiral Swarf Chip Ribbon + optional Sparks at contact zone)
+  const cuttingEffectGroup = new THREE.Group();
+  cuttingEffectGroup.name = 'CuttingEffects_Lathe';
+  cuttingEffectGroup.userData = { isHelperOverlay: true };
+  cuttingEffectGroup.position.set(INITIAL_CARRIAGE_X - 0.044, 0.882, 0.040);
+  helperOverlayGroup.add(cuttingEffectGroup);
+
+  const swarfMesh1 = new THREE.Mesh(
+    trackGeometry(createSwarfRibbonGeometry(3.2, 0.011, 0.012, 0.0038)),
+    materials.chipSwarf
+  );
+  swarfMesh1.rotation.set(0.4, 0.3, -0.5);
+  cuttingEffectGroup.add(swarfMesh1);
+
+  const swarfMesh2 = new THREE.Mesh(
+    trackGeometry(createSwarfRibbonGeometry(2.4, 0.008, 0.010, 0.003)),
+    materials.chipSwarf
+  );
+  swarfMesh2.position.set(0.006, -0.012, 0.008);
+  swarfMesh2.rotation.set(0.9, -0.2, 0.4);
+  cuttingEffectGroup.add(swarfMesh2);
+
+  const sparkParticles = [];
+  const sparkGeom = trackGeometry(THREE.OctahedronGeometry ? new THREE.OctahedronGeometry(0.0035, 0) : new THREE.BoxGeometry(0.005, 0.005, 0.005));
+  for (let i = 0; i < 6; i++) {
+    const sp = new THREE.Mesh(sparkGeom, materials.sparkPoint);
+    sp.userData = {
+      phase: (i / 6) * Math.PI * 2,
+      vx: -0.04 - (i % 3) * 0.02,
+      vy: 0.05 + (i % 2) * 0.03,
+      vz: 0.06 + (i % 3) * 0.025
+    };
+    cuttingEffectGroup.add(sp);
+    sparkParticles.push(sp);
+  }
+
+  // 7.2 Motion Arrows: Vc (Spindle/Workpiece rotation around X) & Sd (Longitudinal carriage feed along X)
+  const motionArrowsGroup = new THREE.Group();
+  motionArrowsGroup.name = 'MotionArrows_Lathe';
+  motionArrowsGroup.userData = { isHelperOverlay: true };
+  helperOverlayGroup.add(motionArrowsGroup);
+
+  const vcArrow = createCurvedMotionArrow(0.078, Math.PI * 1.35, 0.0045, materials.arrowVc, 'x');
+  vcArrow.name = 'Arrow_Vc_Rotation';
+  vcArrow.position.set(-0.08, 0.88, 0);
+  motionArrowsGroup.add(vcArrow);
+
+  const sdArrow = createLinearMotionArrow(0.22, 0.0045, materials.arrowSd, false);
+  sdArrow.name = 'Arrow_Sd_Feed';
+  sdArrow.position.set(INITIAL_CARRIAGE_X, 0.99, 0.11);
+  motionArrowsGroup.add(sdArrow);
+
+  // =========================================================================
+  // 8. ANIMATION STATE & CONTROLLER (deltaTime-driven)
+  // =========================================================================
+  const animState = {
+    isPlaying: options.isPlaying !== undefined ? Boolean(options.isPlaying) : true,
+    spindleSpeed: options.spindleSpeed !== undefined ? Number(options.spindleSpeed) : 1.0, // Multiplier (base = 8.0 rad/s)
+    feedSpeed: options.feedSpeed !== undefined ? Number(options.feedSpeed) : 1.0,       // Multiplier (base = 0.095 m/s)
+    travelMin: -0.09,  // Safe left bound (insert at X = -0.132, right of shoulder at -0.135)
+    travelMax: 0.45,   // Safe right bound (insert at X = +0.408, well left of tailstock center at 0.58)
+    carriageX: INITIAL_CARRIAGE_X,
+    feedDirection: -1, // -1: feeding toward headstock (typical longitudinal turning pass), +1: rapid return
+    cuttingEffectsEnabled: true,
+    motionArrowsVisible: true,
+    spindleAngle: 0
+  };
+
+  function updateAnimation(deltaTime) {
+    const dt = Math.min(Math.max(Number(deltaTime) || 0, 0), 0.1);
+    if (!animState.isPlaying || dt <= 0) return;
+
+    // 1. Primary cutting motion (Vc): Spindle, 3-jaw chuck, and workpiece rotate synchronously around X
+    const baseOmega = 7.5; // rad/s
+    const dTheta = baseOmega * animState.spindleSpeed * dt;
+    animState.spindleAngle = (animState.spindleAngle + dTheta) % (Math.PI * 2);
+
+    spindle.rotation.x = animState.spindleAngle;
+    chuckAssembly.rotation.x = animState.spindleAngle;
+    rotatingWorkpiece.rotation.x = animState.spindleAngle;
+    centerPoint.rotation.x = animState.spindleAngle; // Live center rotates with workpiece
+
+    // 2. Longitudinal feed motion (Sd): Carriage translates along X within [travelMin, travelMax]
+    const baseFeedVel = 0.095; // m/s
+    const speedMultiplier = animState.feedDirection < 0 ? 1.0 : 1.65;
+    const dx = animState.feedDirection * baseFeedVel * animState.feedSpeed * speedMultiplier * dt;
+    animState.carriageX += dx;
+
+    if (animState.carriageX <= animState.travelMin) {
+      animState.carriageX = animState.travelMin;
+      animState.feedDirection = 1; // Return pass
+    } else if (animState.carriageX >= animState.travelMax) {
+      animState.carriageX = animState.travelMax;
+      animState.feedDirection = -1; // Cutting pass toward headstock
+    }
+
+    carriageAssembly.position.x = animState.carriageX;
+    leadscrewMesh.rotation.x += dx * 28.0;
+    apronHandwheel.rotation.z -= dx * 16.0;
+
+    // Update cutting effects & motion arrow positions
+    cuttingEffectGroup.position.x = animState.carriageX - 0.044;
+    const isCuttingPass = animState.feedDirection < 0;
+    cuttingEffectGroup.visible = animState.cuttingEffectsEnabled && isCuttingPass;
+
+    if (cuttingEffectGroup.visible) {
+      swarfMesh1.rotation.x += dt * 9.0 * animState.spindleSpeed;
+      swarfMesh2.rotation.z -= dt * 7.5 * animState.spindleSpeed;
+      sparkParticles.forEach((sp) => {
+        sp.userData.phase = (sp.userData.phase + dt * 6.5 * animState.spindleSpeed) % 1.0;
+        const p = sp.userData.phase;
+        sp.position.set(
+          sp.userData.vx * p,
+          sp.userData.vy * p - 0.12 * p * p,
+          sp.userData.vz * p
+        );
+        const s = Math.max(0.15, 1.0 - p);
+        sp.scale.set(s, s, s);
+      });
+    }
+
+    sdArrow.position.x = animState.carriageX;
+    sdArrow.rotation.y = animState.feedDirection < 0 ? 0 : Math.PI;
+    vcArrow.rotation.x = animState.spindleAngle * 0.25;
+  }
+
+  function resetAnimation() {
+    animState.carriageX = INITIAL_CARRIAGE_X;
+    animState.feedDirection = -1;
+    animState.spindleAngle = 0;
+    spindle.rotation.x = 0;
+    chuckAssembly.rotation.x = 0;
+    rotatingWorkpiece.rotation.x = 0;
+    centerPoint.rotation.x = 0;
+    carriageAssembly.position.x = INITIAL_CARRIAGE_X;
+    cuttingEffectGroup.position.x = INITIAL_CARRIAGE_X - 0.044;
+    sdArrow.position.x = INITIAL_CARRIAGE_X;
+    sdArrow.rotation.y = 0;
+  }
+
+  const animation = {
+    state: animState,
+    update: updateAnimation,
+    play() {
+      animState.isPlaying = true;
+    },
+    pause() {
+      animState.isPlaying = false;
+    },
+    reset: resetAnimation,
+    setSpeed(val) {
+      animState.spindleSpeed = Math.max(0.1, Math.min(3.0, Number(val) || 1.0));
+    },
+    setFeedSpeed(val) {
+      animState.feedSpeed = Math.max(0.0, Math.min(3.0, Number(val) || 1.0));
+    },
+    setCuttingEffectsEnabled(enabled) {
+      animState.cuttingEffectsEnabled = Boolean(enabled);
+      cuttingEffectGroup.visible = animState.cuttingEffectsEnabled && animState.feedDirection < 0;
+    },
+    setMotionArrowsVisible(visible) {
+      animState.motionArrowsVisible = Boolean(visible);
+      motionArrowsGroup.visible = animState.motionArrowsVisible;
+    }
+  };
+
+  function dispose() {
+    createdGeometries.forEach((g) => {
+      if (g && typeof g.dispose === 'function') g.dispose();
+    });
+    if (ownsMaterials && materials && typeof materials.dispose === 'function') {
+      materials.dispose();
+    }
+  }
+
+  return {
+    root,
+    components,
+    metadata: {
+      id: '03-universal-lathe',
+      name: 'Universal Engine Lathe (Máy tiện vạn năng)',
+      rootName: 'UniversalLatheAssembly',
+      upAxis: 'Y',
+      primaryAxis: 'X',
+      educationalSummary: LATHE_EDUCATIONAL_SUMMARY,
+      cuttingZoneTarget: { x: 0.14, y: 0.88, z: 0.04 },
+      overviewTarget: { x: 0.0, y: 0.68, z: 0.0 },
+      components: LATHE_COMPONENT_METADATA
+    },
+    animation,
+    dispose
+  };
+}
+
+// --- Module: src/models/VerticalMillModel.js ---
+const MILL_EDUCATIONAL_SUMMARY =
+  'Trong cấu hình phay đứng minh họa, dao phay quay để tạo chuyển động cắt; bàn máy mang phôi chuyển động tương đối với dao. Máy phay có thể gia công các bề mặt phẳng, rãnh và nhiều biên dạng khác tùy loại dao, cấu hình máy và cách gá đặt.';
+const MILL_COMPONENT_METADATA = {
+  'mill.base': {
+    id: 'mill.base',
+    nodeName: 'MachineBase',
+    nameVi: 'Bệ máy phay đứng (Machine Base)',
+    nameEn: 'Cast-Iron Machine Base & Knee Pedestal',
+    category: 'Kết cấu nền tảng',
+    kinematicRole: 'Cố định (Stationary Foundation)',
+    functionVi:
+      'Đế gang đúc nặng có gờ chắn dung dịch trơn nguội và bệ đỡ консол (knee) phía trước, đảm bảo độ ổn định chống rung động khi phay.'
+  },
+  'mill.column': {
+    id: 'mill.column',
+    nodeName: 'VerticalColumn',
+    nameVi: 'Thân cột đứng (Vertical Column)',
+    nameEn: 'Heavy Box-Section Vertical Column',
+    category: 'Kết cấu nền tảng',
+    kinematicRole: 'Cố định (Stationary Column)',
+    functionVi:
+      'Thân cột dạng hộp gang đúc có gân tăng cứng hai bên và sống trượt đứng phía trước, nâng đỡ cụm đầu trục chính vươn ra phía trên bàn máy.'
+  },
+  'mill.spindle-head': {
+    id: 'mill.spindle-head',
+    nodeName: 'SpindleHead',
+    nameVi: 'Cụm đầu trục chính máy phay (Spindle Head)',
+    nameEn: 'Vertical Milling Spindle Head Assembly',
+    category: 'Cụm truyền động chính',
+    kinematicRole: 'Giữ trục chính thẳng đứng theo trục Y',
+    functionVi:
+      'Cụm đầu máy gắn phía trên thân cột, chứa động cơ dẫn động, cơ cấu truyền động và trục chính hướng thẳng đứng xuống bàn máy.'
+  },
+  'mill.spindle-head.housing': {
+    id: 'mill.spindle-head.housing',
+    nodeName: 'HeadHousing',
+    nameVi: 'Vỏ hộp đầu trục chính (Head Housing)',
+    nameEn: 'Spindle Head Gearbox Housing & Motor',
+    category: 'Cụm truyền động chính',
+    kinematicRole: 'Cố định trên thân cột',
+    functionVi:
+      'Vỏ gang đúc định vị các ổ trục chính, động cơ truyền động phía trên và tay gạt tiến nòng trục chính.'
+  },
+  'mill.spindle': {
+    id: 'mill.spindle',
+    nodeName: 'Spindle',
+    nameVi: 'Trục chính máy phay đứng (Vertical Spindle)',
+    nameEn: 'Vertical Milling Spindle',
+    category: 'Cụm truyền động chính',
+    kinematicRole: 'Chuyển động cắt chính: Quay quanh trục đứng Y (Vc)',
+    functionVi:
+      'Trục chính có độ chính xác hướng kính và chiều trục cao, quay quanh trục đứng Y để truyền mô-men cắt cho bầu kẹp và dao phay.'
+  },
+  'mill.tool-holder': {
+    id: 'mill.tool-holder',
+    nodeName: 'ToolHolder',
+    nameVi: 'Đầu kẹp dao tiêu chuẩn (Tool Holder)',
+    nameEn: 'BT40 Taper Tool Holder',
+    category: 'Cụm kẹp dụng cụ',
+    kinematicRole: 'Quay đồng trục với trục chính quanh trục Y',
+    functionVi:
+      'Bầu kẹp côn tiêu chuẩn lắp đồng trục vào lỗ côn trục chính, có rãnh chữ V thay dao và đầu lắp collet kẹp dao phay.'
+  },
+  'mill.tool-holder.collet': {
+    id: 'mill.tool-holder.collet',
+    nodeName: 'Collet',
+    nameVi: 'Ống kẹp đàn hồi và đai ốc siết (ER Collet & Nut)',
+    nameEn: 'ER32 Precision Collet Chuck & Clamping Nut',
+    category: 'Cụm kẹp dụng cụ',
+    kinematicRole: 'Kẹp đồng tâm chuôi dao và quay quanh trục Y',
+    functionVi:
+      'Collet đàn hồi và đai ốc siết định tâm chính xác chuôi trụ của dao phay ngón, truyền lực kẹp đều quanh chu vi chuôi dao.'
+  },
+  'mill.end-mill': {
+    id: 'mill.end-mill',
+    nodeName: 'EndMill',
+    nameVi: 'Dao phay ngón 4 me cắt xoắn (4-Flute Helical End Mill)',
+    nameEn: 'Four-Flute Helical Solid Carbide End Mill',
+    category: 'Dụng cụ cắt',
+    kinematicRole: 'Quay quanh trục đứng Y để tạo chuyển động cắt chính Vc',
+    functionVi:
+      'Dụng cụ cắt có 4 me xoắn phân bố đều 90° quanh chu vi và lưỡi cắt ở mặt đầu, cho phép gia công mặt phẳng, bậc và rãnh trên phôi.'
+  },
+  'mill.table-assembly': {
+    id: 'mill.table-assembly',
+    nodeName: 'MillingTableAssembly',
+    nameVi: 'Cụm bàn máy phay (Milling Table Assembly)',
+    nameEn: 'Milling Saddle & Worktable Assembly',
+    category: 'Cụm bàn máy & chạy dao',
+    kinematicRole: 'Đỡ và dẫn hướng bàn máy chạy dao ngang',
+    functionVi:
+      'Tổ hợp gồm bệ trượt ngang, bàn máy rãnh chữ T, đồ gá ê-tô và phôi thực hiện chuyển động chạy dao tương đối với dao phay.'
+  },
+  'mill.table-base': {
+    id: 'mill.table-base',
+    nodeName: 'TableBase',
+    nameVi: 'Bệ đỡ bàn máy và sống trượt (Table Saddle Base)',
+    nameEn: 'Saddle & Dovetail Guideway Base',
+    category: 'Cụm bàn máy & chạy dao',
+    kinematicRole: 'Đỡ và dẫn hướng bàn máy trượt theo phương ngang X',
+    functionVi:
+      'Bệ trung gian lắp trên bàn консол, có sống trượt mang cá dẫn hướng cho bàn máy phay tịnh tiến êm và chính xác theo phương ngang.'
+  },
+  'mill.worktable': {
+    id: 'mill.worktable',
+    nodeName: 'Worktable',
+    nameVi: 'Bàn máy phay có rãnh chữ T (Worktable)',
+    nameEn: 'Precision Ground T-Slot Worktable',
+    category: 'Cụm bàn máy & chạy dao',
+    kinematicRole: 'Chuyển động chạy dao ngang qua lại theo trục X (Sd)',
+    functionVi:
+      'Mặt bàn gang đúc dày được mài phẳng chuẩn xác, có 3 rãnh chữ T chạy dọc để định vị và kẹp chặt đồ gá hoặc phôi bằng bu-lông chữ T.'
+  },
+  'mill.worktable.t-slot-01': {
+    id: 'mill.worktable.t-slot-01',
+    nodeName: 'TSlot_01',
+    nameVi: 'Rãnh chữ T số 1 - Phía trong (T-Slot 01)',
+    nameEn: 'Rear Precision T-Slot Channel #1',
+    category: 'Chi tiết bàn máy',
+    kinematicRole: 'Tịnh tiến cùng bàn máy',
+    functionVi:
+      'Rãnh định vị tiết diện chữ T ngược phía gần thân máy (Z = +0.06 m), giữ đầu bu-lông chữ T chống nhổ khi kẹp chặt đế đồ gá.'
+  },
+  'mill.worktable.t-slot-02': {
+    id: 'mill.worktable.t-slot-02',
+    nodeName: 'TSlot_02',
+    nameVi: 'Rãnh chữ T số 2 - Giữa bàn (T-Slot 02)',
+    nameEn: 'Center Reference T-Slot Channel #2',
+    category: 'Chi tiết bàn máy',
+    kinematicRole: 'Tịnh tiến cùng bàn máy',
+    functionVi:
+      'Rãnh chữ T trung tâm (Z = +0.16 m) dùng làm chuẩn căn chỉnh song song cho then dẫn hướng dưới đáy ê-tô hoặc đồ gá.'
+  },
+  'mill.worktable.t-slot-03': {
+    id: 'mill.worktable.t-slot-03',
+    nodeName: 'TSlot_03',
+    nameVi: 'Rãnh chữ T số 3 - Phía trước (T-Slot 03)',
+    nameEn: 'Front Precision T-Slot Channel #3',
+    category: 'Chi tiết bàn máy',
+    kinematicRole: 'Tịnh tiến cùng bàn máy',
+    functionVi:
+      'Rãnh chữ T phía trước bàn máy (Z = +0.26 m), phối hợp với rãnh số 1 để kẹp cứng hai mỏ kẹp giữ ê-tô trên mặt bàn.'
+  },
+  'mill.workholding-fixture': {
+    id: 'mill.workholding-fixture',
+    nodeName: 'WorkholdingFixture',
+    nameVi: 'Đồ gá ê-tô máy phay (Workholding Fixture / Machine Vise)',
+    nameEn: 'Heavy-Duty Precision Milling Machine Vise',
+    category: 'Đồ gá kẹp phôi',
+    kinematicRole: 'Gắn cố định trên bàn máy, dịch chuyển cùng bàn',
+    functionVi:
+      'Ê-tô cơ khí chính xác được bắt chặt vào rãnh chữ T của bàn máy, dùng má tĩnh và má động để kẹp chặt khối phôi kim loại không bị xê dịch khi phay.'
+  },
+  'mill.workpiece': {
+    id: 'mill.workpiece',
+    nodeName: 'Workpiece',
+    nameVi: 'Khối phôi kim loại gia công (Workpiece)',
+    nameEn: 'Prismatic Steel Workpiece with Milled Slot',
+    category: 'Chi tiết gia công',
+    kinematicRole: 'Gá cố định trong đồ gá, chạy dao cùng bàn máy theo trục X',
+    functionVi:
+      'Khối phôi thép hình hộp được kẹp chặt trong ê-tô, mặt trên minh họa rãnh phẳng đang được gia công khi phôi tịnh tiến qua vùng quay của dao phay ngón.'
+  }
+};
+function createVerticalMillModel(options = {}) {
+  const materials = options.materials || createMaterialLibrary();
+  const ownsMaterials = !options.materials;
+
+  // Root Group required by contract: VerticalMillAssembly
+  const root = new THREE.Group();
+  root.name = 'VerticalMillAssembly';
+  root.userData = {
+    modelId: '04-vertical-milling-machine',
+    modelName: 'Vertical Milling Machine (Máy phay đứng)',
+    upAxis: 'Y',
+    spindleAxis: 'Y',
+    spindleCenterXZ: [0.0, 0.16],
+    educationalSummary: MILL_EDUCATIONAL_SUMMARY
+  };
+
+  const components = {};
+  const createdGeometries = [];
+
+  function trackGeometry(geom) {
+    createdGeometries.push(geom);
+    return geom;
+  }
+
+  function registerComponent(node, componentId) {
+    const meta = MILL_COMPONENT_METADATA[componentId] || {
+      id: componentId,
+      nodeName: node.name,
+      nameVi: node.name,
+      nameEn: node.name,
+      category: 'Chi tiết máy phay',
+      kinematicRole: 'Cơ cấu máy phay',
+      functionVi: MILL_EDUCATIONAL_SUMMARY
+    };
+    node.userData = {
+      ...node.userData,
+      componentId: meta.id,
+      nameVi: meta.nameVi,
+      nameEn: meta.nameEn,
+      category: meta.category,
+      kinematicRole: meta.kinematicRole,
+      functionVi: meta.functionVi
+    };
+    components[componentId] = node;
+    components[node.name] = node;
+  }
+
+  // =========================================================================
+  // 1. MACHINE BASE (mill.base -> MachineBase)
+  // =========================================================================
+  const machineBase = new THREE.Group();
+  machineBase.name = 'MachineBase';
+  registerComponent(machineBase, 'mill.base');
+  root.add(machineBase);
+
+  // Heavy floor base plate with coolant tray rim
+  const basePlate = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(1.04, 0.16, 1.12)),
+    materials.castIronDark
+  );
+  basePlate.name = 'MachineBase_Footplate';
+  basePlate.position.set(0, 0.08, -0.02);
+  machineBase.add(basePlate);
+
+  const baseUpperStep = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.92, 0.06, 0.98)),
+    materials.castIronMedium
+  );
+  baseUpperStep.name = 'MachineBase_DeckStep';
+  baseUpperStep.position.set(0, 0.19, -0.03);
+  machineBase.add(baseUpperStep);
+
+  // Knee support pedestal rising under the table at Z = +0.16 (Y from 0.22 to 0.60)
+  const kneePedestalProfileZY = [
+    [-0.14, 0.22],
+    [0.34, 0.22],
+    [0.38, 0.42],
+    [0.38, 0.60],
+    [-0.14, 0.60]
+  ];
+  const kneePedestal = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(kneePedestalProfileZY, -0.26, 0.26, 'x')),
+    materials.castIronDark
+  );
+  kneePedestal.name = 'MachineBase_KneeConsole';
+  machineBase.add(kneePedestal);
+
+  // Elevating screw column telescoper underneath knee
+  const elevatingCylinder = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.055, 0.068, 0.26, 24)),
+    materials.machinedSteel
+  );
+  elevatingCylinder.name = 'MachineBase_ElevatingJack';
+  elevatingCylinder.position.set(0, 0.30, 0.18);
+  machineBase.add(elevatingCylinder);
+
+  // =========================================================================
+  // 2. VERTICAL COLUMN (mill.column -> VerticalColumn)
+  // =========================================================================
+  const verticalColumn = new THREE.Group();
+  verticalColumn.name = 'VerticalColumn';
+  registerComponent(verticalColumn, 'mill.column');
+  root.add(verticalColumn);
+
+  // Main column + overhanging upper ram profile in [z, y] extruded along X in [-0.28, +0.28]
+  const columnProfileZY = [
+    [-0.52, 0.22],
+    [-0.14, 0.22],
+    [-0.14, 1.38],
+    [0.02, 1.48],  // Throat transition overhang toward spindle head
+    [0.02, 1.74],
+    [-0.44, 1.74],
+    [-0.52, 1.58]
+  ];
+  const columnBody = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(columnProfileZY, -0.28, 0.28, 'x')),
+    materials.castIronMedium
+  );
+  columnBody.name = 'VerticalColumn_MainCasting';
+  verticalColumn.add(columnBody);
+
+  // Left & Right side stiffening gusset ribs on the column
+  const gussetProfileZY = [
+    [-0.50, 0.22],
+    [-0.16, 0.22],
+    [-0.16, 1.28],
+    [-0.46, 1.56],
+    [-0.50, 1.56]
+  ];
+  for (const [gx, gName] of [
+    [-0.295, 'VerticalColumn_LeftRib'],
+    [0.295, 'VerticalColumn_RightRib']
+  ]) {
+    const rib = new THREE.Mesh(
+      trackGeometry(createProfileExtrusionGeometry(gussetProfileZY, gx - 0.015, gx + 0.015, 'x')),
+      materials.castIronDark
+    );
+    rib.name = gName;
+    verticalColumn.add(rib);
+  }
+
+  // Precision vertical dovetail Z-ways on the front of the column (Z = -0.13)
+  const columnWays = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.38, 1.12, 0.028)),
+    materials.polishedSteel
+  );
+  columnWays.name = 'VerticalColumn_FrontGuideways';
+  columnWays.position.set(0, 0.82, -0.13);
+  verticalColumn.add(columnWays);
+
+  // =========================================================================
+  // 3. SPINDLE HEAD (mill.spindle-head -> HeadHousing, Spindle, ToolHolder -> Collet, EndMill)
+  // =========================================================================
+  const spindleHead = new THREE.Group();
+  spindleHead.name = 'SpindleHead';
+  registerComponent(spindleHead, 'mill.spindle-head');
+  root.add(spindleHead);
+
+  // 3.1 HeadHousing (mill.spindle-head.housing)
+  const headHousing = new THREE.Group();
+  headHousing.name = 'HeadHousing';
+  registerComponent(headHousing, 'mill.spindle-head.housing');
+  spindleHead.add(headHousing);
+
+  const headCasting = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.36, 0.46, 0.34)),
+    materials.castIronHousing
+  );
+  headCasting.name = 'HeadHousing_MainBox';
+  headCasting.position.set(0, 1.50, 0.15);
+  headHousing.add(headCasting);
+
+  // Lower quill boss around (X = 0, Z = 0.16) from Y = 1.20 to 1.27
+  const quillBoss = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.088, 0.078, 0.08, 32)),
+    materials.castIronDark
+  );
+  quillBoss.name = 'HeadHousing_LowerNoseBoss';
+  quillBoss.position.set(0, 1.235, 0.16);
+  headHousing.add(quillBoss);
+
+  // Top Spindle Drive Motor with cooling fins (Y from 1.73 to 1.96)
+  const motorBody = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.115, 0.115, 0.23, 32)),
+    materials.castIronDark
+  );
+  motorBody.name = 'HeadHousing_DriveMotor';
+  motorBody.position.set(0, 1.845, 0.16);
+  headHousing.add(motorBody);
+
+  // Technical cyan accent band on Spindle Head
+  const headCyanBand = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.366, 0.018, 0.346)),
+    materials.technicalCyan
+  );
+  headCyanBand.name = 'HeadHousing_CyanAccent';
+  headCyanBand.position.set(0, 1.66, 0.15);
+  headHousing.add(headCyanBand);
+
+  // Downfeed Capstan Lever on right side of head (+X = 0.20)
+  const feedHub = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.032, 0.032, 0.04, 20)),
+    materials.machinedSteel
+  );
+  feedHub.rotation.z = Math.PI * 0.5;
+  feedHub.position.set(0.20, 1.44, 0.18);
+  feedHub.name = 'HeadHousing_CapstanHub';
+  headHousing.add(feedHub);
+
+  const feedArm = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.007, 0.007, 0.18, 12)),
+    materials.polishedSteel
+  );
+  feedArm.position.set(0.215, 1.38, 0.24);
+  feedArm.rotation.x = 0.65;
+  feedArm.name = 'HeadHousing_CapstanArm';
+  headHousing.add(feedArm);
+
+  // 3.2 Spindle (mill.spindle) — Vertical rotating spindle nose at (X = 0, Z = 0.16), Y from 1.13 to 1.20
+  const spindleProfile = [
+    [1.125, 0.034],
+    [1.125, 0.056],
+    [1.155, 0.056],
+    [1.155, 0.064],
+    [1.205, 0.064],
+    [1.205, 0.034]
+  ];
+  const spindle = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(spindleProfile, 44, 'y')),
+    materials.polishedSteel
+  );
+  spindle.name = 'Spindle';
+  spindle.position.set(0, 0, 0.16);
+  registerComponent(spindle, 'mill.spindle');
+  spindleHead.add(spindle);
+
+  // 3.3 ToolHolder (mill.tool-holder -> Collet, EndMill)
+  // Positioned at (X = 0, Y = 0, Z = 0.16) so its Y-axis rotation is concentric with Spindle!
+  const toolHolder = new THREE.Group();
+  toolHolder.name = 'ToolHolder';
+  toolHolder.position.set(0, 0, 0.16);
+  registerComponent(toolHolder, 'mill.tool-holder');
+  spindleHead.add(toolHolder);
+
+  // BT40 V-flange tool holder body (Y from 1.045 to 1.125)
+  const holderProfile = [
+    [1.045, 0.018],
+    [1.045, 0.036],
+    [1.078, 0.042],
+    [1.092, 0.054], // V-flange lower lip
+    [1.102, 0.046], // V-groove
+    [1.112, 0.054], // V-flange upper lip
+    [1.125, 0.048],
+    [1.125, 0.018]
+  ];
+  const toolHolderBody = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(holderProfile, 44, 'y')),
+    materials.hardenedSteel
+  );
+  toolHolderBody.name = 'ToolHolder_BT40Body';
+  toolHolder.add(toolHolderBody);
+
+  // 3.4 Collet (mill.tool-holder.collet) — ER32 clamping nut & precision collet sleeve (Y from 0.995 to 1.045)
+  const colletProfile = [
+    [0.995, 0.020],
+    [0.995, 0.028], // Beveled bottom nose of ER32 nut
+    [1.008, 0.035],
+    [1.036, 0.035],
+    [1.045, 0.032], // Collet taper ring
+    [1.045, 0.020]
+  ];
+  const collet = new THREE.Mesh(
+    trackGeometry(createRevolvedSolidGeometry(colletProfile, 36, 'y')),
+    materials.machinedSteel
+  );
+  collet.name = 'Collet';
+  registerComponent(collet, 'mill.tool-holder.collet');
+  toolHolder.add(collet);
+
+  // 3.5 EndMill (mill.end-mill) — True 3D Procedural 4-Flute Helical End Mill
+  // Extends from cutting tip at Y = 0.875 up to Y = 1.015 inside the collet (fluteLength = 0.092 m, cutterRadius = 0.022 m)
+  const endMillGeom = trackGeometry(
+    createFourFluteEndMillGeometry({
+      cutterRadius: 0.022,
+      shankRadius: 0.0195,
+      fluteLength: 0.092,
+      totalLength: 0.140,
+      flutes: 4,
+      helixAngleDeg: 35,
+      radialSegments: 96,
+      axialSegments: 64
+    })
+  );
+  const endMill = new THREE.Mesh(endMillGeom, materials.carbideFlute);
+  endMill.name = 'EndMill';
+  endMill.position.set(0, 0.875, 0);
+  registerComponent(endMill, 'mill.end-mill');
+  toolHolder.add(endMill);
+
+  // Subtle technical cyan collar ring on the end mill shank-to-collet transition
+  const shankAccentRing = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.0205, 0.0205, 0.006, 32)),
+    materials.technicalCyan
+  );
+  shankAccentRing.name = 'EndMill_ShankRing';
+  shankAccentRing.position.set(0, 0.991, 0);
+  toolHolder.add(shankAccentRing);
+
+  // =========================================================================
+  // 4. MILLING TABLE ASSEMBLY
+  //    mill.table-assembly -> TableBase, Worktable (TSlot_01..03), WorkholdingFixture, Workpiece
+  // =========================================================================
+  const millingTableAssembly = new THREE.Group();
+  millingTableAssembly.name = 'MillingTableAssembly';
+  registerComponent(millingTableAssembly, 'mill.table-assembly');
+  root.add(millingTableAssembly);
+
+  // 4.1 TableBase (mill.table-base): Stationary saddle with dovetail X-ways (Y from 0.60 to 0.68)
+  const tableBase = new THREE.Group();
+  tableBase.name = 'TableBase';
+  registerComponent(tableBase, 'mill.table-base');
+  millingTableAssembly.add(tableBase);
+
+  const saddleProfileZY = [
+    [-0.06, 0.60],
+    [0.38, 0.60],
+    [0.36, 0.68],
+    [-0.04, 0.68]
+  ];
+  const saddleCasting = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(saddleProfileZY, -0.36, 0.36, 'x')),
+    materials.castIronDark
+  );
+  saddleCasting.name = 'TableBase_SaddleCasting';
+  tableBase.add(saddleCasting);
+
+  // Cross-feed handwheel at the front of the saddle (+Z = 0.41)
+  const saddleCrossWheel = createHandwheelGroup(0.052, 0.007, materials, 'TableBase_CrossHandwheel');
+  saddleCrossWheel.position.set(0, 0.64, 0.40);
+  tableBase.add(saddleCrossWheel);
+
+  // 4.2 Worktable (mill.worktable) with 3 true 3D T-Slots (TSlot_01, TSlot_02, TSlot_03)
+  const worktable = new THREE.Group();
+  worktable.name = 'Worktable';
+  registerComponent(worktable, 'mill.worktable');
+  millingTableAssembly.add(worktable);
+
+  const worktableDeckMesh = new THREE.Mesh(
+    trackGeometry(
+      createWorktableBodyGeometry({
+        lengthX: 0.96,
+        minY: 0.680,
+        maxY: 0.755,
+        minZ: -0.03,
+        maxZ: 0.35,
+        slotCentersZ: T_SLOT_CENTERS_Z,
+        channelHalfWidth: 0.020,
+        channelBottomY: 0.715
+      })
+    ),
+    materials.machinedSteel
+  );
+  worktableDeckMesh.name = 'Worktable_DeckBody';
+  worktable.add(worktableDeckMesh);
+
+  // Left & Right table end brackets + X-feed handwheels
+  const rightTableWheel = createHandwheelGroup(0.058, 0.008, materials, 'Worktable_RightHandwheel');
+  rightTableWheel.rotation.y = Math.PI * 0.5;
+  rightTableWheel.position.set(0.51, 0.718, 0.16);
+  worktable.add(rightTableWheel);
+
+  const leftTableWheel = createHandwheelGroup(0.058, 0.008, materials, 'Worktable_LeftHandwheel');
+  leftTableWheel.rotation.y = -Math.PI * 0.5;
+  leftTableWheel.position.set(-0.51, 0.718, 0.16);
+  worktable.add(leftTableWheel);
+
+  // Three True 3D Recessed T-Slots (TSlot_01, TSlot_02, TSlot_03)
+  const tSlotGeom = trackGeometry(
+    createTSlotChannelGeometry({
+      lengthX: 0.96,
+      channelBottomY: 0.715,
+      maxY: 0.755,
+      channelHalfWidth: 0.020,
+      throatHalfWidth: 0.008,
+      flangeHalfWidth: 0.015,
+      pocketBottomY: 0.722,
+      pocketTopY: 0.736
+    })
+  );
+
+  const tSlotDefs = [
+    { name: 'TSlot_01', id: 'mill.worktable.t-slot-01', z: T_SLOT_CENTERS_Z[0] },
+    { name: 'TSlot_02', id: 'mill.worktable.t-slot-02', z: T_SLOT_CENTERS_Z[1] },
+    { name: 'TSlot_03', id: 'mill.worktable.t-slot-03', z: T_SLOT_CENTERS_Z[2] }
+  ];
+
+  tSlotDefs.forEach(({ name, id, z }) => {
+    const slotMesh = new THREE.Mesh(tSlotGeom, materials.tSlotCavity);
+    slotMesh.name = name;
+    slotMesh.position.set(0, 0, z);
+    registerComponent(slotMesh, id);
+    worktable.add(slotMesh);
+  });
+
+  // 4.3 WorkholdingFixture (mill.workholding-fixture): Precision Machine Vise bolted to Worktable
+  const workholdingFixture = new THREE.Group();
+  workholdingFixture.name = 'WorkholdingFixture';
+  registerComponent(workholdingFixture, 'mill.workholding-fixture');
+  millingTableAssembly.add(workholdingFixture);
+
+  // Vise Base Plate sitting on Worktable top surface Y = 0.755
+  const viseBase = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.46, 0.036, 0.28)),
+    materials.castIronHousing
+  );
+  viseBase.name = 'WorkholdingFixture_ViseBed';
+  viseBase.position.set(0, 0.773, 0.16);
+  workholdingFixture.add(viseBase);
+
+  // Two T-bolt hold-down clamps engaging TSlot_01 (Z = 0.06) and TSlot_03 (Z = 0.26)
+  for (const [tx, tz, idx] of [
+    [-0.25, 0.06, 1],
+    [0.25, 0.06, 2],
+    [-0.25, 0.26, 3],
+    [0.25, 0.26, 4]
+  ]) {
+    // T-nut seated inside the T-slot pocket + stud + hex flange nut
+    const tBoltStud = new THREE.Mesh(
+      trackGeometry(new THREE.CylinderGeometry(0.007, 0.007, 0.058, 12)),
+      materials.hardenedSteel
+    );
+    tBoltStud.name = `WorkholdingFixture_TBolt_${idx}`;
+    tBoltStud.position.set(tx, 0.755, tz);
+    workholdingFixture.add(tBoltStud);
+
+    const clampLug = new THREE.Mesh(
+      trackGeometry(new THREE.BoxGeometry(0.044, 0.022, 0.036)),
+      materials.hardenedSteel
+    );
+    clampLug.name = `WorkholdingFixture_ClampLug_${idx}`;
+    clampLug.position.set(tx, 0.766, tz);
+    workholdingFixture.add(clampLug);
+  }
+
+  // Fixed Rear Vise Jaw (Z in [0.035, 0.088], Y in [0.791, 0.885])
+  const fixedJawBody = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.36, 0.092, 0.042)),
+    materials.castIronDark
+  );
+  fixedJawBody.name = 'WorkholdingFixture_FixedJaw';
+  fixedJawBody.position.set(0, 0.837, 0.056);
+  workholdingFixture.add(fixedJawBody);
+
+  const fixedJawPlate = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.36, 0.076, 0.010)),
+    materials.polishedSteel
+  );
+  fixedJawPlate.name = 'WorkholdingFixture_FixedJawPlate';
+  fixedJawPlate.position.set(0, 0.842, 0.082);
+  workholdingFixture.add(fixedJawPlate);
+
+  // Movable Front Vise Jaw (Z in [0.232, 0.285], Y in [0.791, 0.885])
+  const movableJawPlate = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.36, 0.076, 0.010)),
+    materials.polishedSteel
+  );
+  movableJawPlate.name = 'WorkholdingFixture_MovableJawPlate';
+  movableJawPlate.position.set(0, 0.842, 0.238);
+  workholdingFixture.add(movableJawPlate);
+
+  const movableJawBody = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.36, 0.088, 0.042)),
+    materials.castIronDark
+  );
+  movableJawBody.name = 'WorkholdingFixture_MovableJaw';
+  movableJawBody.position.set(0, 0.835, 0.264);
+  workholdingFixture.add(movableJawBody);
+
+  // Vise clamping screw & front hex hub at Z = 0.31
+  const viseScrew = new THREE.Mesh(
+    trackGeometry(new THREE.CylinderGeometry(0.014, 0.014, 0.07, 16)),
+    materials.machinedSteel
+  );
+  viseScrew.rotation.x = Math.PI * 0.5;
+  viseScrew.position.set(0, 0.825, 0.315);
+  viseScrew.name = 'WorkholdingFixture_Leadscrew';
+  workholdingFixture.add(viseScrew);
+
+  // 4.4 Workpiece (mill.workpiece): Prismatic Steel Block with Milled Central Slot
+  // Clamped firmly between FixedJawPlate (Z = 0.087) and MovableJawPlate (Z = 0.233),
+  // spanning X in [-0.21, +0.21], Y from 0.791 (resting on vise parallels) up to Y = 0.902.
+  // Central milled slot along X at Z in [0.136, 0.184], floor at Y = 0.875 (exact tip of 4-flute EndMill!)
+  const wpProfileZY = [
+    [0.087, 0.791],
+    [0.233, 0.791],
+    [0.233, 0.902],
+    [0.184, 0.902],
+    [0.184, 0.875], // Right wall of milled slot
+    [0.136, 0.875], // Floor of milled slot (matches EndMill tip Y = 0.875)
+    [0.136, 0.902], // Left wall of milled slot
+    [0.087, 0.902]
+  ];
+  const workpiece = new THREE.Mesh(
+    trackGeometry(createProfileExtrusionGeometry(wpProfileZY, -0.21, 0.21, 'x')),
+    materials.turnedWorkpieceSteel
+  );
+  workpiece.name = 'Workpiece';
+  registerComponent(workpiece, 'mill.workpiece');
+  millingTableAssembly.add(workpiece);
+
+  // Subtle machined slot floor highlight strip inside the milled groove
+  const milledFloorStrip = new THREE.Mesh(
+    trackGeometry(new THREE.BoxGeometry(0.418, 0.002, 0.044)),
+    materials.polishedSteel
+  );
+  milledFloorStrip.name = 'Workpiece_MilledSlotSurface';
+  milledFloorStrip.position.set(0, 0.8755, 0.16);
+  workpiece.add(milledFloorStrip);
+
+  // =========================================================================
+  // 5. EDUCATIONAL OVERLAYS: CUTTING SWARF & MOTION ARROWS (Excluded from GLB)
+  // =========================================================================
+  const helperOverlayGroup = new THREE.Group();
+  helperOverlayGroup.name = 'MillEducationalOverlays';
+  helperOverlayGroup.userData = { isHelperOverlay: true };
+  root.add(helperOverlayGroup);
+
+  // Cutting effect chips around the end mill tip (X = 0, Y = 0.88, Z = 0.16)
+  const cuttingEffectGroup = new THREE.Group();
+  cuttingEffectGroup.name = 'CuttingEffects_Mill';
+  cuttingEffectGroup.userData = { isHelperOverlay: true };
+  cuttingEffectGroup.position.set(0, 0.882, 0.16);
+  helperOverlayGroup.add(cuttingEffectGroup);
+
+  const millChipGeom = trackGeometry(createSwarfRibbonGeometry(1.6, 0.007, 0.006, 0.003));
+  const millChips = [];
+  for (let i = 0; i < 6; i++) {
+    const chip = new THREE.Mesh(millChipGeom, materials.chipSwarf);
+    chip.userData = {
+      baseAngle: (i / 6) * Math.PI * 2,
+      phase: (i / 6)
+    };
+    cuttingEffectGroup.add(chip);
+    millChips.push(chip);
+  }
+
+  // Motion Arrows: Vc (Cutter rotation around Y) & Sd (Horizontal table feed along X)
+  const motionArrowsGroup = new THREE.Group();
+  motionArrowsGroup.name = 'MotionArrows_Mill';
+  motionArrowsGroup.userData = { isHelperOverlay: true };
+  helperOverlayGroup.add(motionArrowsGroup);
+
+  const vcArrow = createCurvedMotionArrow(0.056, Math.PI * 1.4, 0.004, materials.arrowVc, 'y');
+  vcArrow.name = 'Arrow_Vc_MillSpindle';
+  vcArrow.position.set(0, 0.94, 0.16);
+  motionArrowsGroup.add(vcArrow);
+
+  const sdArrow = createLinearMotionArrow(0.28, 0.0048, materials.arrowSd, true);
+  sdArrow.name = 'Arrow_Sd_MillTableFeed';
+  sdArrow.position.set(0, 0.78, 0.39);
+  motionArrowsGroup.add(sdArrow);
+
+  // =========================================================================
+  // 6. ANIMATION STATE & CONTROLLER (deltaTime-driven)
+  // =========================================================================
+  const animState = {
+    spindleSpeed: options.spindleSpeed !== undefined ? Number(options.spindleSpeed) : 1.0,
+    feedSpeed: options.feedSpeed !== undefined ? Number(options.feedSpeed) : 1.0,
+    travelRange: options.travelRange !== undefined ? Number(options.travelRange) : 0.16,
+    loop: options.loop !== undefined ? Boolean(options.loop) : true,
+    isPlaying: options.isPlaying !== undefined ? Boolean(options.isPlaying) : true,
+    tableX: 0.0,
+    feedDirection: 1,
+    spindleAngle: 0,
+    cuttingEffectsEnabled: true,
+    motionArrowsVisible: true
+  };
+
+  function applyTableOffset(xOffset) {
+    // Worktable, WorkholdingFixture, and Workpiece move together in strict lockstep on TableBase!
+    worktable.position.x = xOffset;
+    workholdingFixture.position.x = xOffset;
+    workpiece.position.x = xOffset;
+    sdArrow.position.x = xOffset;
+  }
+
+  function updateAnimation(deltaTime) {
+    const dt = Math.min(Math.max(Number(deltaTime) || 0, 0), 0.1);
+    if (!animState.isPlaying || dt <= 0) return;
+
+    // 1. Primary cutting rotation: Spindle, ToolHolder, Collet, and 4-Flute EndMill rotate around vertical Y axis
+    const baseOmega = 9.5; // rad/s
+    const dTheta = baseOmega * animState.spindleSpeed * dt;
+    animState.spindleAngle = (animState.spindleAngle + dTheta) % (Math.PI * 2);
+
+    spindle.rotation.y = animState.spindleAngle;
+    toolHolder.rotation.y = animState.spindleAngle;
+    vcArrow.rotation.y = animState.spindleAngle * 0.3;
+
+    // 2. Horizontal table feed: Worktable + WorkholdingFixture + Workpiece translate along X relative to stationary cutter
+    const baseFeedVel = 0.085; // m/s
+    const dx = animState.feedDirection * baseFeedVel * animState.feedSpeed * dt;
+    animState.tableX += dx;
+
+    const maxTravel = Math.max(0.04, Math.min(0.18, animState.travelRange));
+    if (animState.tableX >= maxTravel) {
+      animState.tableX = maxTravel;
+      if (animState.loop) {
+        animState.feedDirection = -1;
+      } else {
+        animState.isPlaying = false;
+      }
+    } else if (animState.tableX <= -maxTravel) {
+      animState.tableX = -maxTravel;
+      if (animState.loop) {
+        animState.feedDirection = 1;
+      } else {
+        animState.isPlaying = false;
+      }
+    }
+
+    applyTableOffset(animState.tableX);
+
+    // Rotate table handwheels proportionally to X travel
+    rightTableWheel.rotation.x += dx * 22.0;
+    leftTableWheel.rotation.x -= dx * 22.0;
+
+    // Update milling chip swarf spray
+    cuttingEffectGroup.visible = animState.cuttingEffectsEnabled;
+    if (cuttingEffectGroup.visible) {
+      millChips.forEach((chip) => {
+        chip.userData.phase = (chip.userData.phase + dt * 2.8 * animState.spindleSpeed) % 1.0;
+        const p = chip.userData.phase;
+        const angle = chip.userData.baseAngle + p * 1.4;
+        const r = 0.024 + p * 0.036;
+        chip.position.set(
+          Math.cos(angle) * r,
+          0.015 * Math.sin(p * Math.PI),
+          Math.sin(angle) * r
+        );
+        chip.rotation.set(p * 4.0, angle, p * 3.0);
+        const s = Math.max(0.2, 1.0 - p * 0.75);
+        chip.scale.set(s, s, s);
+      });
+    }
+  }
+
+  function resetAnimation() {
+    animState.tableX = 0.0;
+    animState.feedDirection = 1;
+    animState.spindleAngle = 0;
+    spindle.rotation.y = 0;
+    toolHolder.rotation.y = 0;
+    applyTableOffset(0.0);
+  }
+
+  const animation = {
+    state: animState,
+    update: updateAnimation,
+    play() {
+      animState.isPlaying = true;
+    },
+    pause() {
+      animState.isPlaying = false;
+    },
+    reset: resetAnimation,
+    setSpeed(val) {
+      animState.spindleSpeed = Math.max(0.1, Math.min(3.0, Number(val) || 1.0));
+    },
+    setFeedSpeed(val) {
+      animState.feedSpeed = Math.max(0.0, Math.min(3.0, Number(val) || 1.0));
+    },
+    setTravelRange(val) {
+      animState.travelRange = Math.max(0.04, Math.min(0.18, Number(val) || 0.16));
+    },
+    setCuttingEffectsEnabled(enabled) {
+      animState.cuttingEffectsEnabled = Boolean(enabled);
+      cuttingEffectGroup.visible = animState.cuttingEffectsEnabled;
+    },
+    setMotionArrowsVisible(visible) {
+      animState.motionArrowsVisible = Boolean(visible);
+      motionArrowsGroup.visible = animState.motionArrowsVisible;
+    }
+  };
+
+  function dispose() {
+    createdGeometries.forEach((g) => {
+      if (g && typeof g.dispose === 'function') g.dispose();
+    });
+    if (ownsMaterials && materials && typeof materials.dispose === 'function') {
+      materials.dispose();
+    }
+  }
+
+  return {
+    root,
+    components,
+    metadata: {
+      id: '04-vertical-milling-machine',
+      name: 'Vertical Milling Machine (Máy phay đứng)',
+      rootName: 'VerticalMillAssembly',
+      upAxis: 'Y',
+      primaryAxis: 'Y',
+      educationalSummary: MILL_EDUCATIONAL_SUMMARY,
+      cuttingZoneTarget: { x: 0.0, y: 0.89, z: 0.16 },
+      overviewTarget: { x: 0.0, y: 0.92, z: 0.08 },
+      components: MILL_COMPONENT_METADATA
+    },
+    animation,
+    dispose
+  };
+}
+
+// --- Module: src/app/SceneManager.js ---
+/**
+ * SceneManager — Manages the Three.js WebGLRenderer, Scene, Industrial Lab Lighting,
+ * Technical Floor Reference Grid, Resize Lifecycle, and deltaTime Animation Loop.
+ */
+class SceneManager {
+  constructor(canvasContainer) {
+    this.container = canvasContainer;
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0b0f17);
+
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
+
+    this.camera = new THREE.PerspectiveCamera(42, width / Math.max(height, 1), 0.02, 60);
+    this.camera.position.set(2.1, 1.65, 2.35);
+
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else if ('outputEncoding' in this.renderer && THREE.sRGBEncoding) {
+      this.renderer.outputEncoding = THREE.sRGBEncoding;
+    }
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+
+    this.container.innerHTML = '';
+    this.container.appendChild(this.renderer.domElement);
+
+    this.activeModel = null;
+    this.frameCallbacks = [];
+    this.clock = new THREE.Clock();
+    this._rafId = null;
+
+    this._setupLighting();
+    this._setupLabFloor();
+
+    this._onResizeBound = () => this.handleResize();
+    window.addEventListener('resize', this._onResizeBound);
+  }
+
+  _setupLighting() {
+    this.lightingGroup = new THREE.Group();
+    this.lightingGroup.name = 'IndustrialLabLighting';
+    this.scene.add(this.lightingGroup);
+
+    const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x1e293b, 0.85);
+    hemiLight.position.set(0, 6, 0);
+    this.lightingGroup.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.55);
+    keyLight.position.set(3.5, 5.2, 4.0);
+    this.lightingGroup.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.85);
+    fillLight.position.set(-4.0, 3.0, 2.2);
+    this.lightingGroup.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.70);
+    rimLight.position.set(0.5, 3.5, -4.2);
+    this.lightingGroup.add(rimLight);
+
+    const underLight = new THREE.PointLight(0x64748b, 0.45, 6.0);
+    underLight.position.set(0, 0.65, 1.2);
+    this.lightingGroup.add(underLight);
+  }
+
+  _setupLabFloor() {
+    this.environmentGroup = new THREE.Group();
+    this.environmentGroup.name = 'LabEnvironmentReference';
+    this.scene.add(this.environmentGroup);
+
+    const grid = new THREE.GridHelper(6.0, 30, 0x1e3a5f, 0x162032);
+    grid.position.y = -0.002;
+    this.environmentGroup.add(grid);
+
+    const floorPadGeom = new THREE.PlaneGeometry(6.0, 6.0);
+    floorPadGeom.rotateX(-Math.PI * 0.5);
+    const floorPadMat = new THREE.MeshStandardMaterial({
+      color: 0x0d131d,
+      metalness: 0.2,
+      roughness: 0.88
+    });
+    const floorPad = new THREE.Mesh(floorPadGeom, floorPadMat);
+    floorPad.position.y = -0.004;
+    this.environmentGroup.add(floorPad);
+  }
+
+  setModel(modelInstance) {
+    if (this.activeModel) {
+      this.scene.remove(this.activeModel.root);
+      if (typeof this.activeModel.dispose === 'function') {
+        this.activeModel.dispose();
+      }
+      this.activeModel = null;
+    }
+    this.activeModel = modelInstance;
+    if (this.activeModel && this.activeModel.root) {
+      this.scene.add(this.activeModel.root);
+    }
+  }
+
+  onTick(callback) {
+    this.frameCallbacks.push(callback);
+  }
+
+  handleResize() {
+    if (!this.container) return;
+    const width = Math.max(this.container.clientWidth || window.innerWidth, 1);
+    const height = Math.max(this.container.clientHeight || window.innerHeight, 1);
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+  }
+
+  start() {
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+    }
+    this.clock.getDelta();
+    const animate = () => {
+      this._rafId = requestAnimationFrame(animate);
+      const deltaTime = this.clock.getDelta();
+      if (this.activeModel && this.activeModel.animation) {
+        this.activeModel.animation.update(deltaTime);
+      }
+      for (let i = 0; i < this.frameCallbacks.length; i++) {
+        this.frameCallbacks[i](deltaTime);
+      }
+      this.renderer.render(this.scene, this.camera);
+    };
+    animate();
+  }
+
+  stop() {
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+  }
+
+  dispose() {
+    this.stop();
+    window.removeEventListener('resize', this._onResizeBound);
+    if (this.activeModel && typeof this.activeModel.dispose === 'function') {
+      this.activeModel.dispose();
+    }
+    this.renderer.dispose();
+  }
+}
+
+// --- Module: src/app/CameraController.js ---
+/**
+ * CameraController — Provides Orbit, Zoom, and Pan camera manipulation
+ * plus Fit Model, Reset Camera, Front, Side, Top, Isometric, Overview,
+ * and Cutting Zone close-up transitions.
+ * Self-contained spherical + target damping controller so it works reliably
+ * across Three.js r128+ and ES module environments without external addon failures.
+ */
+class CameraController {
+  constructor(camera, domElement) {
+    this.camera = camera;
+    this.domElement = domElement;
+
+    this.target = new THREE.Vector3(0, 0.72, 0);
+    this.desiredTarget = new THREE.Vector3(0, 0.72, 0);
+
+    this.spherical = {
+      radius: 2.85,
+      phi: 1.12,   // Polar angle from +Y (0 = top, PI/2 = horizon)
+      theta: 0.68  // Azimuth angle around Y from +Z
+    };
+    this.desiredSpherical = { ...this.spherical };
+
+    this.defaultState = {
+      target: new THREE.Vector3(0, 0.72, 0),
+      radius: 2.85,
+      phi: 1.12,
+      theta: 0.68
+    };
+
+    this._isDragging = false;
+    this._dragMode = 'orbit'; // 'orbit' | 'pan'
+    this._prevPointer = { x: 0, y: 0 };
+    this._pointerDownPos = { x: 0, y: 0 };
+    this.wasDragGesture = false;
+
+    this._bindEvents();
+    this._applyImmediately();
+  }
+
+  _bindEvents() {
+    const el = this.domElement;
+
+    this._onPointerDown = (e) => {
+      this._isDragging = true;
+      this.wasDragGesture = false;
+      this._prevPointer = { x: e.clientX, y: e.clientY };
+      this._pointerDownPos = { x: e.clientX, y: e.clientY };
+      this._dragMode = e.button === 2 || e.button === 1 || e.shiftKey ? 'pan' : 'orbit';
+    };
+
+    this._onPointerMove = (e) => {
+      if (!this._isDragging) return;
+      const dx = e.clientX - this._prevPointer.x;
+      const dy = e.clientY - this._prevPointer.y;
+      this._prevPointer = { x: e.clientX, y: e.clientY };
+
+      const totalDist = Math.hypot(
+        e.clientX - this._pointerDownPos.x,
+        e.clientY - this._pointerDownPos.y
+      );
+      if (totalDist > 5) {
+        this.wasDragGesture = true;
+      }
+
+      if (this._dragMode === 'orbit') {
+        const rotSpeed = 0.0065;
+        this.desiredSpherical.theta -= dx * rotSpeed;
+        this.desiredSpherical.phi = Math.max(
+          0.08,
+          Math.min(Math.PI * 0.485, this.desiredSpherical.phi - dy * rotSpeed)
+        );
+      } else {
+        const panScale = this.desiredSpherical.radius * 0.0014;
+        const forward = new THREE.Vector3()
+          .subVectors(this.desiredTarget, this.camera.position)
+          .normalize();
+        const right = new THREE.Vector3()
+          .crossVectors(forward, new THREE.Vector3(0, 1, 0))
+          .normalize();
+        const up = new THREE.Vector3()
+          .crossVectors(right, forward)
+          .normalize();
+
+        this.desiredTarget.addScaledVector(right, -dx * panScale);
+        this.desiredTarget.addScaledVector(up, dy * panScale);
+        this.desiredTarget.y = Math.max(0.15, Math.min(2.2, this.desiredTarget.y));
+      }
+    };
+
+    this._onPointerUp = () => {
+      this._isDragging = false;
+    };
+
+    this._onWheel = (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 1.09 : 0.91;
+      this.desiredSpherical.radius = Math.max(
+        0.35,
+        Math.min(9.0, this.desiredSpherical.radius * zoomFactor)
+      );
+    };
+
+    this._onContextMenu = (e) => e.preventDefault();
+
+    el.addEventListener('pointerdown', this._onPointerDown);
+    window.addEventListener('pointermove', this._onPointerMove);
+    window.addEventListener('pointerup', this._onPointerUp);
+    el.addEventListener('wheel', this._onWheel, { passive: false });
+    el.addEventListener('contextmenu', this._onContextMenu);
+  }
+
+  _applyImmediately() {
+    this.target.copy(this.desiredTarget);
+    this.spherical.radius = this.desiredSpherical.radius;
+    this.spherical.phi = this.desiredSpherical.phi;
+    this.spherical.theta = this.desiredSpherical.theta;
+    this._syncCameraTransform();
+  }
+
+  _syncCameraTransform() {
+    const { radius, phi, theta } = this.spherical;
+    const sinPhi = Math.sin(phi);
+    const x = this.target.x + radius * sinPhi * Math.sin(theta);
+    const y = this.target.y + radius * Math.cos(phi);
+    const z = this.target.z + radius * sinPhi * Math.cos(theta);
+    this.camera.position.set(x, y, z);
+    this.camera.lookAt(this.target);
+  }
+
+  update(deltaTime = 0.016) {
+    const alpha = Math.min(1.0, deltaTime * 11.0);
+    this.target.lerp(this.desiredTarget, alpha);
+    this.spherical.radius += (this.desiredSpherical.radius - this.spherical.radius) * alpha;
+    this.spherical.phi += (this.desiredSpherical.phi - this.spherical.phi) * alpha;
+    this.spherical.theta += (this.desiredSpherical.theta - this.spherical.theta) * alpha;
+    this._syncCameraTransform();
+  }
+
+  fitModel(rootObject) {
+    if (!rootObject) return;
+    const box = new THREE.Box3().setFromObject(rootObject);
+    if (box.isEmpty()) return;
+
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    box.getCenter(center);
+    box.getSize(size);
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fovRad = (this.camera.fov * Math.PI) / 180;
+    const fitDist = (maxDim * 0.62) / Math.tan(fovRad * 0.5);
+
+    this.desiredTarget.copy(center);
+    this.desiredSpherical.radius = Math.max(1.1, Math.min(6.5, fitDist * 1.18));
+
+    this.defaultState = {
+      target: center.clone(),
+      radius: this.desiredSpherical.radius,
+      phi: 1.10,
+      theta: 0.62
+    };
+  }
+
+  resetCamera() {
+    this.desiredTarget.copy(this.defaultState.target);
+    this.desiredSpherical.radius = this.defaultState.radius;
+    this.desiredSpherical.phi = this.defaultState.phi;
+    this.desiredSpherical.theta = this.defaultState.theta;
+  }
+
+  setPresetView(presetName, metadata = {}) {
+    const center = metadata.overviewTarget
+      ? new THREE.Vector3(metadata.overviewTarget.x, metadata.overviewTarget.y, metadata.overviewTarget.z)
+      : this.defaultState.target.clone();
+
+    switch (presetName) {
+      case 'front':
+        this.desiredTarget.copy(center);
+        this.desiredSpherical.theta = 0.0;
+        this.desiredSpherical.phi = Math.PI * 0.45;
+        this.desiredSpherical.radius = this.defaultState.radius * 0.96;
+        break;
+      case 'side':
+        this.desiredTarget.copy(center);
+        this.desiredSpherical.theta = Math.PI * 0.5;
+        this.desiredSpherical.phi = Math.PI * 0.45;
+        this.desiredSpherical.radius = this.defaultState.radius * 0.95;
+        break;
+      case 'top':
+        this.desiredTarget.copy(center);
+        this.desiredSpherical.theta = 0.0;
+        this.desiredSpherical.phi = 0.12;
+        this.desiredSpherical.radius = this.defaultState.radius * 1.02;
+        break;
+      case 'isometric':
+        this.desiredTarget.copy(center);
+        this.desiredSpherical.theta = Math.PI * 0.24;
+        this.desiredSpherical.phi = 1.05;
+        this.desiredSpherical.radius = this.defaultState.radius * 0.98;
+        break;
+      case 'cutting-zone': {
+        const cz = metadata.cuttingZoneTarget || { x: 0, y: 0.88, z: 0.08 };
+        this.desiredTarget.set(cz.x, cz.y, cz.z);
+        this.desiredSpherical.theta = 0.48;
+        this.desiredSpherical.phi = 1.08;
+        this.desiredSpherical.radius = 0.68;
+        break;
+      }
+      case 'overview':
+      default:
+        this.resetCamera();
+        break;
+    }
+  }
+
+  focusNode(node) {
+    if (!node) return;
+    const box = new THREE.Box3().setFromObject(node);
+    if (box.isEmpty()) return;
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    box.getCenter(center);
+    box.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z, 0.18);
+    this.desiredTarget.copy(center);
+    this.desiredSpherical.radius = Math.max(0.55, Math.min(3.5, maxDim * 2.4));
+  }
+}
+
+// --- Module: src/app/ComponentPicker.js ---
+/**
+ * ComponentPicker — Uses THREE.Raycaster to select mechanical components on click,
+ * applies a non-destructive technical emissive highlight, and notifies listeners
+ * with the selected component's metadata.
+ */
+class ComponentPicker {
+  constructor(camera, domElement, cameraController, onComponentSelected) {
+    this.camera = camera;
+    this.domElement = domElement;
+    this.cameraController = cameraController;
+    this.onComponentSelected = onComponentSelected;
+
+    this.raycaster = new THREE.Raycaster();
+    this.pointer = new THREE.Vector2();
+    this.activeModel = null;
+    this.selectedNode = null;
+    this._highlightedRecords = [];
+
+    this._onClickBound = (e) => this._handleClick(e);
+    this.domElement.addEventListener('click', this._onClickBound);
+  }
+
+  setActiveModel(model) {
+    this.clearSelection(false);
+    this.activeModel = model;
+  }
+
+  _handleClick(event) {
+    if (!this.activeModel || !this.activeModel.root) return;
+    if (this.cameraController && this.cameraController.wasDragGesture) return;
+
+    const rect = this.domElement.getBoundingClientRect();
+    this.pointer.x = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+    this.pointer.y = -((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+
+    const pickableMeshes = [];
+    this.activeModel.root.traverseVisible((obj) => {
+      if (obj.isMesh && !this._isInsideHelperOverlay(obj)) {
+        pickableMeshes.push(obj);
+      }
+    });
+
+    const hits = this.raycaster.intersectObjects(pickableMeshes, false);
+    if (hits.length === 0) {
+      this.clearSelection(true);
+      return;
+    }
+
+    const hitObject = hits[0].object;
+    const componentNode = this._resolveComponentNode(hitObject);
+    if (componentNode) {
+      this.selectNode(componentNode, true);
+    }
+  }
+
+  _isInsideHelperOverlay(obj) {
+    let curr = obj;
+    while (curr) {
+      if (curr.userData && curr.userData.isHelperOverlay) return true;
+      curr = curr.parent;
+    }
+    return false;
+  }
+
+  _resolveComponentNode(mesh) {
+    let curr = mesh;
+    while (curr && curr !== this.activeModel.root) {
+      if (curr.userData && curr.userData.componentId) {
+        return curr;
+      }
+      curr = curr.parent;
+    }
+    return null;
+  }
+
+  selectByComponentId(componentId, notify = true) {
+    if (!this.activeModel || !this.activeModel.components) return null;
+    const node = this.activeModel.components[componentId];
+    if (node) {
+      this.selectNode(node, notify);
+    }
+    return node;
+  }
+
+  selectNode(node, notify = true) {
+    this.clearSelection(false);
+    this.selectedNode = node;
+
+    node.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const origMat = child.material;
+        const clonedMat = origMat.clone();
+        if (clonedMat.emissive) {
+          clonedMat.emissive = new THREE.Color(0x06b6d4);
+          clonedMat.emissiveIntensity = 0.42;
+        }
+        child.material = clonedMat;
+        this._highlightedRecords.push({ mesh: child, originalMaterial: origMat, highlightMaterial: clonedMat });
+      }
+    });
+
+    if (notify && typeof this.onComponentSelected === 'function') {
+      this.onComponentSelected(node.userData, node);
+    }
+  }
+
+  clearSelection(notify = true) {
+    for (const rec of this._highlightedRecords) {
+      rec.mesh.material = rec.originalMaterial;
+      if (rec.highlightMaterial && typeof rec.highlightMaterial.dispose === 'function') {
+        rec.highlightMaterial.dispose();
+      }
+    }
+    this._highlightedRecords = [];
+    this.selectedNode = null;
+    if (notify && typeof this.onComponentSelected === 'function') {
+      this.onComponentSelected(null, null);
+    }
+  }
+
+  dispose() {
+    this.clearSelection(false);
+    this.domElement.removeEventListener('click', this._onClickBound);
+  }
+}
+
+// --- Module: src/app/ExportManager.js ---
+/**
+ * ExportManager — Spec-compliant GLTF 2.0 Binary (.glb) Serializer for Three.js Assemblies
+ * Exports ONLY the target model root assembly (excluding UI, helper overlays, camera helpers,
+ * floor grids, and the other machine).
+ * Preserves:
+ * - Exact node names and parent-child component hierarchy
+ * - Node local transforms (translation, rotation quaternion, scale)
+ * - Unmerged individual component meshes & BufferGeometry (POSITION, NORMAL, indices)
+ * - GLTF 2.0 PBR Metallic-Roughness materials
+ * - Component metadata in GLTF `extras`
+ * - Embedded GLTF 2.0 keyframe animation clip for the primary machining cycle
+ */
+class ExportManager {
+  /**
+   * Serializes a model instance or root Group into a binary GLTF 2.0 (.glb) ArrayBuffer.
+   */
+  static serializeModelToGLB(modelInstance) {
+    const root = modelInstance.root || modelInstance;
+
+    // Reset animation to canonical pose before serializing node transforms
+    if (modelInstance.animation && typeof modelInstance.animation.reset === 'function') {
+      const wasPlaying = modelInstance.animation.state?.isPlaying;
+      modelInstance.animation.reset();
+      if (wasPlaying !== undefined) {
+        modelInstance.animation.state.isPlaying = wasPlaying;
+      }
+    }
+
+    root.updateMatrixWorld(true);
+
+    const nodes = [];
+    const meshes = [];
+    const materials = [];
+    const materialMap = new Map();
+    const bufferViews = [];
+    const accessors = [];
+    const binaryChunks = [];
+    let byteOffset = 0;
+
+    function appendTypedArray(typedArray, target) {
+      const u8 = new Uint8Array(
+        typedArray.buffer,
+        typedArray.byteOffset,
+        typedArray.byteLength
+      );
+      const padLen = (4 - (u8.byteLength % 4)) % 4;
+      const viewIndex = bufferViews.length;
+      const viewDef = {
+        buffer: 0,
+        byteOffset,
+        byteLength: u8.byteLength
+      };
+      if (target !== undefined) {
+        viewDef.target = target;
+      }
+      bufferViews.push(viewDef);
+
+      const copy = new Uint8Array(u8.byteLength + padLen);
+      copy.set(u8, 0);
+      binaryChunks.push(copy);
+      byteOffset += copy.byteLength;
+      return viewIndex;
+    }
+
+    function getOrCreateMaterialIndex(mat) {
+      if (!mat) return 0;
+      const key = mat.name || mat.uuid;
+      if (materialMap.has(key)) return materialMap.get(key);
+
+      const color = mat.color || { r: 0.7, g: 0.7, b: 0.7 };
+      const gltfMat = {
+        name: mat.name || `Material_${materials.length}`,
+        pbrMetallicRoughness: {
+          baseColorFactor: [
+            Number(color.r.toFixed(4)),
+            Number(color.g.toFixed(4)),
+            Number(color.b.toFixed(4)),
+            1.0
+          ],
+          metallicFactor: Number((mat.metalness !== undefined ? mat.metalness : 0.5).toFixed(4)),
+          roughnessFactor: Number((mat.roughness !== undefined ? mat.roughness : 0.5).toFixed(4))
+        },
+        doubleSided: Boolean(mat.side === THREE.DoubleSide)
+      };
+
+      if (mat.emissive && (mat.emissive.r > 0 || mat.emissive.g > 0 || mat.emissive.b > 0)) {
+        const intensity = mat.emissiveIntensity !== undefined ? mat.emissiveIntensity : 1.0;
+        gltfMat.emissiveFactor = [
+          Number(Math.min(1, mat.emissive.r * intensity).toFixed(4)),
+          Number(Math.min(1, mat.emissive.g * intensity).toFixed(4)),
+          Number(Math.min(1, mat.emissive.b * intensity).toFixed(4))
+        ];
+      }
+
+      const idx = materials.length;
+      materials.push(gltfMat);
+      materialMap.set(key, idx);
+      return idx;
+    }
+
+    function serializeGeometry(geometry, materialIndex, meshName) {
+      const posAttr = geometry.attributes.position;
+      if (!posAttr || posAttr.count === 0) return null;
+
+      if (!geometry.attributes.normal) {
+        geometry.computeVertexNormals();
+      }
+      const normAttr = geometry.attributes.normal;
+
+      const posArray = new Float32Array(posAttr.array);
+      const min = [Infinity, Infinity, Infinity];
+      const max = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i < posArray.length; i += 3) {
+        const x = posArray[i];
+        const y = posArray[i + 1];
+        const z = posArray[i + 2];
+        if (x < min[0]) min[0] = x;
+        if (y < min[1]) min[1] = y;
+        if (z < min[2]) min[2] = z;
+        if (x > max[0]) max[0] = x;
+        if (y > max[1]) max[1] = y;
+        if (z > max[2]) max[2] = z;
+      }
+
+      // ARRAY_BUFFER = 34962, ELEMENT_ARRAY_BUFFER = 34963
+      const posView = appendTypedArray(posArray, 34962);
+      const posAccessor = accessors.length;
+      accessors.push({
+        bufferView: posView,
+        byteOffset: 0,
+        componentType: 5126, // FLOAT
+        count: posAttr.count,
+        type: 'VEC3',
+        min: min.map((v) => Number(v.toFixed(6))),
+        max: max.map((v) => Number(v.toFixed(6)))
+      });
+
+      const attributes = { POSITION: posAccessor };
+
+      if (normAttr && normAttr.count === posAttr.count) {
+        const normArray = new Float32Array(normAttr.array);
+        // Normalize normal vectors for strict GLTF validator compliance
+        for (let i = 0; i < normArray.length; i += 3) {
+          const nx = normArray[i];
+          const ny = normArray[i + 1];
+          const nz = normArray[i + 2];
+          const len = Math.hypot(nx, ny, nz);
+          if (len > 1e-6) {
+            normArray[i] = nx / len;
+            normArray[i + 1] = ny / len;
+            normArray[i + 2] = nz / len;
+          } else {
+            normArray[i] = 0;
+            normArray[i + 1] = 1;
+            normArray[i + 2] = 0;
+          }
+        }
+        const normView = appendTypedArray(normArray, 34962);
+        const normAccessor = accessors.length;
+        accessors.push({
+          bufferView: normView,
+          byteOffset: 0,
+          componentType: 5126,
+          count: normAttr.count,
+          type: 'VEC3'
+        });
+        attributes.NORMAL = normAccessor;
+      }
+
+      const primitive = {
+        attributes,
+        material: materialIndex,
+        mode: 4 // TRIANGLES
+      };
+
+      if (geometry.index && geometry.index.count > 0) {
+        const idxSource = geometry.index.array;
+        const useU32 = posAttr.count > 65535;
+        const idxArray = useU32 ? new Uint32Array(idxSource) : new Uint16Array(idxSource);
+        const idxView = appendTypedArray(idxArray, 34963);
+        const idxAccessor = accessors.length;
+        accessors.push({
+          bufferView: idxView,
+          byteOffset: 0,
+          componentType: useU32 ? 5125 : 5123, // UNSIGNED_INT or UNSIGNED_SHORT
+          count: idxArray.length,
+          type: 'SCALAR'
+        });
+        primitive.indices = idxAccessor;
+      }
+
+      const meshIndex = meshes.length;
+      meshes.push({
+        name: `${meshName}_Mesh`,
+        primitives: [primitive]
+      });
+      return meshIndex;
+    }
+
+    const nodeNameToIndex = new Map();
+
+    function traverseObject(obj) {
+      // Skip non-mechanical helper overlays (motion arrows, swarf particles)
+      if (obj.userData && obj.userData.isHelperOverlay) {
+        return null;
+      }
+
+      const nodeIndex = nodes.length;
+      const nodeDef = {
+        name: obj.name || `Node_${nodeIndex}`
+      };
+      nodes.push(nodeDef);
+      if (obj.name && !nodeNameToIndex.has(obj.name)) {
+        nodeNameToIndex.set(obj.name, nodeIndex);
+      }
+
+      // Local transform
+      const px = obj.position ? obj.position.x : 0;
+      const py = obj.position ? obj.position.y : 0;
+      const pz = obj.position ? obj.position.z : 0;
+      if (Math.abs(px) > 1e-6 || Math.abs(py) > 1e-6 || Math.abs(pz) > 1e-6) {
+        nodeDef.translation = [
+          Number(px.toFixed(6)),
+          Number(py.toFixed(6)),
+          Number(pz.toFixed(6))
+        ];
+      }
+
+      if (obj.quaternion) {
+        const qx = obj.quaternion.x;
+        const qy = obj.quaternion.y;
+        const qz = obj.quaternion.z;
+        const qw = obj.quaternion.w;
+        if (
+          Math.abs(qx) > 1e-6 ||
+          Math.abs(qy) > 1e-6 ||
+          Math.abs(qz) > 1e-6 ||
+          Math.abs(qw - 1) > 1e-6
+        ) {
+          nodeDef.rotation = [
+            Number(qx.toFixed(6)),
+            Number(qy.toFixed(6)),
+            Number(qz.toFixed(6)),
+            Number(qw.toFixed(6))
+          ];
+        }
+      }
+
+      if (obj.scale) {
+        const sx = obj.scale.x;
+        const sy = obj.scale.y;
+        const sz = obj.scale.z;
+        if (Math.abs(sx - 1) > 1e-6 || Math.abs(sy - 1) > 1e-6 || Math.abs(sz - 1) > 1e-6) {
+          nodeDef.scale = [
+            Number(sx.toFixed(6)),
+            Number(sy.toFixed(6)),
+            Number(sz.toFixed(6))
+          ];
+        }
+      }
+
+      // Preserve metadata in GLTF extras
+      if (obj.userData && Object.keys(obj.userData).length > 0) {
+        const cleanExtras = {};
+        for (const [k, v] of Object.entries(obj.userData)) {
+          if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' || Array.isArray(v)) {
+            cleanExtras[k] = v;
+          }
+        }
+        if (Object.keys(cleanExtras).length > 0) {
+          nodeDef.extras = cleanExtras;
+        }
+      }
+
+      if (obj.isMesh && obj.geometry) {
+        const matIdx = getOrCreateMaterialIndex(obj.material);
+        const meshIdx = serializeGeometry(obj.geometry, matIdx, nodeDef.name);
+        if (meshIdx !== null) {
+          nodeDef.mesh = meshIdx;
+        }
+      }
+
+      if (obj.children && obj.children.length > 0) {
+        const childIndices = [];
+        for (const child of obj.children) {
+          const cIdx = traverseObject(child);
+          if (cIdx !== null) {
+            childIndices.push(cIdx);
+          }
+        }
+        if (childIndices.length > 0) {
+          nodeDef.children = childIndices;
+        }
+      }
+
+      return nodeIndex;
+    }
+
+    const rootNodeIndex = traverseObject(root);
+
+    // Build GLTF 2.0 Keyframe Animation Clip for the mechanical assembly
+    const animations = [];
+    const isLathe = root.name === 'UniversalLatheAssembly';
+    const isMill = root.name === 'VerticalMillAssembly';
+
+    if (isLathe || isMill) {
+      const times = new Float32Array([0.0, 1.0, 2.0, 3.0, 4.0]);
+      const timeView = appendTypedArray(times);
+      const timeAccessor = accessors.length;
+      accessors.push({
+        bufferView: timeView,
+        byteOffset: 0,
+        componentType: 5126,
+        count: times.length,
+        type: 'SCALAR',
+        min: [0.0],
+        max: [4.0]
+      });
+
+      const channels = [];
+      const samplers = [];
+
+      function addRotationChannel(targetNodeName, axis) {
+        const targetNodeIdx = nodeNameToIndex.get(targetNodeName);
+        if (targetNodeIdx === undefined) return;
+        const quats = new Float32Array(times.length * 4);
+        // 2 full revolutions over 4 seconds (0, PI, 2PI, 3PI, 4PI)
+        const angles = [0, Math.PI, Math.PI * 2, Math.PI * 3, Math.PI * 4];
+        for (let i = 0; i < angles.length; i++) {
+          const half = angles[i] * 0.5;
+          const s = Math.sin(half);
+          const c = Math.cos(half);
+          const offset = i * 4;
+          quats[offset + 0] = axis === 'x' ? Number(s.toFixed(6)) : 0;
+          quats[offset + 1] = axis === 'y' ? Number(s.toFixed(6)) : 0;
+          quats[offset + 2] = 0;
+          quats[offset + 3] = Number(c.toFixed(6));
+        }
+        const qView = appendTypedArray(quats);
+        const qAccessor = accessors.length;
+        accessors.push({
+          bufferView: qView,
+          byteOffset: 0,
+          componentType: 5126,
+          count: times.length,
+          type: 'VEC4'
+        });
+        const samplerIdx = samplers.length;
+        samplers.push({
+          input: timeAccessor,
+          interpolation: 'LINEAR',
+          output: qAccessor
+        });
+        channels.push({
+          sampler: samplerIdx,
+          target: { node: targetNodeIdx, path: 'rotation' }
+        });
+      }
+
+      function addTranslationChannel(targetNodeName, positionsXYZ) {
+        const targetNodeIdx = nodeNameToIndex.get(targetNodeName);
+        if (targetNodeIdx === undefined) return;
+        const flatPos = new Float32Array(positionsXYZ.flat());
+        const pView = appendTypedArray(flatPos);
+        const pAccessor = accessors.length;
+        accessors.push({
+          bufferView: pView,
+          byteOffset: 0,
+          componentType: 5126,
+          count: times.length,
+          type: 'VEC3'
+        });
+        const samplerIdx = samplers.length;
+        samplers.push({
+          input: timeAccessor,
+          interpolation: 'LINEAR',
+          output: pAccessor
+        });
+        channels.push({
+          sampler: samplerIdx,
+          target: { node: targetNodeIdx, path: 'translation' }
+        });
+      }
+
+      if (isLathe) {
+        addRotationChannel('Spindle', 'x');
+        addRotationChannel('ChuckAssembly', 'x');
+        addRotationChannel('RotatingWorkpiece', 'x');
+        addTranslationChannel('CarriageAssembly', [
+          [0.18, 0, 0],
+          [-0.08, 0, 0],
+          [0.18, 0, 0],
+          [0.42, 0, 0],
+          [0.18, 0, 0]
+        ]);
+      } else if (isMill) {
+        addRotationChannel('Spindle', 'y');
+        addRotationChannel('ToolHolder', 'y');
+        const tableTrack = [
+          [0.0, 0, 0],
+          [0.16, 0, 0],
+          [0.0, 0, 0],
+          [-0.16, 0, 0],
+          [0.0, 0, 0]
+        ];
+        addTranslationChannel('Worktable', tableTrack);
+        addTranslationChannel('WorkholdingFixture', tableTrack);
+        addTranslationChannel('Workpiece', tableTrack);
+      }
+
+      if (channels.length > 0) {
+        animations.push({
+          name: isLathe ? 'Lathe_Machining_Cycle' : 'Mill_Machining_Cycle',
+          channels,
+          samplers
+        });
+      }
+    }
+
+    const gltfJson = {
+      asset: {
+        version: '2.0',
+        generator: 'Agent-B Industrial 3D GLTFExporter (Three.js)'
+      },
+      scene: 0,
+      scenes: [
+        {
+          name: root.name,
+          nodes: [rootNodeIndex]
+        }
+      ],
+      nodes,
+      meshes,
+      materials,
+      accessors,
+      bufferViews,
+      buffers: [
+        {
+          byteLength: byteOffset
+        }
+      ]
+    };
+
+    if (animations.length > 0) {
+      gltfJson.animations = animations;
+    }
+
+    // Encode JSON chunk (padded to 4-byte boundary with 0x20 spaces)
+    const encoder = new TextEncoder();
+    const jsonBytes = encoder.encode(JSON.stringify(gltfJson));
+    const jsonPad = (4 - (jsonBytes.byteLength % 4)) % 4;
+    const jsonChunkLength = jsonBytes.byteLength + jsonPad;
+
+    const binPad = (4 - (byteOffset % 4)) % 4;
+    const binChunkLength = byteOffset + binPad;
+
+    const totalLength = 12 + 8 + jsonChunkLength + 8 + binChunkLength;
+    const glbBuffer = new ArrayBuffer(totalLength);
+    const dataView = new DataView(glbBuffer);
+    const outBytes = new Uint8Array(glbBuffer);
+
+    // 12-byte GLB Header: magic "glTF" (0x46546C67), version 2, total byte length
+    dataView.setUint32(0, 0x46546c67, true);
+    dataView.setUint32(4, 2, true);
+    dataView.setUint32(8, totalLength, true);
+
+    // Chunk 0: JSON (type 0x4E4F534A)
+    dataView.setUint32(12, jsonChunkLength, true);
+    dataView.setUint32(16, 0x4e4f534a, true);
+    outBytes.set(jsonBytes, 20);
+    for (let i = 0; i < jsonPad; i++) {
+      outBytes[20 + jsonBytes.byteLength + i] = 0x20;
+    }
+
+    // Chunk 1: BIN (type 0x004E4942)
+    const binChunkHeaderOffset = 20 + jsonChunkLength;
+    dataView.setUint32(binChunkHeaderOffset, binChunkLength, true);
+    dataView.setUint32(binChunkHeaderOffset + 4, 0x004e4942, true);
+
+    let writeCursor = binChunkHeaderOffset + 8;
+    for (const chunk of binaryChunks) {
+      outBytes.set(chunk, writeCursor);
+      writeCursor += chunk.byteLength;
+    }
+
+    return glbBuffer;
+  }
+
+  /**
+   * Triggers a browser download of the serialized GLB file for the given model instance.
+   */
+  static downloadModelGLB(modelInstance, filename) {
+    const glbBuffer = ExportManager.serializeModelToGLB(modelInstance);
+    const blob = new Blob([glbBuffer], { type: 'model/gltf-binary' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    return glbBuffer.byteLength;
+  }
+}
+
+// --- Module: src/main.js ---
+/**
+ * Main Application Entry Point — Agent B Industrial 3D Technical Lab Viewer
+ */
+function initIndustrialViewerApp() {
+  const viewportEl = document.getElementById('viewport-canvas');
+  if (!viewportEl) return null;
+
+  const sceneManager = new SceneManager(viewportEl);
+  const cameraController = new CameraController(
+    sceneManager.camera,
+    sceneManager.renderer.domElement
+  );
+
+  let currentModelKey = 'lathe'; // 'lathe' | 'mill'
+  let activeModel = null;
+
+  // UI Elements
+  const btnModelLathe = document.getElementById('btn-model-lathe');
+  const btnModelMill = document.getElementById('btn-model-mill');
+
+  const btnPlay = document.getElementById('btn-anim-play');
+  const btnPause = document.getElementById('btn-anim-pause');
+  const btnReset = document.getElementById('btn-anim-reset');
+
+  const sliderSpindle = document.getElementById('slider-spindle-speed');
+  const labelSpindle = document.getElementById('val-spindle-speed');
+  const sliderFeed = document.getElementById('slider-feed-speed');
+  const labelFeed = document.getElementById('val-feed-speed');
+
+  const chkCuttingEffects = document.getElementById('chk-cutting-effects');
+  const chkMotionArrows = document.getElementById('chk-motion-arrows');
+
+  const btnFitModel = document.getElementById('btn-cam-fit');
+  const btnResetCam = document.getElementById('btn-cam-reset');
+  const btnViewFront = document.getElementById('btn-view-front');
+  const btnViewSide = document.getElementById('btn-view-side');
+  const btnViewTop = document.getElementById('btn-view-top');
+  const btnViewIso = document.getElementById('btn-view-iso');
+  const btnViewOverview = document.getElementById('btn-view-overview');
+  const btnViewCuttingZone = document.getElementById('btn-view-cutting');
+
+  const btnExportLathe = document.getElementById('btn-export-lathe');
+  const btnExportMill = document.getElementById('btn-export-mill');
+  const btnShowAllNodes = document.getElementById('btn-tree-show-all');
+
+  const treeContainer = document.getElementById('component-tree-list');
+  const compTitleEl = document.getElementById('inspector-comp-title');
+  const compIdBadgeEl = document.getElementById('inspector-comp-id');
+  const compNodeBadgeEl = document.getElementById('inspector-comp-node');
+  const compCategoryEl = document.getElementById('inspector-comp-category');
+  const compKinematicEl = document.getElementById('inspector-comp-kinematic');
+  const compDescEl = document.getElementById('inspector-comp-desc');
+  const eduSummaryEl = document.getElementById('edu-summary-text');
+  const activeMachineBadgeEl = document.getElementById('hud-machine-badge');
+  const activeKinematicHudEl = document.getElementById('hud-kinematic-readout');
+  const toastEl = document.getElementById('status-toast');
+
+  let toastTimer = null;
+  function showToast(message) {
+    if (!toastEl) return;
+    toastEl.textContent = message;
+    toastEl.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+    toastEl.classList.add('opacity-100', 'translate-y-0');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toastEl.classList.remove('opacity-100', 'translate-y-0');
+    }, 3400);
+  }
+
+  const componentPicker = new ComponentPicker(
+    sceneManager.camera,
+    sceneManager.renderer.domElement,
+    cameraController,
+    (compMeta, node) => {
+      updateInspectorPanel(compMeta, node);
+      highlightTreeSelection(compMeta ? compMeta.componentId : null);
+    }
+  );
+
+  sceneManager.onTick((dt) => {
+    cameraController.update(dt);
+    updateTelemetryReadout();
+  });
+
+  function updateTelemetryReadout() {
+    if (!activeModel || !activeKinematicHudEl) return;
+    const st = activeModel.animation.state;
+    if (currentModelKey === 'lathe') {
+      const rpm = Math.round(st.spindleSpeed * 420);
+      const feedDirLabel = st.feedDirection < 0 ? '← Tiến cắt (-X)' : '→ Lùi nhanh (+X)';
+      activeKinematicHudEl.textContent = `Vc: ${rpm} RPM (Trục X) · Sd: ${feedDirLabel} · X = ${st.carriageX.toFixed(3)} m`;
+    } else {
+      const rpm = Math.round(st.spindleSpeed * 680);
+      const feedDirLabel = st.feedDirection > 0 ? '→ Chạy bàn (+X)' : '← Chạy bàn (-X)';
+      activeKinematicHudEl.textContent = `Vc: ${rpm} RPM (Trục đứng Y) · Sd: ${feedDirLabel} · X = ${st.tableX.toFixed(3)} m`;
+    }
+  }
+
+  function updateInspectorPanel(compMeta, node) {
+    if (!compTitleEl) return;
+    if (!compMeta || !node) {
+      const meta = activeModel ? activeModel.metadata : null;
+      compTitleEl.textContent = meta ? meta.name : 'Chưa chọn bộ phận';
+      compIdBadgeEl.textContent = meta ? meta.id : '—';
+      compNodeBadgeEl.textContent = meta ? meta.rootName : '—';
+      compCategoryEl.textContent = 'Tổng thành máy công cụ';
+      compKinematicEl.textContent =
+        currentModelKey === 'lathe'
+          ? 'Vc: Phôi quay trục X | Sd: Dao tịnh tiến trục X'
+          : 'Vc: Dao phay quay trục Y | Sd: Bàn máy tịnh tiến trục X';
+      compDescEl.textContent =
+        'Nhấp trực tiếp vào bất kỳ chi tiết 3D nào trên mô hình hoặc chọn trong cây cấu trúc bên trái để xem định danh kỹ thuật, vai trò động học và nguyên lý làm việc.';
+      return;
+    }
+
+    compTitleEl.textContent = compMeta.nameVi || node.name;
+    compIdBadgeEl.textContent = compMeta.componentId || '—';
+    compNodeBadgeEl.textContent = node.name || '—';
+    compCategoryEl.textContent = compMeta.category || 'Bộ phận cơ khí';
+    compKinematicEl.textContent = compMeta.kinematicRole || 'Cơ cấu máy';
+    compDescEl.textContent = compMeta.functionVi || '';
+  }
+
+  function highlightTreeSelection(selectedComponentId) {
+    if (!treeContainer) return;
+    const rows = treeContainer.querySelectorAll('[data-tree-comp-id]');
+    rows.forEach((row) => {
+      const cid = row.getAttribute('data-tree-comp-id');
+      if (selectedComponentId && cid === selectedComponentId) {
+        row.classList.add('bg-cyan-950/80', 'border-cyan-400/70', 'text-cyan-200');
+        row.classList.remove('bg-slate-900/60', 'border-slate-800/80', 'text-slate-300');
+      } else {
+        row.classList.remove('bg-cyan-950/80', 'border-cyan-400/70', 'text-cyan-200');
+        row.classList.add('bg-slate-900/60', 'border-slate-800/80', 'text-slate-300');
+      }
+    });
+  }
+
+  function renderComponentTree() {
+    if (!treeContainer || !activeModel) return;
+    treeContainer.innerHTML = '';
+
+    const manifestEntry = modelManifest.models.find((m) =>
+      currentModelKey === 'lathe'
+        ? m.id === '03-universal-lathe'
+        : m.id === '04-vertical-milling-machine'
+    );
+    if (!manifestEntry || !manifestEntry.sceneGraph) return;
+
+    function buildTreeNodes(nodeSpec, depth = 0) {
+      const targetObj =
+        activeModel.components[nodeSpec.name] ||
+        (nodeSpec.componentId ? activeModel.components[nodeSpec.componentId] : null) ||
+        (nodeSpec.name === activeModel.root.name ? activeModel.root : null);
+
+      const compId = nodeSpec.componentId || (targetObj?.userData?.componentId ?? nodeSpec.name);
+      const row = document.createElement('div');
+      row.setAttribute('data-tree-comp-id', compId);
+      row.className =
+        'flex items-center justify-between gap-1.5 px-2 py-1.5 rounded border bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-cyan-500/40 transition text-xs cursor-pointer';
+      row.style.marginLeft = `${depth * 11}px`;
+
+      const leftBtn = document.createElement('button');
+      leftBtn.type = 'button';
+      leftBtn.className = 'flex-1 text-left truncate flex items-center gap-1.5 focus:outline-none';
+      const dot = document.createElement('span');
+      dot.className =
+        depth === 0
+          ? 'w-2 h-2 rounded-full bg-cyan-400 shrink-0'
+          : 'w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0';
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'font-mono text-[11px] truncate';
+      labelSpan.textContent = nodeSpec.componentId
+        ? `${nodeSpec.name} (${nodeSpec.componentId})`
+        : nodeSpec.name;
+
+      leftBtn.appendChild(dot);
+      leftBtn.appendChild(labelSpan);
+
+      leftBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (targetObj && targetObj !== activeModel.root) {
+          componentPicker.selectNode(targetObj, true);
+          cameraController.focusNode(targetObj);
+        } else {
+          componentPicker.clearSelection(true);
+          cameraController.resetCamera();
+        }
+      });
+
+      row.appendChild(leftBtn);
+
+      if (targetObj && targetObj !== activeModel.root) {
+        const visBtn = document.createElement('button');
+        visBtn.type = 'button';
+        visBtn.className =
+          'px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-700 bg-slate-800/90 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 shrink-0';
+        visBtn.textContent = targetObj.visible ? 'Hiện' : 'Ẩn';
+        visBtn.title = 'Ẩn / Hiện bộ phận này';
+        visBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          targetObj.visible = !targetObj.visible;
+          visBtn.textContent = targetObj.visible ? 'Hiện' : 'Ẩn';
+          if (!targetObj.visible) {
+            visBtn.classList.add('text-amber-400', 'border-amber-500/50');
+          } else {
+            visBtn.classList.remove('text-amber-400', 'border-amber-500/50');
+          }
+        });
+        row.appendChild(visBtn);
+      }
+
+      treeContainer.appendChild(row);
+
+      if (nodeSpec.children && nodeSpec.children.length > 0) {
+        nodeSpec.children.forEach((child) => buildTreeNodes(child, depth + 1));
+      }
+    }
+
+    buildTreeNodes(manifestEntry.sceneGraph, 0);
+  }
+
+  function syncPlayPauseButtons() {
+    if (!activeModel || !btnPlay || !btnPause) return;
+    const playing = activeModel.animation.state.isPlaying;
+    if (playing) {
+      btnPlay.classList.add('bg-cyan-500/25', 'border-cyan-400', 'text-cyan-200');
+      btnPause.classList.remove('bg-amber-500/25', 'border-amber-400', 'text-amber-200');
+    } else {
+      btnPlay.classList.remove('bg-cyan-500/25', 'border-cyan-400', 'text-cyan-200');
+      btnPause.classList.add('bg-amber-500/25', 'border-amber-400', 'text-amber-200');
+    }
+  }
+
+  function loadModel(modelKey) {
+    currentModelKey = modelKey;
+    const instance =
+      modelKey === 'lathe' ? createUniversalLatheModel() : createVerticalMillModel();
+
+    sceneManager.setModel(instance);
+    activeModel = instance;
+    componentPicker.setActiveModel(instance);
+
+    // Sync sliders & checkboxes to new model instance
+    if (sliderSpindle) {
+      instance.animation.setSpeed( parseFloat(sliderSpindle.value) || 1.0 );
+    }
+    if (sliderFeed) {
+      instance.animation.setFeedSpeed( parseFloat(sliderFeed.value) || 1.0 );
+    }
+    if (chkCuttingEffects) {
+      instance.animation.setCuttingEffectsEnabled(chkCuttingEffects.checked);
+    }
+    if (chkMotionArrows) {
+      instance.animation.setMotionArrowsVisible(chkMotionArrows.checked);
+    }
+
+    cameraController.fitModel(instance.root);
+    cameraController.setPresetView('isometric', instance.metadata);
+
+    if (eduSummaryEl) {
+      eduSummaryEl.textContent = instance.metadata.educationalSummary;
+    }
+    if (activeMachineBadgeEl) {
+      activeMachineBadgeEl.textContent =
+        modelKey === 'lathe'
+          ? 'OBJECT 03 · UNIVERSAL ENGINE LATHE (MÁY TIỆN VẠN NĂNG)'
+          : 'OBJECT 04 · VERTICAL MILLING MACHINE (MÁY PHAY ĐỨNG)';
+    }
+
+    // Update model tab buttons
+    if (btnModelLathe && btnModelMill) {
+      if (modelKey === 'lathe') {
+        btnModelLathe.className =
+          'px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm';
+        btnModelMill.className =
+          'px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-slate-900/80 border-slate-700 text-slate-300 hover:border-slate-500';
+      } else {
+        btnModelMill.className =
+          'px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm';
+        btnModelLathe.className =
+          'px-3 py-1.5 rounded-md text-xs font-semibold border transition bg-slate-900/80 border-slate-700 text-slate-300 hover:border-slate-500';
+      }
+    }
+
+    renderComponentTree();
+    updateInspectorPanel(null, null);
+    syncPlayPauseButtons();
+  }
+
+  // Bind UI Controls
+  if (btnModelLathe) {
+    btnModelLathe.addEventListener('click', () => {
+      if (currentModelKey !== 'lathe') {
+        loadModel('lathe');
+        showToast('Đã chuyển sang OBJECT 03 — Máy tiện vạn năng (Universal Engine Lathe)');
+      }
+    });
+  }
+
+  if (btnModelMill) {
+    btnModelMill.addEventListener('click', () => {
+      if (currentModelKey !== 'mill') {
+        loadModel('mill');
+        showToast('Đã chuyển sang OBJECT 04 — Máy phay đứng (Vertical Milling Machine)');
+      }
+    });
+  }
+
+  if (btnPlay) {
+    btnPlay.addEventListener('click', () => {
+      if (!activeModel) return;
+      activeModel.animation.play();
+      syncPlayPauseButtons();
+    });
+  }
+
+  if (btnPause) {
+    btnPause.addEventListener('click', () => {
+      if (!activeModel) return;
+      activeModel.animation.pause();
+      syncPlayPauseButtons();
+    });
+  }
+
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      if (!activeModel) return;
+      activeModel.animation.reset();
+      showToast('Đã đặt lại vị trí cơ cấu về trạng thái chuẩn.');
+    });
+  }
+
+  if (sliderSpindle) {
+    sliderSpindle.addEventListener('input', () => {
+      const val = parseFloat(sliderSpindle.value) || 1.0;
+      if (labelSpindle) labelSpindle.textContent = `${val.toFixed(1)}x`;
+      if (activeModel) activeModel.animation.setSpeed(val);
+    });
+  }
+
+  if (sliderFeed) {
+    sliderFeed.addEventListener('input', () => {
+      const val = parseFloat(sliderFeed.value);
+      if (labelFeed) labelFeed.textContent = `${val.toFixed(1)}x`;
+      if (activeModel) activeModel.animation.setFeedSpeed(val);
+    });
+  }
+
+  if (chkCuttingEffects) {
+    chkCuttingEffects.addEventListener('change', () => {
+      if (activeModel) {
+        activeModel.animation.setCuttingEffectsEnabled(chkCuttingEffects.checked);
+      }
+    });
+  }
+
+  if (chkMotionArrows) {
+    chkMotionArrows.addEventListener('change', () => {
+      if (activeModel) {
+        activeModel.animation.setMotionArrowsVisible(chkMotionArrows.checked);
+      }
+    });
+  }
+
+  if (btnFitModel) {
+    btnFitModel.addEventListener('click', () => {
+      if (activeModel) cameraController.fitModel(activeModel.root);
+    });
+  }
+
+  if (btnResetCam) {
+    btnResetCam.addEventListener('click', () => {
+      cameraController.resetCamera();
+    });
+  }
+
+  const viewMap = [
+    [btnViewFront, 'front'],
+    [btnViewSide, 'side'],
+    [btnViewTop, 'top'],
+    [btnViewIso, 'isometric'],
+    [btnViewOverview, 'overview'],
+    [btnViewCuttingZone, 'cutting-zone']
+  ];
+  viewMap.forEach(([btn, viewName]) => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (activeModel) {
+          cameraController.setPresetView(viewName, activeModel.metadata);
+        }
+      });
+    }
+  });
+
+  if (btnShowAllNodes) {
+    btnShowAllNodes.addEventListener('click', () => {
+      if (!activeModel) return;
+      activeModel.root.traverse((obj) => {
+        if (!obj.userData?.isHelperOverlay) {
+          obj.visible = true;
+        }
+      });
+      renderComponentTree();
+      showToast('Đã hiển thị lại toàn bộ các bộ phận trong Scene Graph.');
+    });
+  }
+
+  if (btnExportLathe) {
+    btnExportLathe.addEventListener('click', () => {
+      const tempLathe =
+        currentModelKey === 'lathe' && activeModel ? activeModel : createUniversalLatheModel();
+      const bytes = ExportManager.downloadModelGLB(tempLathe, '03-universal-lathe.glb');
+      if (tempLathe !== activeModel) tempLathe.dispose();
+      showToast(`Đã xuất 03-universal-lathe.glb (${(bytes / 1024).toFixed(1)} KB)`);
+    });
+  }
+
+  if (btnExportMill) {
+    btnExportMill.addEventListener('click', () => {
+      const tempMill =
+        currentModelKey === 'mill' && activeModel ? activeModel : createVerticalMillModel();
+      const bytes = ExportManager.downloadModelGLB(tempMill, '04-vertical-milling-machine.glb');
+      if (tempMill !== activeModel) tempMill.dispose();
+      showToast(`Đã xuất 04-vertical-milling-machine.glb (${(bytes / 1024).toFixed(1)} KB)`);
+    });
+  }
+
+  // Initialize with Universal Engine Lathe (OBJECT 03)
+  loadModel('lathe');
+  sceneManager.start();
+
+  return {
+    sceneManager,
+    cameraController,
+    componentPicker,
+    loadModel
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => {
+    initIndustrialViewerApp();
+  });
+}
+</script>
+</body>
+</html>
